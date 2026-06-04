@@ -24,6 +24,9 @@ const userSchema = new mongoose.Schema({
         require:true,
         default:0
     },
+    publicKey:{
+        type:String,
+    },
     password:{
         type: String,
         required: true,
