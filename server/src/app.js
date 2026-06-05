@@ -18,8 +18,10 @@ app.use(express.static("public"))
 //write api routes here
 import errorHandler from "./middlewares/error.middleware.js";
 import AuthRoute from "./routes/auth.route.js";
+import messageRoute from "./routes/message.route.js";
 
 app.use('/api/auth/v1',AuthRoute)
+app.use('/api/message/v1',messageRoute)
 
 
 
