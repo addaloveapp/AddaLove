@@ -24,10 +24,10 @@ export default function AddaLoveRecharge() {
     const [isProcessing, setIsProcessing] = useState(false);
     // const [orderdata, setOrderdata] = useState({})
     const [balance, setBalance] = useState(0)
-    const naviget= useNavigate()
+    const naviget = useNavigate()
 
-    const handleclick=()=>{
-    naviget('/transcation-history')
+    const handleclick = () => {
+        naviget('/transcation-history')
     }
     // Simulated API Call
     const handlePayment = async () => {
@@ -102,8 +102,8 @@ export default function AddaLoveRecharge() {
                     else if (orderdata.bonus === '+35000 bonus') {
                         totalbouns = 15000;
                     }
-                    else{
-                        totalbouns=0;
+                    else {
+                        totalbouns = 0;
                     }
                     const url3 = `${import.meta.env.VITE_BACKEND_URL}/api/wallet/v1/add-coin`
                     const res = await fetch(url3, {
@@ -119,7 +119,6 @@ export default function AddaLoveRecharge() {
                     console.log(data3)
                     if (data3.success) {
                         setBalance(data3.data.newWlletBlance)
-                        // naviget('/userorder')
                         setIsProcessing(false);
                         setIsModalOpen(false);
                         setSelectedPkg(null);
@@ -144,7 +143,11 @@ export default function AddaLoveRecharge() {
             rzp.open();
         } catch (error) {
             setLoder(false)
+            handleError('Payment Cancel')
             console.error('Payment Error:', error);
+        }
+        finally {
+            setLoder(false)
         }
     };
 
@@ -208,7 +211,7 @@ export default function AddaLoveRecharge() {
                         </div>
 
                         <button onClick={handleclick} className="flex items-center gap-2 bg-[#251e12] border border-[#52441a] text-yellow-400 hover:bg-[#332816] transition-colors px-5 py-2.5 rounded-xl text-sm font-semibold shadow-inner">
-                            <History/>
+                            <History />
                             Your transcation history
                         </button>
                     </div>

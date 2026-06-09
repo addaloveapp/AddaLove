@@ -15,14 +15,14 @@ const verifyUser = asyncHandler(async (req, res, next) => {
     console.log(decoded)
 
     if (decoded.userType.toLowerCase() === 'boy') {
-        const user = await User.findById(decoded.id).select('-password');
+        const user = await User.findById(decoded.userId).select('-password');
         if (!user) {
             throw new ApiError(401, 'User not found');
         }
         req.user = user;
         req.userType = 'boy';
     } else if (decoded.userType.toLowerCase() === 'girl') {
-        const girl = await Girls.findById(decoded.id).select('-password');
+        const girl = await Girls.findById(decoded.userId).select('-password');
         if (!girl) {
             throw new ApiError(401, 'Girl not found');
         }
