@@ -11,6 +11,7 @@ import CheckApplication from './pages/CheckApplication.jsx'
 import GirlsLogin from './pages/GirlsLogin.jsx'
 import AddaLoveRecharge from './pages/Wallet.jsx'
 import TranscationHistory from './pages/TranscationHistory.jsx'
+import { UserdataProvider } from './context/UserdataContext.jsx'
 
 const router = createBrowserRouter([
   {
@@ -62,6 +63,8 @@ const router = createBrowserRouter([
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
+    <UserdataProvider>
     <RouterProvider router={router} />
+    </UserdataProvider>
   </StrictMode>
 )
