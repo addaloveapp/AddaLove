@@ -216,4 +216,12 @@ const girlsLogin = asyncHandler(async (req, res) => {
 
 
 })
-export { sendOtp, otpVerify, register, login, girlRegister, girlVedioUpload, checkApplicationStatus , girlsLogin };
+
+const currentUser = asyncHandler(async(req,res)=>{
+    const userData = req.user;
+    if(!userData){
+        throw new ApiError(404, 'User not found')
+    }
+    return res.status(200).json(ApiResponse(200,{userData},'User data fecthed Successful.'))
+})
+export { sendOtp, otpVerify, register, login, girlRegister, girlVedioUpload, checkApplicationStatus , girlsLogin , currentUser };

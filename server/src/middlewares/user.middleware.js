@@ -26,7 +26,7 @@ const verifyUser = asyncHandler(async (req, res, next) => {
         if (!girl) {
             throw new ApiError(401, 'Girl not found');
         }
-        req.girl = girl;
+        req.user = girl;
         req.userType = 'girl';
     } else {
         throw new ApiError(403, 'Invalid userType in token');
