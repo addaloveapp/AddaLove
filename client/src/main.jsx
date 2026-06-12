@@ -12,6 +12,7 @@ import GirlsLogin from './pages/GirlsLogin.jsx'
 import AddaLoveRecharge from './pages/Wallet.jsx'
 import TranscationHistory from './pages/TranscationHistory.jsx'
 import { UserdataProvider } from './context/UserdataContext.jsx'
+import Profile from './pages/Profile.jsx'
 
 const router = createBrowserRouter([
   {
@@ -55,6 +56,11 @@ const router = createBrowserRouter([
       {
         path: "/transcation-history",
         element: <TranscationHistory />
+
+      },
+      {
+        path: "/profile",
+        element: <Profile />
 
       },
     ]
