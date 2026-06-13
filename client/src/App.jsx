@@ -34,7 +34,7 @@ function App() {
       } catch (error) {
         console.log(error)
       } finally {
-        // await new Promise(resolve => setTimeout(resolve, 10000));
+        await new Promise(resolve => setTimeout(resolve, 10000));
         setScreenloder(false)
       }
     }
