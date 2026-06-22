@@ -278,7 +278,8 @@ const getRoomDetails = asyncHandler(async (req, res) => {
     const { roomId } = req.params;
 
     const room = await Room.findOne({ roomId })
-        .populate('createdBy', 'fullName imageUrl age');
+        .populate('createdBy', 'fullName imageUrl age')
+        .populate('currentBoy', 'fullName imageUrl walletBlance');
 
     if (!room) {
         throw new ApiError(404, 'Room not found');
