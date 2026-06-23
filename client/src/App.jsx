@@ -1,6 +1,6 @@
 import './App.css'
 import { useEffect, Suspense, useState } from 'react'
-import { Outlet } from 'react-router-dom'
+import { Outlet, useLocation } from 'react-router-dom'
 import { ToastContainer, Flip } from "react-toastify";
 import { connectSocket, disconnectSocket } from './socket/socket.js';
 import useUserStore from './store/userStore.js';
@@ -12,7 +12,8 @@ import ButtomNavbar from './components/ButtomNavbar'
 function App() {
   const { fetchUser, isAuthenticated, user, userRole } = useUserStore();
   const {getOpenRooms, isEnterTheRoom } = useRoomStore();
-  const [screenloder, setScreenloder] = useState(true)
+  const [screenloder, setScreenloder] = useState(true);
+  const location = useLocation();
 
   useEffect(() => {
     const loadInitialData = async () => {
@@ -20,7 +21,6 @@ function App() {
       try {
         await fetchUser();
         await getOpenRooms();
-        console.log(isEnterTheRoom)
       } catch (error) {
         disconnectSocket();
       }finally {
@@ -28,7 +28,7 @@ function App() {
         setScreenloder(false);
       }
     };
-
+   console.log(location.pathname)
     loadInitialData();
   }, [fetchUser, getOpenRooms]);
 

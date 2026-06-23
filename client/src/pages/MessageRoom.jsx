@@ -5,7 +5,6 @@ import useUserStore from '../store/userStore.js'
 import { connectSocket, socket } from '../socket/socket.js'
 import useRoomStore from '../store/roomStore.js'
 import useMessageStore from '../store/messageStore.js'
-
 const MessageRoom = () => {
   const { roomId } = useParams()
   const navigate = useNavigate()
@@ -14,6 +13,7 @@ const MessageRoom = () => {
   const [isLeaving, setIsLeaving] = useState(false)
   const [isBoyInside, setIsBoyInside] = useState(userRole === 'boy')
   const [boyProfile, setBoyProfile] = useState(null)
+    const { user: useralldata } = useUserStore();
   const [girlProfile, setGirlProfile] = useState(null)
   const messagesEndRef = useRef(null)
   const { leaveRoom, destroyRoom, getRoomDetails } = useRoomStore()
@@ -192,11 +192,12 @@ const MessageRoom = () => {
             <div className='flex h-10 w-10 items-center justify-center rounded-2xl bg-[#FF4D8D]/15 text-[#FF4D8D]'>
               <MessageCircle size={21} />
             </div>
-            <div>
+            <div> 
               <p className='text-[10px] font-semibold uppercase tracking-[0.25em] text-[#FF4D8D]'>Live chat</p>
               <h1 className='text-base font-bold sm:text-lg'>Message Room</h1>
             </div>
           </div>
+          <div className='flex gap-1  rounded-3xl border border-yellow-400/20 bg-yellow-500/10  p-1.5'><CoinIcon className="w-4 h-4 text-yellow-400 mt-1" /> {useralldata.walletBlance}</div>
           <button
             type='button'
             onClick={userRole === 'girl' ? destroyRoomFunc : leaveRoomFunc}
@@ -318,5 +319,13 @@ const MessageRoom = () => {
     </div>
   )
 }
-
+function CoinIcon({ className }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" className={className}>
+      <circle cx="12" cy="12" r="10" fill="#facc15" />
+      <circle cx="12" cy="12" r="8" fill="#eab308" />
+      <path d="M12 6V18M9 9H15M9 15H15" stroke="#ca8a04" strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  );
+}
 export default MessageRoom
