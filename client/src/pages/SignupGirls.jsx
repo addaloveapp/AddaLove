@@ -83,7 +83,7 @@ export default function SignupGirls() {
     setLoading(true);
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/auth/v1/send-otp`,
+        `${import.meta.env.VITE_BACKEND_URL2}/api/auth/v1/send-otp`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -130,7 +130,7 @@ export default function SignupGirls() {
     setLoading(true);
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/auth/v1/verify-otp`,
+        `${import.meta.env.VITE_BACKEND_URL2}/api/auth/v1/verify-otp`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -238,7 +238,7 @@ export default function SignupGirls() {
       formDataToSend.append('profilePhoto', formData.profilePhoto);
 
       const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/auth/v1/girl-register`,
+        `${import.meta.env.VITE_BACKEND_URL2}/api/auth/v1/girl-register`,
         {
           method: 'POST',
           body: formDataToSend,

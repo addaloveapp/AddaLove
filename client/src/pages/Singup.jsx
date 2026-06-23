@@ -51,7 +51,7 @@ export default function Signup() {
         setLoading(true);
         try {
             // API Call
-            const url = `${import.meta.env.VITE_BACKEND_URL}/api/auth/v1/send-otp`
+            const url = `${import.meta.env.VITE_BACKEND_URL2}/api/auth/v1/send-otp`
             const response = await fetch(url, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -87,7 +87,7 @@ export default function Signup() {
         setLoading(true);
         try {
             // API Call
-            const url = `${import.meta.env.VITE_BACKEND_URL}/api/auth/v1/verify-otp`
+            const url = `${import.meta.env.VITE_BACKEND_URL2}/api/auth/v1/verify-otp`
             const response = await fetch(url, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -161,7 +161,7 @@ export default function Signup() {
         setLoading(true);
         try {
             // Create FormData for file upload
-            const url = `${import.meta.env.VITE_BACKEND_URL}/api/auth/v1/register`
+            const url = `${import.meta.env.VITE_BACKEND_URL2}/api/auth/v1/register`
             const submitData = new FormData();
             submitData.append('fullName', formData.fullName);
             submitData.append('email', formData.email);
