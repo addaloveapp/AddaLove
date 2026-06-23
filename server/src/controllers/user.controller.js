@@ -230,10 +230,6 @@ const logOut = asyncHandler(async (req, res) => {
     if (!userId) {
         throw new ApiError(401, "Unauthorized");
     }
-    const user = await User.findById(userId);
-    if (!user) {
-        throw new ApiError(404, "User not found");
-    }
     res.clearCookie("authToken", options);
     return res.status(200).json(new ApiResponse(200, null, 'Logout done'))
 })
