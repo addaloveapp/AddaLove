@@ -6,7 +6,8 @@ const useRoomStore = create((set) => ({
     room: null,
     isLoading: false,
     error: null,
-    isEnterTheRoom: false,
+    isEnterTheRoom:false,
+    resetRoomState: () => set({ room: null, isEnterTheRoom: false, error: null }),
     getOpenRooms: async () => {
         set({ isLoading: true, error: null });
         try {
