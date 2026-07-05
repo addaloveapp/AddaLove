@@ -276,7 +276,7 @@ export default function AddaLoveRecharge() {
                                 </div>
 
                                 {/* Custom Sub-Labels Content */}
-                                <div className="min-h-[16px] flex items-center justify-center mb-3">
+                                <div className="min-h-4 flex items-center justify-center mb-3">
                                     {pkg.tag ? (
                                         <span className={`text-[7px] font-extrabold px-1.5 py-0.5 rounded-sm tracking-wide uppercase ${
                                             pkg.tagType === 'basic' ? 'bg-[#25222e] text-gray-300 border border-gray-600/30' :
