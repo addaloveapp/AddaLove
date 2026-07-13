@@ -1,4 +1,5 @@
 import mongoose, { model } from "mongoose"
+import { type } from "node:os";
 const girlsSchema = new mongoose.Schema({
     fullName: {
         type: String,
@@ -17,7 +18,7 @@ const girlsSchema = new mongoose.Schema({
     imageUrl: {
         type: String,
         required: true,
-        default: 'https://ik.imagekit.io/ufopzzlbh/p.jpeg'
+        default: 'https://ik.imagekit.io/ufopzzlbh/58964_BYSKi0X54.png'
     },
     vedioUrl: {
         type: String,
@@ -39,6 +40,9 @@ const girlsSchema = new mongoose.Schema({
     },
     applicationId:{
         type:String,
+    },
+    userBio:{
+        type:String
     },
     password: {
         type: String,

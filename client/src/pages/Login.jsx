@@ -4,6 +4,7 @@ import { handleSuccess } from '../components/ErrorMessage';
 import { Link, useNavigate } from 'react-router';
 import shotlogo from "../assets/logo2.png"
 import useUserStore from '../store/userStore.js';
+
 export default function Login() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -11,8 +12,22 @@ export default function Login() {
     const [loading, setLoading] = useState(false);
     const [errors, setErrors] = useState({});
     const [rememberMe, setRememberMe] = useState(false);
-    const naviget=useNavigate()
-    const { fetchUser} = useUserStore();
+    
+    // Manage the gender selection step
+    const [genderSelected, setGenderSelected] = useState(false);
+
+    const naviget = useNavigate();
+    const { fetchUser } = useUserStore();
+
+    // Handle Gender Selection
+    const handleGenderSelect = (gender) => {
+        if (gender === 'female') {
+            naviget('/girlslogin');
+        } else if (gender === 'male') {
+            setGenderSelected(true);
+        }
+    };
+
     // Handle Login
     const handleLogin = async (e) => {
         e.preventDefault();
@@ -38,7 +53,6 @@ export default function Login() {
 
         setLoading(true);
         try {
-            // API Call
             const url = `${import.meta.env.VITE_BACKEND_URL}/api/auth/v1/login`
             const response = await fetch(url, {
                 method: 'POST',
@@ -48,13 +62,8 @@ export default function Login() {
             });
 
             const data = await response.json();
-            console.log(data)
             if (data.success) {
-                // Handle successful login
-
                 handleSuccess('Login successful!');
-       
-                // Redirect to dashboard or home
                 window.location.href = '/';
             } else {
                 setErrors({ submit: data.message || 'Login failed' });
@@ -67,9 +76,7 @@ export default function Login() {
         }
     };
 
-    // Handle Forgot Password
     const handleForgotPassword = () => {
-        // Navigate to forgot password page or open modal
         // window.location.href = '/forgot-password';
     };
 
@@ -93,128 +100,157 @@ export default function Login() {
                         <h1 className="text-3xl md:text-4xl font-bold bg-linear-to-r from-[#FF4D8D] to-[#6C3BFF] bg-clip-text text-transparent mb-2">
                             AddaLove
                         </h1>
-                        <p className="text-slate-300 text-sm">Welcome back! Sign in to continue</p>
+                        <p className="text-slate-300 text-sm tracking-wide">
+                            {!genderSelected ? 'Select your gender' : 'Welcome back! Sign in to continue'}
+                        </p>
                     </div>
 
-                    {/* Login Form */}
-                    <form onSubmit={handleLogin} className="space-y-5">
-                        {/* Email Input */}
-                        <div>
-                            <label className="block text-sm font-semibold mb-2 text-slate-200">
-                                Email Address
-                            </label>
-                            <input
-                                type="email"
-                                value={email}
-                                onChange={(e) => {
-                                    setEmail(e.target.value);
-                                    if (errors.email) setErrors(prev => ({ ...prev, email: '' }));
-                                }}
-                                placeholder="your@email.com"
-                                className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-xl text-slate-100 placeholder-slate-400 focus:outline-none focus:border-[#FF4D8D] focus:bg-white/10 transition-all duration-300 hover:bg-white/5"
-                            />
-                            {errors.email && <p className="text-red-400 text-xs mt-1">{errors.email}</p>}
-                        </div>
-
-                        {/* Password Input */}
-                        <div>
-                            <div className="flex justify-between items-center mb-2">
-                                <label className="block text-sm font-semibold text-slate-200">
-                                    Password
-                                </label>
-                                <button
-                                    type="button"
-                                    onClick={handleForgotPassword}
-                                    className="text-xs text-[#FF4D8D] hover:text-[#6C3BFF] transition-colors font-semibold"
-                                >
-                                    Forgot?
-                                </button>
-                            </div>
-                            <div className="relative">
-                                <input
-                                    type={showPassword ? 'text' : 'password'}
-                                    value={password}
-                                    onChange={(e) => {
-                                        setPassword(e.target.value);
-                                        if (errors.password) setErrors(prev => ({ ...prev, password: '' }));
-                                    }}
-                                    placeholder="••••••••"
-                                    className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-xl text-slate-100 placeholder-slate-400 focus:outline-none focus:border-[#FF4D8D] focus:bg-white/10 transition-all duration-300 pr-10 hover:bg-white/5"
+                    {/* Conditional Rendering based on Gender Selection */}
+                    {!genderSelected ? (
+                        <div className="flex justify-center gap-6 py-4 animate-fadeIn">
+                            {/* Boys Avatar Option */}
+                            <button
+                                type="button"
+                                onClick={() => handleGenderSelect('male')}
+                                className="flex flex-col items-center gap-3 p-4 bg-white/5 border border-white/20 rounded-2xl hover:bg-white/10 hover:border-[#6C3BFF] transition-all duration-300 transform hover:scale-105 w-32 cursor-pointer"
+                            >
+                                <img 
+                                    src="https://ik.imagekit.io/ufopzzlbh/p.jpeg" 
+                                    alt="Boy Avatar" 
+                                    className="w-16 h-16 rounded-full object-cover border-2 border-white/20"
                                 />
-                                <button
-                                    type="button"
-                                    onClick={() => setShowPassword(!showPassword)}
-                                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-[#FF4D8D] transition-colors"
-                                >
-                                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                                </button>
-                            </div>
-                            {errors.password && <p className="text-red-400 text-xs mt-1">{errors.password}</p>}
+                                <span className="font-semibold text-sm tracking-wide">Male</span>
+                            </button>
+
+                            {/* Girls Avatar Option */}
+                            <button
+                                type="button"
+                                onClick={() => handleGenderSelect('female')}
+                                className="flex flex-col items-center gap-3 p-4 bg-white/5 border border-white/20 rounded-2xl hover:bg-white/10 hover:border-[#FF4D8D] transition-all duration-300 transform hover:scale-105 w-32 cursor-pointer"
+                            >
+                                <img 
+                                    src="https://ik.imagekit.io/ufopzzlbh/58964_BYSKi0X54.png" 
+                                    alt="Girl Avatar" 
+                                    className="w-16 h-16 rounded-full object-cover border-2 border-white/20"
+                                />
+                                <span className="font-semibold text-sm tracking-wide">Female</span>
+                            </button>
                         </div>
-
-                        {/* Remember Me Checkbox */}
-                        <div className="flex items-center gap-2">
-                            <input
-                                type="checkbox"
-                                id="rememberMe"
-                                checked={rememberMe}
-                                onChange={(e) => setRememberMe(e.target.checked)}
-                                className="w-4 h-4 accent-[#FF4D8D] cursor-pointer rounded"
-                            />
-                            <label htmlFor="rememberMe" className="text-sm text-slate-300 cursor-pointer">
-                                Remember me
-                            </label>
-                        </div>
-
-                        {/* Error Message */}
-                        {errors.submit && (
-                            <div className="p-3 bg-red-500/20 border border-red-500/50 rounded-xl">
-                                <p className="text-red-300 text-xs">{errors.submit}</p>
+                    ) : (
+                        /* Login Form (Revealed for Male selection) */
+                        <form onSubmit={handleLogin} className="space-y-5 animate-fadeIn">
+                            {/* Email Input */}
+                            <div>
+                                <label className="block text-sm font-semibold mb-2 text-slate-200">
+                                    Email Address
+                                </label>
+                                <input
+                                    type="email"
+                                    value={email}
+                                    onChange={(e) => {
+                                        setEmail(e.target.value);
+                                        if (errors.email) setErrors(prev => ({ ...prev, email: '' }));
+                                    }}
+                                    placeholder="your@email.com"
+                                    className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-xl text-slate-100 placeholder-slate-400 focus:outline-none focus:border-[#FF4D8D] focus:bg-white/10 transition-all duration-300 hover:bg-white/5"
+                                />
+                                {errors.email && <p className="text-red-400 text-xs mt-1">{errors.email}</p>}
                             </div>
-                        )}
 
-                        {/* Login Button */}
-                        <button
-                            type="submit"
-                            disabled={loading}
-                            className="w-full py-3 bg-linear-to-r from-[#FF4D8D] to-[#6C3BFF] text-white font-bold rounded-xl hover:shadow-lg hover:shadow-[#FF4D8D]/50 transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 mt-6"
-                        >
-                            {loading ? (
-                                <>
-                                    <Loader className="w-4 h-4 animate-spin" />
-                                    Logging in...
-                                </>
-                            ) : (
-                                'Sign In'
+                            {/* Password Input */}
+                            <div>
+                                <div className="flex justify-between items-center mb-2">
+                                    <label className="block text-sm font-semibold text-slate-200">
+                                        Password
+                                    </label>
+                                    <button
+                                        type="button"
+                                        onClick={handleForgotPassword}
+                                        className="text-xs text-[#FF4D8D] hover:text-[#6C3BFF] transition-colors font-semibold"
+                                    >
+                                        Forgot?
+                                    </button>
+                                </div>
+                                <div className="relative">
+                                    <input
+                                        type={showPassword ? 'text' : 'password'}
+                                        value={password}
+                                        onChange={(e) => {
+                                            setPassword(e.target.value);
+                                            if (errors.password) setErrors(prev => ({ ...prev, password: '' }));
+                                        }}
+                                        placeholder="••••••••"
+                                        className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-xl text-slate-100 placeholder-slate-400 focus:outline-none focus:border-[#FF4D8D] focus:bg-white/10 transition-all duration-300 pr-10 hover:bg-white/5"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-[#FF4D8D] transition-colors"
+                                    >
+                                        {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                                    </button>
+                                </div>
+                                {errors.password && <p className="text-red-400 text-xs mt-1">{errors.password}</p>}
+                            </div>
+
+                            {/* Remember Me Checkbox */}
+                            <div className="flex items-center gap-2">
+                                <input
+                                    type="checkbox"
+                                    id="rememberMe"
+                                    checked={rememberMe}
+                                    onChange={(e) => setRememberMe(e.target.checked)}
+                                    className="w-4 h-4 accent-[#FF4D8D] cursor-pointer rounded"
+                                />
+                                <label htmlFor="rememberMe" className="text-sm text-slate-300 cursor-pointer">
+                                    Remember me
+                                </label>
+                            </div>
+
+                            {/* Error Message */}
+                            {errors.submit && (
+                                <div className="p-3 bg-red-500/20 border border-red-500/50 rounded-xl">
+                                    <p className="text-red-300 text-xs">{errors.submit}</p>
+                                </div>
                             )}
-                        </button>
 
-                        {/* Divider */}
-                        <div className="relative my-6">
-                            <div className="absolute inset-0 flex items-center">
-                                <div className="w-full border-t border-white/20"></div>
-                            </div>
-                            <div className="relative flex justify-center text-xs">
-                                <span className="px-2 bg-linear-to-br from-[#0F172A] via-[#1a1f3a] to-[#0F172A]">
-                                    Don't have an account?
-                                </span>
-                            </div>
-                        </div>
+                            {/* Login Button */}
+                            <button
+                                type="submit"
+                                disabled={loading}
+                                className="w-full py-3 bg-linear-to-r from-[#FF4D8D] to-[#6C3BFF] text-white font-bold rounded-xl hover:shadow-lg hover:shadow-[#FF4D8D]/50 transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 mt-6"
+                            >
+                                {loading ? (
+                                    <>
+                                        <Loader className="w-4 h-4 animate-spin" />
+                                        Logging in...
+                                    </>
+                                ) : (
+                                    'Sign In'
+                                )}
+                            </button>
 
-                        {/* Sign Up Link */}
-                        <Link
-                            to="/signup"
-                            className="block w-full py-3 border border-white/20 text-white font-bold rounded-xl text-center hover:bg-white/5 hover:border-[#FF4D8D] transition-all duration-300 transform hover:scale-105"
-                        >
-                            Create Account
-                        </Link>
-                        <Link
-                            to="/signupgirl"
-                            className="block w-full py-3 border border-white/20 text-white font-bold rounded-xl text-center hover:bg-white/5 hover:border-[#FF4D8D] transition-all duration-300 transform hover:scale-105"
-                        >
-                            Create Account as girls
-                        </Link>
-                    </form>
+                            {/* Divider */}
+                            <div className="relative my-6">
+                                <div className="absolute inset-0 flex items-center">
+                                    <div className="w-full border-t border-white/20"></div>
+                                </div>
+                                <div className="relative flex justify-center text-xs">
+                                    <span className="px-2 bg-linear-to-br from-[#0F172A] via-[#1a1f3a] to-[#0F172A]">
+                                        Don't have an account?
+                                    </span>
+                                </div>
+                            </div>
+
+                            {/* Sign Up Links */}
+                            <Link
+                                to="/signup"
+                                className="block w-full py-3 border border-white/20 text-white font-bold rounded-xl text-center hover:bg-white/5 hover:border-[#FF4D8D] transition-all duration-300 transform hover:scale-105"
+                            >
+                                Create Account
+                            </Link>
+                        </form>
+                    )}
 
                     {/* Footer Text */}
                     <p className="text-center text-xs text-slate-400 mt-6">
@@ -234,22 +270,22 @@ export default function Login() {
                 </div>
             </div>
 
-            {/* Add animation for fadeIn */}
+            {/* Animation Injection */}
             <style>{`
-        @keyframes fadeIn {
-          from {
-            opacity: 0;
-            transform: translateY(10px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        .animate-fadeIn {
-          animation: fadeIn 0.3s ease-out;
-        }
-      `}</style>
+                @keyframes fadeIn {
+                    from {
+                        opacity: 0;
+                        transform: translateY(10px);
+                    }
+                    to {
+                        opacity: 1;
+                        transform: translateY(0);
+                    }
+                }
+                .animate-fadeIn {
+                    animation: fadeIn 0.4s ease-out forwards;
+                }
+            `}</style>
         </div>
     );
 }
