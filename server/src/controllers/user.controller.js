@@ -13,6 +13,7 @@ import sendemail from '../middlewares/sendotp.middleware.js';
 import Girls from '../models/girls.model.js';
 import mongoose from 'mongoose';
 import { userRateCalculate } from '../utils/calculateUserRateAVG.js';
+import axios from 'axios'
 const sendOtp = asyncHandler(async (req, res) => {
     const { email } = req.body;
     if (!email) {
@@ -32,6 +33,28 @@ const sendOtp = asyncHandler(async (req, res) => {
     const sendmail = await sendemail(email, otp);
     return res.status(200).json(new ApiResponse(200, { referenceCode }, "Otp is send to your email"))
 })
+
+
+const messageOtpSend = asyncHandler(async (req, res) => {
+    const otp = Math.floor((Math.random() * 1000000) + 1);
+    const response = await axios.post(
+        `${process.env.APITXT_BASE_URL}/send-sms`, // Replace with actual endpoint
+        {
+            number: "919635013952",
+            message: `Your verification code is ${otp}. It is valid for 5 minutes.`,
+        },
+        {
+            headers: {
+                Authorization: `Bearer ${process.env.APITXT_API_KEY}`,
+                "Content-Type": "application/json",
+            },
+        }
+    );
+    console.log(response)
+    return res.status(200).json(new ApiResponse(200,response,'done'))
+
+})
+
 const otpVerify = asyncHandler(async (req, res) => {
     const { otp, referenceCode } = req.body;
     const dbOtp = (
@@ -278,11 +301,11 @@ const currentUser = asyncHandler(async (req, res) => {
             }
         ]);
         const userRateAVG = await userRateCalculate(req.user._id);
-        const userInfo=user[0];
+        const userInfo = user[0];
         return res.status(200).json(
             new ApiResponse(
                 200,
-                {userInfo,userRateAVG},
+                { userInfo, userRateAVG },
                 "Current user details retrieved successfully"
             )
         );
@@ -348,11 +371,11 @@ const currentUser = asyncHandler(async (req, res) => {
         ]);
 
         const userRateAVG = await userRateCalculate(req.user._id);
-        const userInfo=user[0];
+        const userInfo = user[0];
         return res.status(200).json(
             new ApiResponse(
                 200,
-                {userInfo,userRateAVG},
+                { userInfo, userRateAVG },
                 "Current user details retrieved successfully"
             )
         );
@@ -379,5 +402,6 @@ export {
     checkApplicationStatus,
     girlsLogin,
     currentUser,
-    logOut
+    logOut,
+    messageOtpSend
 };
