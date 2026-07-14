@@ -23,6 +23,7 @@ import Profile from './pages/Profile.jsx'
 import Earning from './pages/Earning.jsx'
 import WithdrawMoney from './pages/WithdrawMoney.jsx'
 import AudioRoom from './pages/AudioRoom.jsx'
+import SendOtp from './pages/SendOtp.jsx'
 
 const router = createBrowserRouter([
   {
@@ -41,6 +42,11 @@ const router = createBrowserRouter([
       {
         path: "/login",
         element: <AuthenticatedUserRoute><Login /></AuthenticatedUserRoute>
+
+      },
+      {
+        path: "/sendotp",
+        element: <ProtectRoute><SendOtp /></ProtectRoute>
 
       },
       {

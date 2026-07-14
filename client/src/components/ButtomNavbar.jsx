@@ -25,6 +25,15 @@ export default function ButtomNavbar() {
         naviget('/')
 
     }
+    const handelroom = () => {
+        window.scrollTo({
+            top: 0,
+            left: 0,
+            behavior: 'smooth', // Optional: creates a smooth animation instead of an instant jump
+        });
+        naviget('/sendotp')
+
+    }
 
     const handelRechargeClick = () => {
         window.scrollTo({
@@ -60,6 +69,7 @@ export default function ButtomNavbar() {
                 </button>
 
                 <button
+                 onClick={handelroom}
                     className={`flex flex-col items-center justify-center flex-1 transition-all ${location.pathname === '/room' ? 'text-[#6C3BFF]' : 'text-slate-400 hover:text-slate-200'}`}
                 >
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
