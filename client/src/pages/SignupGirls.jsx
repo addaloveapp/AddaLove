@@ -25,7 +25,7 @@ export default function SignupGirls() {
     fullName: '',
     email: '',
     phoneNumber: '',
-    bio:"",
+    bio: "",
     age: '',
     password: '',
     confirmPassword: '',
@@ -42,6 +42,7 @@ export default function SignupGirls() {
   const [recordingTime, setRecordingTime] = useState(0);
   const [recordingTimerInterval, setRecordingTimerInterval] = useState(null);
   const [cameraActive, setCameraActive] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0); // Tracks upload progress %
 
   // ===== STEP 5: Success Data =====
   const [applicationId, setApplicationId] = useState('');
@@ -76,7 +77,6 @@ export default function SignupGirls() {
       setErrors({ phoneNumber: 'phone number is required' });
       return;
     }
-
 
     setLoading(true);
     try {
@@ -193,7 +193,7 @@ export default function SignupGirls() {
     setErrors({});
     setSuccessMessage('');
 
-    const { fullName, age, password, confirmPassword,email, bio } = formData;
+    const { fullName, age, password, confirmPassword, email, bio } = formData;
 
     // Validation
     if (!fullName.trim()) {
@@ -234,7 +234,7 @@ export default function SignupGirls() {
       formDataToSend.append('age', age);
       formDataToSend.append('bio', bio);
       formDataToSend.append('password', password);
-      formDataToSend.append('phoneNumber',phoneNumber)
+      formDataToSend.append('phoneNumber', phoneNumber)
       formDataToSend.append('profilePhoto', formData.profilePhoto);
 
       const response = await fetch(
@@ -273,12 +273,9 @@ export default function SignupGirls() {
         audio: true,
       });
 
-      // 1. Set state to TRUE first so React renders the <video> tag
       setCameraActive(true);
       setErrors({});
 
-      // 2. Use a short timeout to let React finish mounting the <video> element
-      // before attempting to attach the stream to it.
       setTimeout(() => {
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
@@ -295,6 +292,7 @@ export default function SignupGirls() {
     setErrors({});
     setRecordedVideoBlob(null);
     setRecordingTime(0);
+    setUploadProgress(0); // Reset upload tracker when re-recording
 
     const stream = videoRef.current?.srcObject;
     if (!stream) {
@@ -320,7 +318,6 @@ export default function SignupGirls() {
     mediaRecorderRef.current = recorder;
     setIsRecording(true);
 
-    // Start 10-second timer
     let seconds = 0;
     const interval = setInterval(() => {
       seconds += 1;
@@ -361,8 +358,8 @@ export default function SignupGirls() {
     }
   };
 
-  // ==================== STEP 4: SUBMIT VIDEO ====================
-  const handleSubmitVideo = async (e) => {
+  // ==================== STEP 4: SUBMIT VIDEO WITH PROGRESS ====================
+  const handleSubmitVideo = (e) => {
     e.preventDefault();
     setErrors({});
     setSuccessMessage('');
@@ -378,37 +375,50 @@ export default function SignupGirls() {
     }
 
     setLoading(true);
-    try {
-      const formDataToSend = new FormData();
-      formDataToSend.append('girlVedio', recordedVideoBlob, 'verification-video.webm');
-      formDataToSend.append('userId', userId);
+    setUploadProgress(0);
 
-      const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/auth/v1/girl-vedio`,
-        {
-          method: 'PUT',
-          body: formDataToSend,
-        }
-      );
+    const formDataToSend = new FormData();
+    formDataToSend.append('girlVedio', recordedVideoBlob, 'verification-video.webm');
+    formDataToSend.append('userId', userId);
 
-      const data = await response.json();
+    // Using XMLHttpRequest to support file stream transmission tracking updates
+    const xhr = new XMLHttpRequest();
 
-      if (!data.success) {
-        setErrors({ video: data.message || 'Video upload failed' });
-        setLoading(false);
-        return;
+    xhr.upload.addEventListener('progress', (event) => {
+      if (event.lengthComputable) {
+        const percentage = Math.round((event.loaded / event.total) * 100);
+        setUploadProgress(percentage);
       }
+    });
 
-      // Extract application ID from response
-      setApplicationId(data.data.applicationId);
-      setSuccessMessage('Video uploaded successfully!');
-      handleStopCamera();
-      setStep(5); // Move to success screen
-    } catch (error) {
-      setErrors({ video: error.message || 'Network error during video upload' });
-    } finally {
+    xhr.addEventListener('load', () => {
+      try {
+        const data = JSON.parse(xhr.responseText);
+        
+        if (!data.success) {
+          setErrors({ video: data.message || 'Video upload failed' });
+          setLoading(false);
+          return;
+        }
+
+        setApplicationId(data.data.applicationId);
+        setSuccessMessage('Video uploaded successfully!');
+        handleStopCamera();
+        setStep(5); // Move to success screen
+      } catch (err) {
+        setErrors({ video: 'Invalid server response structure.' });
+      } finally {
+        setLoading(false);
+      }
+    });
+
+    xhr.addEventListener('error', () => {
+      setErrors({ video: 'Network error during video upload setup.' });
       setLoading(false);
-    }
+    });
+
+    xhr.open('PUT', `${import.meta.env.VITE_BACKEND_URL}/api/auth/v1/girl-vedio`);
+    xhr.send(formDataToSend);
   };
 
   // ==================== COPY APPLICATION ID ====================
@@ -427,7 +437,6 @@ export default function SignupGirls() {
   if (step === 1) {
     return (
       <div className="min-h-screen bg-linear-to-br from-[#0F172A] via-[#1a1f3a] to-[#0F172A] text-slate-100 flex items-center justify-center px-4 py-8">
-        {/* Animated background blur elements */}
         <div className="fixed inset-0 pointer-events-none overflow-hidden">
           <div className="absolute top-20 left-10 w-72 h-72 bg-linear-to-r from-[#FF4D8D] to-[#6C3BFF] rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse"></div>
           <div className="absolute bottom-20 right-10 w-72 h-72 bg-linear-to-r from-[#6C3BFF] to-[#FF4D8D] rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse" style={{ animationDelay: '2s' }}></div>
@@ -488,7 +497,6 @@ export default function SignupGirls() {
                 </div>
               </div>
 
-              {/* Sign Up Link */}
               <Link
                 to="/girlslogin"
                 className="block w-full py-3 border border-white/20 text-white font-bold rounded-xl text-center hover:bg-white/5 hover:border-[#FF4D8D] transition-all duration-300 transform hover:scale-105"
@@ -616,7 +624,6 @@ export default function SignupGirls() {
             )}
 
             <form onSubmit={handleRegisterSubmit} className="space-y-5">
-              {/* Full Name */}
               <div>
                 <label htmlFor="fullName" className="block text-sm font-semibold mb-2 text-slate-200">
                   Full Name
@@ -634,7 +641,6 @@ export default function SignupGirls() {
                 {errors.fullName && <p className="text-red-400 text-xs mt-1 font-semibold">{errors.fullName}</p>}
               </div>
 
-              {/* Email (Read-only) */}
               <div>
                 <label htmlFor="email" className="block text-sm font-semibold mb-2 text-slate-200">
                   <div className='flex gap-2'>Phone Number (Verified) <Verified className='h-5 text-blue-600' /></div>
@@ -677,7 +683,6 @@ export default function SignupGirls() {
                 {errors.bio && <p className="text-red-400 text-xs mt-1">{errors.bio}</p>}
               </div>
 
-              {/* Age */}
               <div>
                 <label htmlFor="age" className="block text-sm font-semibold mb-2 text-slate-200">
                   Age
@@ -696,7 +701,6 @@ export default function SignupGirls() {
                 {errors.age && <p className="text-red-400 text-xs mt-1 font-semibold">{errors.age}</p>}
               </div>
 
-              {/* Profile Photo */}
               <div>
                 <label htmlFor="profilePhoto" className="block text-sm font-semibold mb-2 text-slate-200">
                   Profile Photo
@@ -719,7 +723,6 @@ export default function SignupGirls() {
                 {errors.profilePhoto && <p className="text-red-400 text-xs mt-1 font-semibold">{errors.profilePhoto}</p>}
               </div>
 
-              {/* Password */}
               <div>
                 <label htmlFor="password" className="block text-sm font-semibold mb-2 text-slate-200">
                   Password
@@ -746,7 +749,6 @@ export default function SignupGirls() {
                 {errors.password && <p className="text-red-400 text-xs mt-1 font-semibold">{errors.password}</p>}
               </div>
 
-              {/* Confirm Password */}
               <div>
                 <label htmlFor="confirmPassword" className="block text-sm font-semibold mb-2 text-slate-200">
                   Confirm Password
@@ -794,7 +796,7 @@ export default function SignupGirls() {
     );
   }
 
-  // ==================== RENDER STEP 4: VIDEO RECORDING ====================
+  // ==================== RENDER STEP 4: VIDEO RECORDING & UPLOAD PROGRESS ====================
   if (step === 4) {
     return (
       <div className="min-h-screen bg-linear-to-br from-[#0F172A] via-[#1a1f3a] to-[#0F172A] text-slate-100 flex items-center justify-center px-4 py-8">
@@ -907,22 +909,38 @@ export default function SignupGirls() {
               )}
             </div>
 
-            {/* Submit Video */}
+            {/* Submit & Upload Progress UI Layer */}
             {recordedVideoBlob && (
-              <form onSubmit={handleSubmitVideo}>
+              <form onSubmit={handleSubmitVideo} className="space-y-4">
+                {loading && (
+                  <div className="w-full space-y-2 bg-white/5 p-4 rounded-xl border border-white/10">
+                    <div className="flex justify-between text-xs font-semibold text-slate-300">
+                      <span>Uploading verification file...</span>
+                      <span className="text-[#FF4D8D] font-bold">{uploadProgress}%</span>
+                    </div>
+                    <div className="w-full bg-white/10 h-2 rounded-full overflow-hidden">
+                      <div 
+                        className="bg-linear-to-r from-[#FF4D8D] to-[#6C3BFF] h-full transition-all duration-150 ease-out"
+                        style={{ width: `${uploadProgress}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                )}
+                
                 <button
                   type="submit"
                   disabled={loading || recordingTime < 10}
                   className="w-full py-3 px-4 bg-linear-to-r from-[#FF4D8D] to-[#6C3BFF] text-white font-bold rounded-xl hover:shadow-lg hover:shadow-[#FF4D8D]/50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300"
                 >
-                  {loading ? 'Uploading Video...' : '📤 Upload & Submit'}
+                  {loading ? `Uploading Video (${uploadProgress}%)` : '📤 Upload & Submit'}
                 </button>
               </form>
             )}
 
             <button
               onClick={() => setStep(3)}
-              className="w-full mt-6 py-3 px-4 text-slate-300 font-semibold hover:text-slate-100 transition-colors duration-300"
+              disabled={loading}
+              className="w-full mt-6 py-3 px-4 text-slate-300 font-semibold hover:text-slate-100 transition-colors duration-300 disabled:opacity-50"
             >
               ← Back
             </button>
@@ -943,7 +961,6 @@ export default function SignupGirls() {
 
         <div className="relative w-full max-w-md">
           <div className="backdrop-blur-xl bg-white/10 border border-white/20 rounded-3xl p-8 shadow-2xl hover:shadow-2xl hover:border-white/30 transition-all duration-300 max-h-[90vh] overflow-y-auto">
-            {/* Success Icon */}
             <div className="text-6xl text-center mb-6 animate-bounce">✅</div>
 
             <h1 className="text-3xl md:text-4xl font-bold bg-linear-to-r from-[#FF4D8D] to-[#6C3BFF] bg-clip-text text-transparent mb-3 text-center">
@@ -955,7 +972,6 @@ export default function SignupGirls() {
                 Your application has been successfully received.
               </p>
 
-              {/* Application ID Card */}
               <div className="bg-linear-to-r from-[#FF4D8D]/20 to-[#6C3BFF]/20 border border-[#FF4D8D]/30 rounded-2xl p-6 text-center">
                 <p className="text-xs font-bold text-slate-300 mb-3 tracking-widest uppercase">
                   Your Application ID
@@ -974,7 +990,6 @@ export default function SignupGirls() {
                 </div>
               </div>
 
-              {/* Instructions */}
               <div className="bg-white/5 border border-white/10 rounded-2xl p-5 space-y-3">
                 <h3 className="font-bold text-slate-200 flex items-center gap-2">
                   ⏳ What Happens Next?
@@ -1003,7 +1018,6 @@ export default function SignupGirls() {
                 📧 Please check your email (including spam folder) for our confirmation.
               </div>
 
-              {/* Action Buttons */}
               <div className="space-y-3 pt-4">
                 <button
                   onClick={handleCheckApplication}

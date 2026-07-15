@@ -6,7 +6,8 @@ import shotlogo from "../assets/logo2.png"
 import useUserStore from '../store/userStore.js';
 
 export default function Login() {
-    const [email, setEmail] = useState('');
+    const [phoneNumber, setPhoneNumber] = useState('');
+
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
@@ -34,10 +35,8 @@ export default function Login() {
 
         // Validation
         const newErrors = {};
-        if (!email.trim()) {
-            newErrors.email = 'Please enter your email';
-        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-            newErrors.email = 'Please enter a valid email';
+        if (!phoneNumber.trim()) {
+            newErrors.phoneNumber = 'Please enter your phone number';
         }
         if (!password) {
             newErrors.password = 'Please enter your password';
@@ -58,7 +57,7 @@ export default function Login() {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'include',
-                body: JSON.stringify({ email, password }),
+                body: JSON.stringify({ phoneNumber, password }),
             });
 
             const data = await response.json();
@@ -142,19 +141,20 @@ export default function Login() {
                             {/* Email Input */}
                             <div>
                                 <label className="block text-sm font-semibold mb-2 text-slate-200">
-                                    Email Address
+                                    Phone number
                                 </label>
                                 <input
-                                    type="email"
-                                    value={email}
+                                    type="number"
+                                    name='phoneNumber'
+                                    value={phoneNumber}
                                     onChange={(e) => {
-                                        setEmail(e.target.value);
-                                        if (errors.email) setErrors(prev => ({ ...prev, email: '' }));
+                                        setPhoneNumber(e.target.value);
+                                        if (errors.phoneNumber) setErrors(prev => ({ ...prev, phoneNumber: '' }));
                                     }}
-                                    placeholder="your@email.com"
+                                    placeholder="eg. 9663652147"
                                     className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-xl text-slate-100 placeholder-slate-400 focus:outline-none focus:border-[#FF4D8D] focus:bg-white/10 transition-all duration-300 hover:bg-white/5"
                                 />
-                                {errors.email && <p className="text-red-400 text-xs mt-1">{errors.email}</p>}
+                                {errors.phoneNumber && <p className="text-red-400 text-xs mt-1">{errors.phoneNumber}</p>}
                             </div>
 
                             {/* Password Input */}
