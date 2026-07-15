@@ -149,7 +149,7 @@ export default function Profile() {
               </div>
 
               <p className="text-xs text-slate-400 italic max-w-50 leading-relaxed py-0.5">
-                "Be kind, be real, be you! 💜"
+               {useralldata?.userBio || ''}
               </p>
 
               {/* Badges Info Chips Grid Row */}

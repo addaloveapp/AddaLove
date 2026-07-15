@@ -36,22 +36,41 @@ const sendOtp = asyncHandler(async (req, res) => {
 
 
 const messageOtpSend = asyncHandler(async (req, res) => {
+    const { phoneNumber } = req.body;
+    if (!phoneNumber) {
+        throw new ApiError(400, 'Number can not be empty')
+    }
+    const otpCount = await OTP.countDocuments({ phoneNumber });
+    const IsFristUser = await User.findOne({ phoneNumber: phoneNumber }).lean();
+    const IsFristGirl = await Girls.findOne({ phoneNumber: phoneNumber }).lean();
+    if (otpCount >= 2) {
+        throw new ApiError(429, 'OTP limit reached. Please try again after some time.');
+    }
+    if (IsFristUser || IsFristGirl) {
+        throw new ApiError(400, 'Alreday Have a account with this phone number.');
+    }
     const otp = Math.floor((Math.random() * 1000000) + 1);
-    const response = await axios.post(
-        `${process.env.APITXT_BASE_URL}/send-sms`, // Replace with actual endpoint
-        {
-            number: "919635013952",
-            message: `Your verification code is ${otp}. It is valid for 5 minutes.`,
+    const response = await fetch("https://apitxt.com/api/sendOTP", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
         },
-        {
-            headers: {
-                Authorization: `Bearer ${process.env.APITXT_API_KEY}`,
-                "Content-Type": "application/json",
-            },
-        }
-    );
-    console.log(response)
-    return res.status(200).json(new ApiResponse(200,response,'done'))
+        body: new URLSearchParams({
+            authkey: process.env.APITXT_API_KEY,
+            mobile: `91${Number(phoneNumber)}`,
+            otp: otp.toString(),
+        }),
+    });
+    const referenceCode = generateReferenceCode();
+    const newotp = new OTP({
+        OTPNO: otp,
+        referenceCode: referenceCode,
+        phoneNumber: phoneNumber
+    })
+    await newotp.save();
+    const data = await response.json();
+    console.log(data);
+    return res.status(200).json(new ApiResponse(200, { referenceCode }, 'OTP Send successfully'))
 
 })
 
@@ -75,8 +94,8 @@ const otpVerify = asyncHandler(async (req, res) => {
 })
 
 const register = asyncHandler(async (req, res) => {
-    const { fullName, email, age, password } = req.body;
-    if (!fullName || !email || !age || !password) {
+    const { fullName, email, age, password, phoneNumber, bio } = req.body;
+    if (!fullName || !phoneNumber || !age || !password) {
         throw new ApiError(400, 'All details are not found');
     }
     let uploadResult;
@@ -95,7 +114,9 @@ const register = asyncHandler(async (req, res) => {
     const haspass = await bcrypt.hash(password, slat);
     const newuser = new User({
         fullName,
-        email,
+        phoneNumber,
+        email: email ? email : null,
+        userBio: bio ? bio : null,
         age,
         imageUrl: uploadResult?.url || 'https://ik.imagekit.io/ufopzzlbh/p.jpeg',
         password: haspass
@@ -107,12 +128,12 @@ const register = asyncHandler(async (req, res) => {
 })
 
 const login = asyncHandler(async (req, res) => {
-    const { email, password } = req.body;
-    if (!email || !password) {
+    const { phoneNumber, password } = req.body;
+    if (!phoneNumber || !password) {
         throw new ApiError(400, 'All details are not found');
     }
 
-    const userdata = await User.findOne({ email: email }).lean();;
+    const userdata = await User.findOne({ phoneNumber }).lean();;
     if (!userdata) {
         throw new ApiError(400, "Invalid credential");
     }
@@ -122,7 +143,7 @@ const login = asyncHandler(async (req, res) => {
     }
     const authToken = jwt.sign({
         userId: userdata._id,
-        email: userdata.email,
+        phoneNumber: userdata.phoneNumber,
         userType: userdata.userType
     }, process.env.JWT_SERECT)
     return res
@@ -135,7 +156,7 @@ const login = asyncHandler(async (req, res) => {
 })
 
 const girlRegister = asyncHandler(async (req, res) => {
-    const { fullName, email, age, password } = req.body;
+    const { fullName, email, age, password, bio, phoneNumber } = req.body;
     if (!fullName || !email || !age || !password) {
         throw new ApiError(400, 'All details are not found');
     }
@@ -155,7 +176,9 @@ const girlRegister = asyncHandler(async (req, res) => {
     const haspass = await bcrypt.hash(password, slat);
     const newuser = new Girls({
         fullName,
-        email,
+        phoneNumber,
+        email: email ? email : null,
+        userBio: bio ? bio : null,
         age,
         imageUrl: uploadResult?.url || 'https://ik.imagekit.io/ufopzzlbh/p2.jpeg',
         password: haspass
@@ -210,12 +233,12 @@ const checkApplicationStatus = asyncHandler(async (req, res) => {
 
 const girlsLogin = asyncHandler(async (req, res) => {
 
-    const { email, password } = req.body;
-    if (!email || !password) {
+    const { phoneNumber, password } = req.body;
+    if (!phoneNumber || !password) {
         throw new ApiError(400, 'All details are not found');
     }
 
-    const userdata = await Girls.findOne({ email: email }).lean();;
+    const userdata = await Girls.findOne({phoneNumber}).lean();;
     if (!userdata) {
         throw new ApiError(400, "Invalid credential");
     }
@@ -226,7 +249,7 @@ const girlsLogin = asyncHandler(async (req, res) => {
         }
         const authToken = jwt.sign({
             userId: userdata._id,
-            email: userdata.email,
+            phoneNumber: userdata.phoneNumber,
             userType: userdata.userType
         }, process.env.JWT_SERECT)
         return res
