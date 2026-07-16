@@ -76,7 +76,7 @@ export default function Signup() {
                 setReferenceCode(data.data.referenceCode)
                 setStep(2);
                 setOtpSent(true);
-                setTimer(60);
+                setTimer(120);
                 setErrors({});
             } else {
                 setErrors({ phoneNumber: data.message || 'Failed to send OTP' });
