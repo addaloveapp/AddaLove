@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import useUserStore from '../store/userStore.js';
 import useRoomStore from '../store/roomStore.js';
 import { MessageCircleMore } from 'lucide-react';
-
+import createRoomimg from "../assets/createRoom.png"
 const languages = ['Bengali', 'Hindi', 'Gujarati', 'English', 'Kannada', 'Marathi', 'Tamil', 'Telugu', 'Urdu', 'Punjabi'];
 
 const getRoomPath = (type, roomId) => {
@@ -222,13 +222,14 @@ const Home = () => {
                 </div>
                 
                 {/* Embedded Mascot for Girl UI */}
-                <div className="relative z-10 flex h-[85px] w-[85px] shrink-0 items-center justify-center">
+                {/* <div className="relative z-10 flex h-[85px] w-[85px] shrink-0 items-center justify-center"> */}
                   <img 
-                    src="https://ik.imagekit.io/ufopzzlbh/addlovemodel.jpeg" 
+                    
+                    src={createRoomimg}
                     alt="Mascot" 
-                    className="h-full w-full rounded-full border-2 border-[#FF4D8D]/30 object-cover shadow-[0_0_20px_rgba(255,77,141,0.4)]" 
+                    className=" h-40 border-2 border-[#FF4D8D]/30 object-cover shadow-[0_0_20px_rgba(255,77,141,0.4)]" 
                   />
-                </div>
+                {/* </div> */}
               </div>
 
               <div className="mt-4 grid grid-cols-3 gap-3">

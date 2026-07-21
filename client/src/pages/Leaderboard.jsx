@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Trophy, Clock, Star, UserPlus, Flame } from 'lucide-react';
 import useLeaderboardStore from '../store/leaderbordStore.js';
-
+import ladday from "../assets/ladday.png"
 const Leaderboard = () => {
   const [activeTab, setActiveTab] = useState('girl');
   const { leaderboard, isLoading, fetchLeaderboard } = useLeaderboardStore();
@@ -25,7 +25,7 @@ const Leaderboard = () => {
     <div className="min-h-screen bg-[#05000a] flex items-start justify-center pt-[73px] px-0 pb-0 md:px-8 md:pb-8 md:pt-[105px] font-sans">
       
       {/* Main Card Container */}
-      <div className="w-full max-w-md bg-[#0b0515] text-white p-4 md:p-6 md:rounded-[2.5rem] md:border md:border-[#2a1b42] md:shadow-2xl md:shadow-fuchsia-900/20 min-h-screen md:min-h-[850px]">
+      <div className="w-full mb-20.75 max-w-md bg-[#0b0515] text-white p-4 md:p-6 md:rounded-[2.5rem] md:border md:border-[#2a1b42] md:shadow-2xl md:shadow-fuchsia-900/20 min-h-screen md:min-h-[850px]">
         
         {/* Header Section */}
         <div className="flex items-start justify-between mb-6">
@@ -42,8 +42,9 @@ const Leaderboard = () => {
           
           {/* Trophy Graphic */}
           <div className="relative">
-            <div className="absolute inset-0 bg-fuchsia-600 blur-[20px] opacity-40 rounded-full"></div>
-            <Trophy className="w-16 h-16 text-pink-500 drop-shadow-[0_0_15px_rgba(236,72,153,0.8)] relative z-10" strokeWidth={1.2} />
+            {/* <div className="absolute inset-0 bg-fuchsia-600 blur-[20px] opacity-40 rounded-full"></div>
+            <Trophy className="w-16 h-16 text-pink-500 drop-shadow-[0_0_15px_rgba(236,72,153,0.8)] relative z-10" strokeWidth={1.2} /> */}
+            <img src={ladday} className='h-30' alt="" />
           </div>
 
           <div className="bg-[#150a21] rounded-2xl p-2 px-3 flex flex-col items-center border border-[#2a1b42]">

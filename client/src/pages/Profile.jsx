@@ -6,6 +6,8 @@ import { handleError } from '../components/ErrorMessage';
 import respact from "../assets/respectpointlogo.png"
 export default function Profile() {
   const { user: useralldata, userRole, userRate , userRank} = useUserStore();
+  const [top,setTop]=useState(false)
+  const [count,setCount]=useState(0)
   const naviget = useNavigate();
 
   // State for Modal and Form
@@ -22,10 +24,15 @@ export default function Profile() {
   const isGirl = useMemo(() => userRole === 'girl', [userRole]);
 
   // useEffect(() => {
-  //   console.log("User Data:", useralldata);
-  //   console.log("User Rate:", userRate);
-  //   console.log(isBoy, '....... girl--->>', isGirl)
-  // }, [useralldata, userRate]);
+  //   const playvedio =()=>{
+  //     setTop(true);
+  //     console.log("Hello")
+  //     setCount(1);
+  //   }
+  //    if(count===0){
+  //      playvedio();
+  //    }
+  // },[]);
 
   // Open modal and pre-fill data
   const handleOpenModal = () => {
