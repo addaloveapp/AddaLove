@@ -1,9 +1,21 @@
 import { useEffect, useState } from 'react';
-import { Eye, EyeOff, Loader, Mail, Phone, Verified } from 'lucide-react';
+import { 
+  Eye, 
+  EyeOff, 
+  Loader, 
+  Mail, 
+  Smartphone, 
+  Verified, 
+  Lock, 
+  Globe, 
+  ChevronDown, 
+  ArrowRight,
+  ShieldCheck,
+  Sparkles
+} from 'lucide-react';
 import { Link, useNavigate } from 'react-router';
 import { handleSuccess } from '../components/ErrorMessage';
-import shotlogo from '../assets/logo2.png';
-
+import cooladday from "../assets/cooladday.png"
 export default function ForgetPassword() {
   const [step, setStep] = useState(1);
   const [phoneNumber, setPhoneNumber] = useState('');
@@ -21,7 +33,7 @@ export default function ForgetPassword() {
   const naviget = useNavigate();
 
   const backendUrl = import.meta.env.VITE_BACKEND_URL2 || import.meta.env.VITE_BACKEND_URL;
-  const supportMessage = 'Your account is not have gamil contatc our support team ph no : 7362999841';
+  const supportMessage = 'Your account does not have a gmail contact our support team ph no : 7362999841';
 
   useEffect(() => {
     let interval;
@@ -155,33 +167,66 @@ export default function ForgetPassword() {
   };
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-[#0F172A] via-[#1a1f3a] to-[#0F172A] text-slate-100 flex items-center justify-center px-4 py-8">
-      <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-20 left-10 w-72 h-72 bg-linear-to-r from-[#FF4D8D] to-[#6C3BFF] rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse"></div>
-        <div className="absolute bottom-20 right-10 w-72 h-72 bg-linear-to-r from-[#6C3BFF] to-[#FF4D8D] rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse" style={{ animationDelay: '2s' }}></div>
+    <div className="min-h-screen bg-[#0A0014] text-slate-100 flex flex-col items-center py-6 px-4 font-sans relative overflow-x-hidden">
+      
+      {/* Ambient Background Glow (Static) */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden flex justify-center items-center">
+        <div className="absolute top-[10%] w-[500px] h-[500px] bg-[#FF2994] rounded-full mix-blend-screen filter blur-[120px] opacity-10"></div>
+        <div className="absolute bottom-[-10%] w-[400px] h-[400px] bg-[#8B2BFF] rounded-full mix-blend-screen filter blur-[150px] opacity-15"></div>
       </div>
 
-      <div className="relative w-full max-w-md">
-        <div className="backdrop-blur-xl bg-white/10 border border-white/20 rounded-3xl p-8 shadow-2xl">
-          <div className="text-center mb-8">
-            <div className="inline-block mb-4 p-3 bg-linear-to-r from-[rgb(28,1,11)] to-[#170352] rounded-full">
-              <img className="h-10" src={shotlogo} alt="" />
-            </div>
-            <h1 className="text-3xl md:text-4xl font-bold bg-linear-to-r from-[#FF4D8D] to-[#6C3BFF] bg-clip-text text-transparent mb-2">AddaLove</h1>
-            <p className="text-slate-300 text-sm">
-              {step === 1 && 'Find your account with phone number'}
-              {step === 2 && 'Select Gmail to receive OTP'}
-              {step === 3 && 'Enter the OTP sent to your Gmail'}
-              {step === 4 && 'Create your new password'}
+      <div className="relative w-full max-w-md flex flex-col items-center z-10">
+        
+        {/* Header Section */}
+        <div className="w-full flex justify-between items-center mb-4 px-2">
+          <div className="flex flex-col">
+            <h1 className="text-2xl font-bold tracking-tight">
+              Adda<span className="text-[#FF2994]">Love</span>
+            </h1>
+            <p className="text-[10px] text-slate-300 mt-0.5">Account <span className="text-[#FF2994]">Recovery</span></p>
+          </div>
+          <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-white/10 bg-white/5 text-xs text-white hover:bg-white/10 transition">
+            <Globe className="w-3.5 h-3.5" />
+            English
+            <ChevronDown className="w-3.5 h-3.5" />
+          </button>
+        </div>
+
+        {/* Hero Character Image (Hide on final step to save space) */}
+        {step < 4 && (
+          <div className="relative w-full flex justify-center mb-6 animate-fadeIn">
+            <img 
+              src={cooladday} 
+              alt="AddaLove Mascot" 
+              className="w-48 h-auto drop-shadow-[0_0_25px_rgba(255,41,148,0.4)] transition-all duration-500"
+            />
+          </div>
+        )}
+
+        {/* Main Card */}
+        <div className="w-full bg-[#150A2A]/90 backdrop-blur-xl border border-white/5 rounded-4xl p-6 shadow-2xl">
+          
+          <div className="text-center mb-6">
+            <h2 className="text-2xl font-bold mb-1">
+              {step === 1 && "Find Account"}
+              {step === 2 && "Recovery Method"}
+              {step === 3 && "Verify OTP"}
+              {step === 4 && "Reset Password"}
+            </h2>
+            <p className="text-slate-400 text-sm">
+              {step === 1 && "Enter your phone number to continue"}
+              {step === 2 && "Select your email to receive a code"}
+              {step === 3 && "Enter the 6-digit code sent to your email"}
+              {step === 4 && "Create a new secure password"}
             </p>
           </div>
 
+          {/* STEP 1: Phone Search */}
           {step === 1 && (
-            <div className="space-y-6 animate-fadeIn">
+            <div className="space-y-4 animate-fadeIn">
               <div>
-                <label className="block text-sm font-semibold mb-2 text-slate-200">Phone number</label>
-                <div className="relative">
-                  <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <div className="flex items-center bg-[#1C1035] border border-white/5 rounded-2xl px-4 py-3.5 focus-within:border-[#FF2994]/50 transition-colors">
+                  <Smartphone className="w-5 h-5 text-[#FF2994] shrink-0" />
                   <input
                     type="number"
                     value={phoneNumber}
@@ -189,104 +234,194 @@ export default function ForgetPassword() {
                       setPhoneNumber(e.target.value);
                       if (errors.phoneNumber) setErrors({});
                     }}
-                    placeholder="eg. 8665237845"
-                    className="w-full pl-11 pr-4 py-3 bg-white/5 border border-white/20 rounded-xl text-slate-100 placeholder-slate-400 focus:outline-none focus:border-[#FF4D8D] focus:bg-white/10 transition-all duration-300 hover:bg-white/5"
+                    placeholder="Phone Number"
+                    className="w-full bg-transparent text-white placeholder-slate-500 ml-3 outline-none text-sm disabled:opacity-50"
+                    disabled={loading}
                   />
+                  <div className="flex items-center text-slate-400 text-sm border-l border-white/10 pl-3 ml-2 shrink-0">
+                    +91 <ChevronDown className="w-4 h-4 ml-1" />
+                  </div>
                 </div>
-                {errors.phoneNumber && <p className="text-red-400 text-xs mt-1">{errors.phoneNumber}</p>}
+                {errors.phoneNumber && <p className="text-red-400 text-xs mt-1.5 px-2">{errors.phoneNumber}</p>}
               </div>
-              <button onClick={handleFindUser} disabled={loading} className="w-full py-3 bg-linear-to-r from-[#FF4D8D] to-[#6C3BFF] text-white font-bold rounded-xl hover:shadow-lg hover:shadow-[#FF4D8D]/50 transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
-                {loading ? <><Loader className="w-4 h-4 animate-spin" />Checking...</> : 'Find Account'}
+
+              <button 
+                onClick={handleFindUser} 
+                disabled={loading || !phoneNumber} 
+                className="w-full py-4 bg-linear-to-r from-[#FF2994] to-[#8B2BFF] text-white font-bold rounded-full hover:shadow-[0_0_20px_rgba(255,41,148,0.4)] transition-all duration-300 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm mt-2"
+              >
+                {loading ? <><Loader className="w-4 h-4 animate-spin" /> Checking...</> : <><SearchIcon className="w-4 h-4" /> Find Account</>}
               </button>
             </div>
           )}
 
+          {/* STEP 2: Email Selection */}
           {step === 2 && (
-            <div className="space-y-6 animate-fadeIn">
+            <div className="space-y-4 animate-fadeIn">
               {email ? (
                 <>
-                  <button type="button" onClick={() => setSelectedEmail(email)} className={`w-full p-4 border rounded-xl text-left transition-all duration-300 ${selectedEmail === email ? 'border-[#FF4D8D] bg-white/10' : 'border-white/20 bg-white/5 hover:bg-white/10'}`}>
+                  <button 
+                    type="button" 
+                    onClick={() => setSelectedEmail(email)} 
+                    className={`w-full p-4 border rounded-2xl text-left transition-all duration-300 ${selectedEmail === email ? 'border-[#FF2994] bg-[#2A0845] shadow-[0_0_15px_rgba(255,41,148,0.2)]' : 'border-white/10 bg-[#1C1035] hover:bg-[#251545]'}`}
+                  >
                     <span className="flex items-center gap-3 text-sm font-semibold text-slate-100">
-                      <Mail className="w-5 h-5 text-[#FF4D8D]" />
-                      {email}
-                      {selectedEmail === email && <Verified className="w-5 h-5 text-blue-500 ml-auto" />}
+                      <div className={`p-2 rounded-full ${selectedEmail === email ? 'bg-[#FF2994]/20' : 'bg-white/5'}`}>
+                        <Mail className={`w-5 h-5 ${selectedEmail === email ? 'text-[#FF2994]' : 'text-slate-400'}`} />
+                      </div>
+                      <span className="truncate">{email}</span>
+                      {selectedEmail === email && <Verified className="w-5 h-5 text-green-400 ml-auto shrink-0" />}
                     </span>
                   </button>
-                  {errors.email && <p className="text-red-400 text-xs">{errors.email}</p>}
-                  <button onClick={handleSendOtp} disabled={loading || !selectedEmail} className="w-full py-3 bg-linear-to-r from-[#FF4D8D] to-[#6C3BFF] text-white font-bold rounded-xl hover:shadow-lg hover:shadow-[#FF4D8D]/50 transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
-                    {loading ? <><Loader className="w-4 h-4 animate-spin" />Sending...</> : 'Send OTP'}
+                  {errors.email && <p className="text-red-400 text-xs px-2">{errors.email}</p>}
+                  <button 
+                    onClick={handleSendOtp} 
+                    disabled={loading || !selectedEmail} 
+                    className="w-full py-4 bg-linear-to-r from-[#FF2994] to-[#8B2BFF] text-white font-bold rounded-full hover:shadow-[0_0_20px_rgba(255,41,148,0.4)] transition-all duration-300 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm mt-4"
+                  >
+                    {loading ? <><Loader className="w-4 h-4 animate-spin" /> Sending...</> : <><Sparkles className="w-4 h-4" /> Send OTP Code</>}
                   </button>
                 </>
               ) : (
-                <div className="p-4 bg-red-500/20 border border-red-500/50 rounded-xl">
-                  <p className="text-red-300 text-sm">{errors.email || supportMessage}</p>
+                <div className="p-4 bg-red-500/10 border border-red-500/30 rounded-xl text-center">
+                  <p className="text-red-300 text-sm leading-relaxed">{errors.email || supportMessage}</p>
                 </div>
               )}
-              <button type="button" onClick={() => { setStep(1); setErrors({}); }} className="w-full py-2 text-slate-300 hover:text-[#FF4D8D] transition-colors text-sm font-semibold">Back</button>
-            </div>
-          )}
-
-          {step === 3 && (
-            <div className="space-y-6 animate-fadeIn">
-              <div>
-                <label className="block text-sm font-semibold mb-2 text-slate-200">Enter OTP</label>
-                <input
-                  type="text"
-                  value={otp}
-                  onChange={(e) => {
-                    setOtp(e.target.value.replace(/\D/g, '').slice(0, 6));
-                    if (errors.otp) setErrors({});
-                  }}
-                  placeholder="000000"
-                  maxLength="6"
-                  className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-xl text-slate-100 placeholder-slate-400 focus:outline-none focus:border-[#FF4D8D] focus:bg-white/10 transition-all duration-300 text-center text-2xl tracking-widest font-bold hover:bg-white/5"
-                />
-                {errors.otp && <p className="text-red-400 text-xs mt-1">{errors.otp}</p>}
-              </div>
-              <button onClick={handleVerifyOtp} disabled={loading || otp.length !== 6} className="w-full py-3 bg-linear-to-r from-[#FF4D8D] to-[#6C3BFF] text-white font-bold rounded-xl hover:shadow-lg hover:shadow-[#FF4D8D]/50 transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
-                {loading ? <><Loader className="w-4 h-4 animate-spin" />Verifying...</> : 'Verify OTP'}
+              
+              <button 
+                type="button" 
+                onClick={() => { setStep(1); setErrors({}); }} 
+                className="w-full py-2 text-slate-400 hover:text-white transition-colors text-xs font-medium"
+              >
+                Go Back
               </button>
-              <div className="text-center flex justify-between items-center">
-                <button type="button" onClick={() => { setStep(2); setOtp(''); setErrors({}); }} className="text-xs text-slate-400 hover:text-[#FF4D8D] transition-colors">Back</button>
-                {timer > 0 ? <span className="text-xs text-slate-400">Resend in {timer}s</span> : <button type="button" onClick={handleSendOtp} className="text-xs text-[#FF4D8D] hover:text-[#6C3BFF] transition-colors">Resend OTP</button>}
+            </div>
+          )}
+
+          {/* STEP 3: OTP Verification */}
+          {step === 3 && (
+            <div className="space-y-5 animate-fadeIn">
+              <div>
+                <div className="flex items-center bg-[#1C1035] border border-white/5 rounded-2xl px-4 py-4 focus-within:border-[#FF2994]/50 transition-colors">
+                  <input
+                    type="text"
+                    value={otp}
+                    onChange={(e) => {
+                      setOtp(e.target.value.replace(/\D/g, '').slice(0, 6));
+                      if (errors.otp) setErrors({});
+                    }}
+                    placeholder="••••••"
+                    maxLength="6"
+                    className="w-full bg-transparent text-white placeholder-slate-600 text-center text-3xl tracking-[0.5em] font-bold outline-none disabled:opacity-50"
+                    disabled={loading}
+                  />
+                </div>
+                {errors.otp && <p className="text-red-400 text-xs mt-1.5 px-2 text-center">{errors.otp}</p>}
+              </div>
+              
+              <button 
+                onClick={handleVerifyOtp} 
+                disabled={loading || otp.length !== 6} 
+                className="w-full py-4 bg-linear-to-r from-[#FF2994] to-[#8B2BFF] text-white font-bold rounded-full hover:shadow-[0_0_20px_rgba(255,41,148,0.4)] transition-all duration-300 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm"
+              >
+                {loading ? <><Loader className="w-4 h-4 animate-spin" /> Verifying...</> : <><Verified className="w-4 h-4" /> Verify OTP</>}
+              </button>
+              
+              <div className="text-center flex justify-between items-center px-2">
+                <button type="button" onClick={() => { setStep(2); setOtp(''); setErrors({}); }} className="text-xs text-slate-400 hover:text-white transition-colors font-medium">Change Email</button>
+                {timer > 0 ? (
+                  <span className="text-xs text-slate-400 bg-white/5 px-3 py-1 rounded-full">Resend in {timer}s</span>
+                ) : (
+                  <button type="button" onClick={handleSendOtp} className="text-xs text-[#FF2994] hover:text-[#FF66AD] transition-colors font-medium">Resend OTP</button>
+                )}
               </div>
             </div>
           )}
 
+          {/* STEP 4: New Password */}
           {step === 4 && (
-            <form onSubmit={handleChangePassword} className="space-y-5 animate-fadeIn">
+            <form onSubmit={handleChangePassword} className="space-y-4 animate-fadeIn">
               <div>
-                <label className="block text-sm font-semibold mb-2 text-slate-200">New Password</label>
-                <div className="relative">
-                  <input type={showPassword ? 'text' : 'password'} value={newPassword} onChange={(e) => { setNewPassword(e.target.value); if (errors.newPassword) setErrors({}); }} placeholder="Password" className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-xl text-slate-100 placeholder-slate-400 focus:outline-none focus:border-[#FF4D8D] focus:bg-white/10 transition-all duration-300 pr-10 hover:bg-white/5" />
-                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-[#FF4D8D] transition-colors">{showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}</button>
+                <div className="flex items-center bg-[#1C1035] border border-white/5 rounded-2xl px-4 py-3.5 focus-within:border-[#FF2994]/50 transition-colors">
+                  <ShieldCheck className="w-5 h-5 text-green-400 shrink-0" />
+                  <input 
+                    type={showPassword ? 'text' : 'password'} 
+                    value={newPassword} 
+                    onChange={(e) => { setNewPassword(e.target.value); if (errors.newPassword) setErrors({}); }} 
+                    placeholder="New Password" 
+                    className="w-full bg-transparent text-white placeholder-slate-500 ml-3 outline-none text-sm disabled:opacity-50" 
+                    disabled={loading}
+                  />
+                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="text-slate-500 hover:text-white transition-colors shrink-0 ml-2">
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
                 </div>
-                {errors.newPassword && <p className="text-red-400 text-xs mt-1">{errors.newPassword}</p>}
+                {errors.newPassword && <p className="text-red-400 text-xs mt-1.5 px-2">{errors.newPassword}</p>}
               </div>
+
               <div>
-                <label className="block text-sm font-semibold mb-2 text-slate-200">Confirm Password</label>
-                <div className="relative">
-                  <input type={showConfirmPassword ? 'text' : 'password'} value={confirmPassword} onChange={(e) => { setConfirmPassword(e.target.value); if (errors.confirmPassword) setErrors({}); }} placeholder="Confirm password" className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-xl text-slate-100 placeholder-slate-400 focus:outline-none focus:border-[#FF4D8D] focus:bg-white/10 transition-all duration-300 pr-10 hover:bg-white/5" />
-                  <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-[#FF4D8D] transition-colors">{showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}</button>
+                <div className="flex items-center bg-[#1C1035] border border-white/5 rounded-2xl px-4 py-3.5 focus-within:border-[#FF2994]/50 transition-colors">
+                  <Lock className="w-5 h-5 text-slate-400 shrink-0" />
+                  <input 
+                    type={showConfirmPassword ? 'text' : 'password'} 
+                    value={confirmPassword} 
+                    onChange={(e) => { setConfirmPassword(e.target.value); if (errors.confirmPassword) setErrors({}); }} 
+                    placeholder="Confirm Password" 
+                    className="w-full bg-transparent text-white placeholder-slate-500 ml-3 outline-none text-sm disabled:opacity-50" 
+                    disabled={loading}
+                  />
+                  <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="text-slate-500 hover:text-white transition-colors shrink-0 ml-2">
+                    {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
                 </div>
-                {errors.confirmPassword && <p className="text-red-400 text-xs mt-1">{errors.confirmPassword}</p>}
+                {errors.confirmPassword && <p className="text-red-400 text-xs mt-1.5 px-2">{errors.confirmPassword}</p>}
               </div>
-              {errors.submit && <div className="p-3 bg-red-500/20 border border-red-500/50 rounded-xl"><p className="text-red-300 text-xs">{errors.submit}</p></div>}
-              <button type="submit" disabled={loading} className="w-full py-3 bg-linear-to-r from-[#FF4D8D] to-[#6C3BFF] text-white font-bold rounded-xl hover:shadow-lg hover:shadow-[#FF4D8D]/50 transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
-                {loading ? <><Loader className="w-4 h-4 animate-spin" />Saving...</> : 'Change Password'}
+
+              {errors.submit && (
+                <div className="p-3 bg-red-500/10 border border-red-500/30 rounded-xl text-center">
+                  <p className="text-red-400 text-xs">{errors.submit}</p>
+                </div>
+              )}
+              
+              <button 
+                type="submit" 
+                disabled={loading} 
+                className="w-full mt-2 py-4 bg-linear-to-r from-[#FF2994] to-[#8B2BFF] text-white font-bold rounded-full hover:shadow-[0_0_20px_rgba(255,41,148,0.4)] transition-all duration-300 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm"
+              >
+                {loading ? <><Loader className="w-4 h-4 animate-spin" /> Saving...</> : 'Save New Password'}
               </button>
             </form>
           )}
 
-          <div className="relative my-6">
-            <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-white/20"></div></div>
-            <div className="relative flex justify-center text-xs"><span className="px-2 bg-linear-to-br from-[#0F172A] via-[#1a1f3a] to-[#0F172A]">Remember your password?</span></div>
-          </div>
-          <Link to="/login" className="block w-full py-3 border border-white/20 text-white font-bold rounded-xl text-center hover:bg-white/5 hover:border-[#FF4D8D] transition-all duration-300 transform hover:scale-105">Login</Link>
+          {/* Login Link Card (Always visible at the bottom) */}
+          <Link 
+            to="/login"
+            className="mt-6 flex items-center justify-between w-full bg-[#1A0B2E] border border-white/5 hover:border-[#8B2BFF]/30 rounded-2xl p-4 transition-colors group cursor-pointer"
+          >
+            <span className="text-sm text-slate-300">
+              Remembered your password? <span className="text-[#8B2BFF] font-medium group-hover:text-[#A75CFF] transition-colors">Login</span>
+            </span>
+            <div className="w-7 h-7 rounded-full bg-[#2A1545] flex items-center justify-center group-hover:bg-[#8B2BFF]/20 transition-colors">
+              <ArrowRight className="w-4 h-4 text-[#8B2BFF]" />
+            </div>
+          </Link>
+
         </div>
 
-        <div className="flex gap-2 justify-center mt-8">
-          {[1, 2, 3, 4].map((i) => <div key={i} className={`h-1 rounded-full transition-all duration-300 ${i <= step ? 'bg-linear-to-r from-[#FF4D8D] to-[#6C3BFF] w-8' : 'bg-white/20 w-6'}`} />)}
+        {/* Progress Indicator */}
+        <div className="flex gap-2 justify-center mt-6 z-10">
+          {[1, 2, 3, 4].map((i) => (
+            <div 
+              key={i} 
+              className={`h-1.5 rounded-full transition-all duration-500 ${
+                i === step 
+                  ? 'bg-linear-to-r from-[#FF2994] to-[#8B2BFF] w-8 shadow-[0_0_10px_rgba(255,41,148,0.5)]' 
+                  : i < step 
+                    ? 'bg-[#8B2BFF]/50 w-4' 
+                    : 'bg-white/10 w-4'
+              }`} 
+            />
+          ))}
         </div>
       </div>
 
@@ -295,9 +430,40 @@ export default function ForgetPassword() {
           from { opacity: 0; transform: translateY(10px); }
           to { opacity: 1; transform: translateY(0); }
         }
-        .animate-fadeIn { animation: fadeIn 0.3s ease-out; }
+        .animate-fadeIn {
+          animation: fadeIn 0.4s ease-out forwards;
+        }
+        /* Hide number input spinners */
+        input[type='number']::-webkit-inner-spin-button,
+        input[type='number']::-webkit-outer-spin-button {
+          -webkit-appearance: none;
+          margin: 0;
+        }
+        input[type='number'] {
+          -moz-appearance: textfield;
+        }
       `}</style>
     </div>
   );
 }
 
+// Inline component for the Search icon 
+function SearchIcon(props) {
+  return (
+    <svg
+      {...props}
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <circle cx="11" cy="11" r="8" />
+      <path d="m21 21-4.3-4.3" />
+    </svg>
+  );
+}
