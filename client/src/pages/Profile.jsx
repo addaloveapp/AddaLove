@@ -23,17 +23,6 @@ export default function Profile() {
   const isBoy = useMemo(() => userRole === 'boy', [userRole]);
   const isGirl = useMemo(() => userRole === 'girl', [userRole]);
 
-  // useEffect(() => {
-  //   const playvedio =()=>{
-  //     setTop(true);
-  //     console.log("Hello")
-  //     setCount(1);
-  //   }
-  //    if(count===0){
-  //      playvedio();
-  //    }
-  // },[]);
-
   // Open modal and pre-fill data
   const handleOpenModal = () => {
     if (useralldata) {
