@@ -1,6 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { Coins, Loader2, LogOut, MessageCircle, Send, Trash2, TriangleAlert, UserMinus, UserRoundPlus } from 'lucide-react'
+import { 
+  Coins, Loader2, LogOut, MessageCircle, Send, Trash2, TriangleAlert, 
+  UserMinus, UserRoundPlus, Users, User, Crown, BadgeCheck, ShieldCheck, 
+  Plus, Smile, Info, Video, Star
+} from 'lucide-react'
 import useUserStore from '../store/userStore.js'
 import { connectSocket, socket } from '../socket/socket.js'
 import useRoomStore from '../store/roomStore.js'
@@ -10,6 +14,7 @@ import useReportStore from '../store/reportStore.js'
 import ReportPopup from '../components/ReportPopup.jsx'
 import useRatingStore from '../store/ratingStore.js'
 import RatingPopup from '../components/RatingPopup.jsx'
+
 const MessageRoom = () => {
   const { roomId } = useParams()
   const navigate = useNavigate()
@@ -20,8 +25,12 @@ const MessageRoom = () => {
   const [boyProfile, setBoyProfile] = useState(null)
   const { user: useralldata } = useUserStore();
   const [girlProfile, setGirlProfile] = useState(null)
-  const [boyFollowers,setBoyFollowers]=useState(0)
-  const [girlFollowers,setGirlFollowers]=useState(0)
+  const [boyFollowers, setBoyFollowers] = useState(0)
+  const [girlFollowers, setGirlFollowers] = useState(0)
+  const [boyFollowing, setBoyFollowing] = useState(0)
+  const [girlFollowing, setGirlFollowing] = useState(0)
+  const [respectPoint, setRespectPoint] = useState(0);
+  const [avgReating, setAvgReacting] = useState(0)
   const [isReportOpen, setIsReportOpen] = useState(false)
   const [isRatingOpen, setIsRatingOpen] = useState(false)
   const [ratingTarget, setRatingTarget] = useState(null)
@@ -163,175 +172,129 @@ const MessageRoom = () => {
       socket.emit('leave_room', { roomId, userId: user._id })
     }
   }, [roomId, user?._id])
+  
   const isBoy = useMemo(() => userRole === 'boy', [userRole]);
   const isGirl = useMemo(() => userRole === 'girl', [userRole]);
   const [isFollow, setIsFollow] = useState(false)
   const [loder, setLoder] = useState(false)
+
   useEffect(() => {
     const fectFollowOrnot = async () => {
-      if (isBoy) {
+      if (isBoy && girlProfile) {
         try {
           const url = `${import.meta.env.VITE_BACKEND_URL}/api/follower/v1/check-follow`;
-
           const res = await fetch(url, {
             method: 'POST',
-            headers: {
-              "Content-Type": "application/json"
-            },
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ profileUserId: girlProfile._id }),
             credentials: 'include',
           });
           const data = await res.json();
-          console.log(data)
           if (!data.success) {
             return setIsFollow(false)
           }
           setIsFollow(true)
         } catch (error) {
-
-        }
-        finally {
+        } finally {
           setLoder(false)
         }
-
       }
-      if (isGirl) {
+      if (isGirl && boyProfile) {
         try {
-
-
           const url = `${import.meta.env.VITE_BACKEND_URL}/api/follower/v1/check-follow`;
-
           const res = await fetch(url, {
             method: 'POST',
-            headers: {
-              "Content-Type": "application/json"
-            },
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ profileUserId: boyProfile._id }),
             credentials: 'include',
           });
           const data = await res.json();
-          console.log(data);
           if (!data.success) {
             return setIsFollow(false)
           }
           setIsFollow(true)
         } catch (error) {
-
-        }
-        finally {
+        } finally {
           setLoder(false);
         }
       }
-
     }
-    fectFollowOrnot();
-  }, [boyProfile, girlProfile])
-  // Follow and Unfollow api call here
+    if (boyProfile || girlProfile) {
+      fectFollowOrnot();
+    }
+  }, [boyProfile, girlProfile, isBoy, isGirl])
+
   const handleFollowClick = async () => {
     if (isBoy) {
       try {
         setLoder(true)
-
         const url = `${import.meta.env.VITE_BACKEND_URL}/api/follower/v1/add-followers`;
-
         const res = await fetch(url, {
           method: 'POST',
-          headers: {
-            "Content-Type": "application/json"
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ profileUserId: girlProfile._id }),
           credentials: 'include',
         });
         const data = await res.json();
-        console.log(data)
-        if (!data.success) {
-          return setIsFollow(false)
-        }
+        if (!data.success) return setIsFollow(false)
         setIsFollow(true)
       } catch (error) {
-
-
       } finally {
         setLoder(false)
       }
-
     }
     if (isGirl) {
       try {
         setLoder(true)
-
         const url = `${import.meta.env.VITE_BACKEND_URL}/api/follower/v1/add-followers`;
-
         const res = await fetch(url, {
           method: 'POST',
-          headers: {
-            "Content-Type": "application/json"
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ profileUserId: boyProfile._id }),
           credentials: 'include',
         });
         const data = await res.json();
-        console.log(data);
-        if (!data.success) {
-          return setIsFollow(false)
-        }
+        if (!data.success) return setIsFollow(false)
         setIsFollow(true)
       } catch (error) {
-
       } finally {
         setLoder(false)
       }
     }
-
   }
-  const handleUnfollowClick = async () => {
 
+  const handleUnfollowClick = async () => {
     if (isBoy) {
       try {
-
-
+        setLoder(true)
         const url = `${import.meta.env.VITE_BACKEND_URL}/api/follower/v1/unfollow`;
-
         const res = await fetch(url, {
           method: 'POST',
-          headers: {
-            "Content-Type": "application/json"
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ profileUserId: girlProfile._id }),
           credentials: 'include',
         });
         const data = await res.json();
-        console.log(data)
-        if (data.success) {
-          return setIsFollow(false)
-        }
+        if (data.success) return setIsFollow(false)
         setIsFollow(true)
       } catch (error) {
         handleError('Network Issue ! Try again')
       } finally {
         setLoder(false)
       }
-
     }
     if (isGirl) {
       try {
-
-
+        setLoder(true)
         const url = `${import.meta.env.VITE_BACKEND_URL}/api/follower/v1/unfollow`;
-
         const res = await fetch(url, {
           method: 'POST',
-          headers: {
-            "Content-Type": "application/json"
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ profileUserId: boyProfile._id }),
           credentials: 'include',
         });
         const data = await res.json();
-        console.log(data);
-        if (data.success) {
-          return setIsFollow(false)
-        }
+        if (data.success) return setIsFollow(false)
         setIsFollow(true)
       } catch (error) {
         handleError('Network Issue ! Try again')
@@ -339,10 +302,7 @@ const MessageRoom = () => {
         setLoder(false)
       }
     }
-
   }
-
-
 
   useEffect(() => {
     if (!roomId) return
@@ -352,9 +312,12 @@ const MessageRoom = () => {
     getRoomDetails(roomId)
       .then((data) => {
         const room = data?.room
-        console.log(room)
-        setBoyFollowers(room.boyExtraDetails.followerCount);
-        setGirlFollowers(room.girlsExtraDetails.followerCount)
+        setBoyFollowers(room?.boyExtraDetails?.followerCount || 0);
+        setBoyFollowing(room?.boyExtraDetails?.followingCount || 0)
+        setRespectPoint(room?.RespactPoint || 0)
+        setAvgReacting(room?.AvgRating || 0)
+        setGirlFollowers(room?.girlsExtraDetails?.followerCount || 0)
+        setGirlFollowing(room?.girlsExtraDetails?.followingCount || 0)
         setIsBoyInside(userRole === 'boy' || Boolean(room?.currentBoy))
         boyProfileRef.current = room?.currentBoy || null
         girlProfileRef.current = room?.createdBy || null
@@ -507,53 +470,45 @@ const MessageRoom = () => {
   const partnerAvatar = chatPartner?.imageUrl || getFallbackAvatar(partnerName)
 
   return (
-    <div className='min-h-screen bg-slate-950 p-0 text-white sm:px-4 sm:py-5'>
-      <div className='mx-auto flex h-dvh w-full max-w-5xl flex-col overflow-hidden bg-slate-900 shadow-2xl shadow-black/30 sm:h-[calc(100vh-2.5rem)] sm:rounded-3xl sm:border sm:border-white/10'>
-        <nav className='z-20 flex min-h-17 items-center justify-between border-b border-white/10 bg-slate-900/95 px-4 py-3 backdrop-blur-xl sm:px-6'>
+    <div className='min-h-screen bg-[#070b19] p-0 text-white sm:px-4 sm:py-5 font-sans'>
+      <div className='mx-auto flex h-dvh w-full max-w-5xl flex-col overflow-hidden bg-[#0a0f24] shadow-2xl sm:h-[calc(100vh-2.5rem)] sm:rounded-[40px] sm:border sm:border-blue-500/20'>
+        {/* Top Navbar */}
+        <nav className='z-20 flex min-h-17 items-center justify-between px-4 py-4 sm:px-6'>
           <div className='flex items-center gap-3'>
-            <div className='flex h-10 w-10 items-center justify-center rounded-2xl bg-[#FF4D8D]/15 text-[#FF4D8D]'>
-              <MessageCircle size={21} />
-            </div>
-            <div>
-              <p className='text-[10px] font-semibold uppercase tracking-[0.25em] text-[#FF4D8D]'>Live chat</p>
-              <h1 className='text-base font-bold sm:text-lg'>Message Room</h1>
-            </div>
-          </div>
-          <div className='flex gap-1  rounded-3xl border border-yellow-400/20 bg-yellow-500/10  p-1.5'><CoinIcon className="w-4 h-4 text-yellow-400 mt-1" /> {useralldata.walletBlance}</div>
-          <button
-            type='button'
-            onClick={userRole === 'girl' ? destroyRoomFunc : leaveRoomFunc}
-            disabled={isLeaving}
-            className='flex items-center gap-2 rounded-xl border border-red-400/20 bg-red-500/10 px-3 py-2 text-xs font-semibold text-red-300 transition hover:bg-red-500 hover:text-white disabled:cursor-not-allowed disabled:opacity-60 sm:px-4 sm:text-sm'
-          >
-            {userRole === 'girl' ? <Trash2 size={16} /> : <LogOut size={16} />}
-            {isLeaving ? 'Please wait...' : exitLabel}
-          </button>
-        </nav>
-
-        {isBoyInside && chatPartner && (
-          <div className='z-10 flex items-center justify-between gap-3 border-b border-white/10 bg-white/3 px-4 py-3 sm:px-6'>
-            <div className='flex gap-3'>
-              <div className='relative shrink-0'>
+            <div className='relative shrink-0'>
+              <div className='rounded-full p-0.5 bg-linear-to-br from-[#FF4D8D] to-[#4D8DFF]'>
                 <img
                   src={partnerAvatar}
                   alt={partnerName}
                   onError={(event) => handleAvatarError(event, partnerName)}
-                  className='h-11 w-11 rounded-full border-2 border-[#FF4D8D]/70 object-cover'
+                  className='h-10 w-10 rounded-full border border-[#0a0f24] object-cover'
                 />
-                <span className='absolute right-0 bottom-0 h-3 w-3 rounded-full border-2 border-slate-900 bg-emerald-400' />
               </div>
-              <div className='min-w-0'>
-                <p className='truncate text-sm font-bold text-white'>{partnerName}</p>
-                <p className='flex items-center gap-1.5 text-xs text-emerald-400'>
-                  <span className='h-1.5 w-1.5 rounded-full bg-emerald-400' />
-                  In the room
-                </p>
-              </div>
+              <span className='absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-[#0a0f24] bg-green-500' />
             </div>
-            <div className='text-gray-500 text-[15px]'>
-              End to end encrypted
+            <div>
+              <h1 className='flex items-center gap-1 text-sm font-bold sm:text-base'>
+                {partnerName} <BadgeCheck size={14} className="text-[#4D8DFF]" />
+              </h1>
+              <p className='text-[11px] text-green-400'>In the room</p>
             </div>
+          </div>
+          
+          <div className='flex items-center gap-2'>
+            <div className='flex items-center gap-1 rounded-3xl border border-yellow-400/20 bg-yellow-500/10 px-2 py-1 text-xs'>
+              <CoinIcon className="w-3.5 h-3.5 text-yellow-400" /> {useralldata.walletBlance}
+            </div>
+            
+            {/* The user's exact original styles for these buttons */}
+            <button
+              type='button'
+              onClick={userRole === 'girl' ? destroyRoomFunc : leaveRoomFunc}
+              disabled={isLeaving}
+              className='flex items-center gap-2 rounded-xl border border-red-400/20 bg-red-500/10 px-3 py-2 text-xs font-semibold text-red-300 transition hover:bg-red-500 hover:text-white disabled:cursor-not-allowed disabled:opacity-60 sm:px-4 sm:text-sm'
+            >
+              {userRole === 'girl' ? <Trash2 size={16} /> : <LogOut size={16} />}
+              {isLeaving ? 'Please wait...' : exitLabel}
+            </button>
             <button
               type='button'
               aria-label={`Report ${partnerName}`}
@@ -563,9 +518,10 @@ const MessageRoom = () => {
               <TriangleAlert size={18} />
             </button>
           </div>
-        )}
+        </nav>
 
-        <main className='showAllMessages flex-1 space-y-4 overflow-y-auto bg-[radial-gradient(circle_at_top,rgba(255,77,141,0.08),transparent_36%)] px-4 py-5 sm:px-6'>
+        {/* Main Content Area */}
+        <main className='flex-1 space-y-4 overflow-y-auto px-4 py-2 sm:px-6 custom-scrollbar'>
           {!isBoyInside && userRole === 'girl' ? (
             <div className='flex h-full flex-col items-center justify-center px-6 text-center'>
               <div className='mb-4 flex h-18 w-18 items-center justify-center rounded-full border border-[#FF4D8D]/20 bg-[#FF4D8D]/10 text-[#FF4D8D]'>
@@ -577,102 +533,169 @@ const MessageRoom = () => {
           ) : (
             <>
               {chatPartner && (
-                <section className='mx-auto mb-7 flex max-w-lg flex-col items-center rounded-3xl border border-[#FF4D8D]/20 bg-slate-900/80 px-5 py-6 text-center shadow-xl shadow-black/15 backdrop-blur'>
-                  <div className='rounded-full bg-linear-to-br from-[#FF4D8D] to-rose-600 p-1 shadow-lg shadow-[#FF4D8D]/20'>
+                <section className='mx-auto mb-8 mt-2 flex max-w-sm flex-col items-center rounded-[32px] border border-blue-500/20 bg-[#0c122b]/80 px-6 py-8 text-center shadow-[0_0_25px_rgba(77,141,255,0.05)] backdrop-blur-xl'>
+                  {/* Neon Avatar */}
+                  <div className='relative mb-4 rounded-full bg-linear-to-tr from-[#FF4D8D] via-purple-500 to-[#4D8DFF] p-1 shadow-[0_0_20px_rgba(255,77,141,0.4)]'>
                     <img
                       src={partnerAvatar}
                       alt={partnerName}
                       onError={(event) => handleAvatarError(event, partnerName)}
-                      className='h-22 w-22 rounded-full border-4 border-slate-900 object-cover sm:h-26 sm:w-26'
+                      className='h-28 w-28 rounded-full border-4 border-[#0c122b] object-cover sm:h-32 sm:w-32'
                     />
-
-                  </div>
-                  <div className="flex flex-col items-center justify-center transition-transform hover:scale-105">
-                    <div className="bg-linear-to-b from-white to-[#FF4D8D] bg-clip-text text-2xl font-black text-transparent drop-shadow-[0_0_15px_rgba(255,77,141,0.8)]">
-                      {isBoy?girlFollowers:boyFollowers}
-                    </div>
-                    <div className="text-xs font-semibold tracking-widest text-[#FF4D8D] drop-shadow-[0_0_8px_rgba(255,77,141,0.6)]">
-                      Followers
+                    <div className='absolute -bottom-2 left-1/2 flex -translate-x-1/2 items-center justify-center rounded-full border-2 border-[#0c122b] bg-pink-500 p-1.5 shadow-lg'>
+                      <Smile size={16} className="text-white" />
                     </div>
                   </div>
 
-                  <h2 className='mt-3 text-xl font-extrabold'>{partnerName}</h2>
+                  <h2 className='mt-2 flex items-center justify-center gap-1.5 text-2xl font-bold text-white'>
+                    {partnerName} <BadgeCheck size={20} className="text-[#4D8DFF]" />
+                  </h2>
 
-                  <div
-                    onClick={loder ? undefined : (isFollow ? handleUnfollowClick : handleFollowClick)}
-                    className={`mt-2 flex w-fit cursor-pointer items-center justify-center gap-2 rounded-full border border-yellow-400/15 bg-yellow-400/10 px-3 py-1.5 text-sm text-yellow-300 transition-colors hover:bg-yellow-400/20 ${loder ? 'cursor-not-allowed opacity-70' : ''}`}
-                  >
-                    {loder ? (
-                      <>
-                        <Loader2 size={15} className="animate-spin text-yellow-400" />
-                        <span className="font-semibold text-yellow-400">Loading...</span>
-                      </>
-                    ) : (
-                      <>
-                        {isFollow ? <UserMinus size={15} /> : <UserRoundPlus size={15} />}
-                        <span className="font-semibold">{isFollow ? 'Unfollow' : 'Follow'}</span>
-                      </>
-                    )}
+                  {/* Profile Stats Matrix */}
+                  <div className='mt-6 flex w-full justify-between gap-3'>
+                    <div className='flex flex-1 flex-col items-center justify-center rounded-2xl border border-white/5 bg-white/5 py-3 transition hover:bg-white/10'>
+                      <Users size={20} className="mb-1 text-[#FF4D8D]" />
+                      <span className='text-base font-bold text-white'>{isBoy ? girlFollowers : boyFollowers}</span>
+                      <span className='text-[10px] uppercase tracking-wider text-slate-400'>Followers</span>
+                    </div>
+                    <div className='flex flex-1 flex-col items-center justify-center rounded-2xl border border-white/5 bg-white/5 py-3 transition hover:bg-white/10'>
+                      <User size={20} className="mb-1 text-[#4D8DFF]" />
+                      <span className='text-base font-bold text-white'>{isBoy ? girlFollowing : boyFollowing}</span>
+                      <span className='text-[10px] uppercase tracking-wider text-slate-400'>Following</span>
+                    </div>
+                    <div className='flex flex-1 flex-col items-center justify-center rounded-2xl border border-white/5 bg-white/5 py-3 transition hover:bg-white/10'>
+                      <Crown size={20} className="mb-1 text-yellow-500" />
+                      <span className='text-base font-bold text-yellow-400'>{isBoy?avgReating:respectPoint}</span>
+                      <span className='text-[10px] uppercase tracking-wider text-slate-400'>{isBoy?"Rating":"Respect"}</span>
+                    </div>
                   </div>
 
-                  <p className='mt-3 text-xs text-slate-500'>You’re connected — say hello!</p>
+                  {/* Follow & Message Buttons */}
+                  <div className='mt-5 flex w-full gap-3'>
+                    <button
+                      onClick={loder ? undefined : (isFollow ? handleUnfollowClick : handleFollowClick)}
+                      disabled={loder}
+                      className={`flex-1 flex items-center justify-center gap-2 rounded-2xl bg-linear-to-r from-[#FF4D8D] to-purple-600 py-3 text-sm font-semibold text-white shadow-[0_0_15px_rgba(255,77,141,0.3)] transition-all hover:scale-[1.02] active:scale-95 ${loder ? 'cursor-not-allowed opacity-70' : ''}`}
+                    >
+                      {loder ? (
+                        <Loader2 size={18} className="animate-spin" />
+                      ) : (
+                        <>
+                          {isFollow ? <UserMinus size={18} /> : <Plus size={18} />}
+                          {isFollow ? 'Unfollow' : 'Follow'}
+                        </>
+                      )}
+                    </button>
+                    <button className='flex h-[46px] w-[56px] items-center justify-center rounded-2xl border border-[#FF4D8D]/30 bg-transparent text-white transition hover:bg-[#FF4D8D]/10'>
+                      <Send size={18} />
+                    </button>
+                  </div>
+
+                  {/* Badges/Info row */}
+                  
+                  <div className='mt-4 flex w-full items-center justify-center gap-2 rounded-xl border border-purple-500/20 bg-purple-500/10 py-2.5 text-xs font-medium text-purple-300'>
+                    <ShieldCheck size={16} /> Verified & Trusted Member
+                  </div>
                 </section>
               )}
 
-              {messages.length === 0 ? (
-                <p className='py-4 text-center text-sm text-slate-500'>No messages yet. Start the conversation below.</p>
-              ) : messages.map((message, index) => {
-                const ownMessage = isOwnMessage(message)
+              {/* Chat Date Divider */}
+              <div className='relative flex items-center justify-center py-4'>
+                <div className='absolute left-0 right-0 h-[1px] bg-linear-to-r from-transparent via-white/10 to-transparent' />
+                <span className='relative bg-[#0a0f24] px-4 text-xs font-medium text-slate-400'>
+                  ✧ Today ✧
+                </span>
+              </div>
 
-                return (
-                  <div key={message._id || index} className={`flex items-end gap-2 ${ownMessage ? 'justify-end' : 'justify-start'}`}>
-                    {!ownMessage && (
-                      <img
-                        src={partnerAvatar}
-                        alt={partnerName}
-                        onError={(event) => handleAvatarError(event, partnerName)}
-                        className='h-8 w-8 shrink-0 rounded-full border border-[#FF4D8D]/50 object-cover'
-                      />
-                    )}
-                    <div className={`max-w-[78%] px-4 py-2.5 text-sm leading-relaxed shadow-lg sm:max-w-[68%] ${ownMessage ? 'rounded-2xl rounded-br-sm bg-linear-to-r from-[#FF4D8D] to-rose-500 text-white shadow-[#FF4D8D]/10' : 'rounded-2xl rounded-bl-sm border border-white/10 bg-white/8 text-slate-100 shadow-black/10'}`}>
-                      {message.messageType === 'text' ? message.text : message.fileUrl}
+              {/* Messages Container */}
+              <div className='space-y-4 pb-4'>
+                {messages.length === 0 ? (
+                  <p className='text-center text-xs text-slate-500'>No messages yet. Say hello!</p>
+                ) : messages.map((message, index) => {
+                  const ownMessage = isOwnMessage(message)
+                  const messageTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) // Format as needed based on your message object
+
+                  return (
+                    <div key={message._id || index} className={`flex items-end gap-2 ${ownMessage ? 'justify-end' : 'justify-start'}`}>
+                      {!ownMessage && (
+                        <div className="rounded-full p-[1px] bg-linear-to-tr from-[#FF4D8D] to-[#4D8DFF] mb-1">
+                          <img
+                            src={partnerAvatar}
+                            alt={partnerName}
+                            onError={(event) => handleAvatarError(event, partnerName)}
+                            className='h-7 w-7 rounded-full border border-[#0a0f24] object-cover'
+                          />
+                        </div>
+                      )}
+                      
+                      <div className={`relative max-w-[75%] px-4 py-3 text-sm shadow-md sm:max-w-[65%] ${
+                        ownMessage 
+                          ? 'rounded-3xl rounded-br-sm bg-linear-to-r from-[#FF4D8D] to-purple-500 text-white shadow-[0_4px_15px_rgba(255,77,141,0.15)]' 
+                          : 'rounded-3xl rounded-bl-sm border border-blue-500/20 bg-[#121936] text-slate-200'
+                        }`}
+                      >
+                        <p className="pr-12">{message.messageType === 'text' ? message.text : message.fileUrl}</p>
+                        
+                        <div className="absolute bottom-1.5 right-3 flex items-center gap-1">
+                          <span className={`text-[9px] ${ownMessage ? 'text-white/80' : 'text-slate-400'}`}>
+                            {messageTime}
+                          </span>
+                          {ownMessage && <BadgeCheck size={10} className="text-white/90" />}
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                )
-              })}
-              <div ref={messagesEndRef} />
+                  )
+                })}
+                <div ref={messagesEndRef} />
+              </div>
             </>
           )}
         </main>
 
-        <footer className='border-t border-white/10 bg-slate-950/90 p-3 backdrop-blur-xl sm:p-4'>
-          <div className={`sendMessage flex items-center gap-2 rounded-2xl border px-3 py-2 transition ${isBoyInside ? 'border-white/10 bg-white/5 focus-within:border-[#FF4D8D]/60' : 'border-white/5 bg-white/3 opacity-70'}`}>
+        {/* Chat Input Footer */}
+        <footer className='bg-[#0a0f24] px-4 py-3 sm:px-6'>
+          <div className={`flex items-center gap-2 rounded-full border p-1.5 transition-all ${
+            isBoyInside 
+              ? 'border-[#FF4D8D]/40 bg-[#121936] shadow-[0_0_15px_rgba(255,77,141,0.05)] focus-within:border-[#FF4D8D]' 
+              : 'border-white/5 bg-white/5 opacity-60'
+            }`}
+          >
+            <button className="flex h-9 w-9 items-center justify-center rounded-full border border-[#FF4D8D]/40 bg-[#FF4D8D]/10 text-[#FF4D8D] transition hover:bg-[#FF4D8D]/20">
+              <Plus size={20} />
+            </button>
+            
             <input
               type='text'
               value={messageText}
               placeholder={inputPlaceholder}
               disabled={!isBoyInside}
-              className='min-w-0 flex-1 bg-transparent px-2 py-2 text-sm text-white outline-none placeholder:text-slate-500 disabled:cursor-not-allowed'
+              className='min-w-0 flex-1 bg-transparent px-2 text-sm text-white outline-none placeholder:text-slate-500 disabled:cursor-not-allowed'
               onChange={(event) => setMessageText(event.target.value)}
               onKeyDown={(event) => {
                 if (event.key === 'Enter') handleSendMessage()
               }}
             />
+            
+            <button className="flex h-9 w-9 items-center justify-center text-slate-400 transition hover:text-[#FF4D8D]">
+              <Smile size={22} />
+            </button>
+            
             <button
               type='button'
               aria-label='Send message'
               onClick={handleSendMessage}
               disabled={!isBoyInside || !messageText.trim()}
-              className='flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#FF4D8D] text-white shadow-lg shadow-[#FF4D8D]/20 transition hover:bg-pink-400 disabled:cursor-not-allowed disabled:opacity-35 disabled:shadow-none'
+              className='flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-full bg-linear-to-r from-[#FF4D8D] to-purple-500 text-white shadow-lg transition hover:scale-105 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:scale-100'
             >
-              <Send size={18} />
+              <Send size={18} className="ml-0.5" />
             </button>
           </div>
           {!isBoyInside && userRole === 'girl' && (
-            <p className='mt-2 text-center text-[11px] text-slate-500'>Messaging will unlock when a boy joins.</p>
+            <p className='mt-2 text-center text-[10px] uppercase tracking-wider text-slate-500'>Messaging will unlock when a boy joins.</p>
           )}
         </footer>
       </div>
+      
       <ReportPopup
         isOpen={isReportOpen}
         userName={partnerName}
@@ -692,6 +715,7 @@ const MessageRoom = () => {
     </div>
   )
 }
+
 function CoinIcon({ className }) {
   return (
     <svg viewBox="0 0 24 24" fill="currentColor" className={className}>
@@ -701,4 +725,5 @@ function CoinIcon({ className }) {
     </svg>
   );
 }
+
 export default MessageRoom

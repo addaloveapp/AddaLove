@@ -5,12 +5,15 @@ const respactPointCalculate = async (userId) => {
     if (!userId) {
         return null;
     }
+
     const allPoint = await Rating.find({ ratedUser: userId }).select('rating').lean();
+
     if (allPoint.length == 0) {
         return null;
     }
     for (let i = 0; i < allPoint.length; i++) {
-        sum = sum + allPoint[i]
+
+        sum = sum + allPoint[i].rating
     }
     return sum;
 
