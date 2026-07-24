@@ -8,6 +8,8 @@ import { ApiResponse } from "../utils/apiResponse.js";
 import { ApiError } from '../utils/apiError.js';
 import { io } from '../socket/socket.js';
 import mongoose from 'mongoose';
+import { respactPointCalculate } from '../utils/respactPointCalculate.js';
+import { userRateCalculate } from '../utils/calculateUserRateAVG.js';
 
 const SESSION_DURATIONS_SECONDS = {
     '20_sec': 20,
@@ -24,7 +26,7 @@ const ALLOWED_LANGUAGES = ['Bengali', 'Hindi', 'Gujarati', 'English', 'Kannada',
 const ACTIVE_SESSION_DURATION_KEY = '5_min';
 const ACTIVE_SESSION_DURATION_SECONDS = SESSION_DURATIONS_SECONDS[ACTIVE_SESSION_DURATION_KEY];
 const activeRoomTimers = new Map();
-    
+
 const clearRoomTimer = (roomId) => {
     const timer = activeRoomTimers.get(roomId);
     if (timer) {
@@ -364,8 +366,8 @@ const leaveRoom = asyncHandler(async (req, res) => {
 const getRoomDetails = asyncHandler(async (req, res) => {
     const { roomId } = req.params;
     const requesterId = new mongoose.Types.ObjectId(req.user._id);
-
-    const [room] = await Room.aggregate([
+    
+    let [room] = await Room.aggregate([
 
         {
             $match: {
@@ -380,8 +382,8 @@ const getRoomDetails = asyncHandler(async (req, res) => {
                 as: 'createdBy'
             }
         },
-        { 
-            $unwind: { path: '$createdBy', preserveNullAndEmptyArrays: false } 
+        {
+            $unwind: { path: '$createdBy', preserveNullAndEmptyArrays: false }
         },
         {
             $lookup: {
@@ -391,8 +393,8 @@ const getRoomDetails = asyncHandler(async (req, res) => {
                 as: 'currentBoy'
             }
         },
-        { 
-            $unwind: { path: '$currentBoy', preserveNullAndEmptyArrays: true } 
+        {
+            $unwind: { path: '$currentBoy', preserveNullAndEmptyArrays: true }
         },
         {
             $lookup: {
@@ -546,7 +548,8 @@ const getRoomDetails = asyncHandler(async (req, res) => {
                             then: '$$REMOVE',
                             else: { $gt: [{ $size: '$_boyFollowsGirl' }, 0] }
                         }
-                    }
+                    },
+                    // girlAvgRate:AvgRating
                 },
                 boyExtraDetails: {
                     $cond: {
@@ -560,7 +563,8 @@ const getRoomDetails = asyncHandler(async (req, res) => {
                                 $ifNull: [{ $arrayElemAt: ['$_boyFollowing.count', 0] }, 0]
                             },
                             isFollowingGirl: { $gt: [{ $size: '$_boyFollowsGirl' }, 0] },
-                            isFollowedByGirl: { $gt: [{ $size: '$_girlFollowsBoy' }, 0] }
+                            isFollowedByGirl: { $gt: [{ $size: '$_girlFollowsBoy' }, 0] },
+                         
                         }
                     }
                 }
@@ -571,9 +575,23 @@ const getRoomDetails = asyncHandler(async (req, res) => {
     if (!room) {
         throw new ApiError(404, 'Room not found');
     }
+    let RespactPoint=0;
+    if (room.currentBoy?._id) {
+         RespactPoint = await respactPointCalculate(room.currentBoy?._id);
+
+    }
+    const RespectObj={
+        "RespactPoint":Number(RespactPoint)*2
+    }
+    const AvgRating = await userRateCalculate(room.createdBy?._id)
+    const AvgObj={
+        "AvgRating":AvgRating
+    }
 
     const isOwner = room.createdBy?._id?.toString() === requesterId.toString();
     const isCurrentBoy = room.currentBoy?._id?.toString() === requesterId.toString();
+     room= {...room, ...RespectObj ,...AvgObj}
+    console.log(room)
 
     if (!isOwner && !isCurrentBoy) {
         throw new ApiError(403, 'You are not a participant in this room');

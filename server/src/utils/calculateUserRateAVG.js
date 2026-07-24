@@ -6,8 +6,9 @@ const userRateCalculate=async(userId)=>{
   if(!userId){
     return null;
   }
-   console.log(userId)
+
    const allRate= await Rating.find({ratedUser:userId}).select('rating').lean()
+
    if(allRate.length==0){
     return null;
    }

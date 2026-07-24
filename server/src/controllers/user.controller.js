@@ -384,7 +384,6 @@ const currentUser = asyncHandler(async (req, res) => {
         let userRank = 0;
         for (let i in leaderboard) {
             if (leaderboard[i]._id.toString() == req.user._id.toString()) {
-                console.log("Hello");
                 userRank = Number(i) + 1;
             }
         }
@@ -542,7 +541,6 @@ const currentUser = asyncHandler(async (req, res) => {
         let userRank = 0;
         for (let i in leaderboard) {
             if (leaderboard[i]._id.toString() == req.user._id.toString()) {
-                console.log("Hello");
                 userRank = Number(i) + 1;
             }
         }
