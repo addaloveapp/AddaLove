@@ -161,7 +161,7 @@ export default function AddaLoveRecharge() {
     };
 
     return (
-        <div className="min-h-screen bg-[#0A0014] text-slate-100 flex flex-col items-center py-6 px-4 font-sans relative overflow-x-hidden pb-32">
+        <div className="min-h-screen bg-[url('./assets/Rechargebg.png')] text-slate-100 flex flex-col items-center py-6 px-4 font-sans relative overflow-x-hidden pb-32">
             
             {/* Ambient Background Glow */}
             <div className="fixed inset-0 pointer-events-none overflow-hidden flex justify-center items-center">

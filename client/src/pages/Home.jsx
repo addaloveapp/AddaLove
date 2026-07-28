@@ -188,8 +188,9 @@ const Home = () => {
   };
 
   return (
-    <div className={`min-h-screen ${isBoy || isGirl ? 'bg-[#090A10]' : 'bg-[#0F172A]'} text-white flex justify-center sm:items-center px-0 sm:px-4 sm:py-8`}>
-      <div className={`w-full max-w-md shadow-2xl relative overflow-hidden flex flex-col ${isBoy ? 'bg-[#0B0C13] border-none sm:rounded-3xl sm:border sm:border-white/5' : isGirl ? 'bg-[#070812] border-none sm:rounded-3xl sm:border sm:border-white/5' : 'bg-[#1E293B] rounded-3xl border border-white/10 p-6'}`}>
+    <div className={`min-h-screen ${isBoy || isGirl ? 'bg-[url("./assets/home.png")] bg-cover bg-center' : 'bg-bg-[url("./assets/home.png")] bg-cover bg-center'} text-white flex justify-center sm:items-center px-0 sm:px-4 sm:py-8`}>
+      {/* Changed background opacity and added backdrop-blur here */}
+      <div className={`w-full max-w-md shadow-2xl relative overflow-hidden flex flex-col ${isBoy ? 'bg-[#0B0C13]/70 backdrop-blur-xl border-none sm:rounded-3xl sm:border sm:border-white/5' : isGirl ? 'bg-[#070812]/70 backdrop-blur-xl border-none sm:rounded-3xl sm:border sm:border-white/5' : 'bg-transparent backdrop-blur-xl rounded-3xl border border-white/10 p-6'}`}>
 
         {/* Girl/Unknown Header (Hidden for Boy) */}
         {!isBoy && !isGirl && (
@@ -205,10 +206,12 @@ const Home = () => {
         {/* GIRL UI */}
         {isGirl && (
           <div className="flex-1 overflow-y-auto px-4 pt-24 pb-28 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] scrollbar-none">
-            <div className="girl-create-ui rounded-3xl border border-white/10 bg-[#090915] px-4 py-5 shadow-[0_24px_80px_rgba(0,0,0,0.45)]">
+            {/* Reduced opacity on bg-[#090915] and added blur */}
+            <div className="girl-create-ui rounded-3xl border border-white/10 bg-[#090915]/60 backdrop-blur-lg px-4 py-5 shadow-[0_24px_80px_rgba(0,0,0,0.45)]">
               
               {/* Girl Hero Banner */}
-              <div className="relative overflow-hidden rounded-[18px] border border-[#FF4D8D]/15 bg-[#0F0D1C] px-4 py-5 flex items-center justify-between">
+              {/* Reduced opacity on bg-[#0F0D1C] */}
+              <div className="relative overflow-hidden rounded-[18px] border border-[#FF4D8D]/15 bg-[#0F0D1C]/50 backdrop-blur-sm px-4 py-5 flex items-center justify-between">
                 <div className="absolute right-3 top-2 h-24 w-24 rounded-full bg-[#FF4D8D]/20"></div>
                 <div className="absolute right-16 bottom-0 h-20 w-20 rounded-full bg-[#6C3BFF]/20"></div>
                 
@@ -221,15 +224,11 @@ const Home = () => {
                   </p>
                 </div>
                 
-                {/* Embedded Mascot for Girl UI */}
-                {/* <div className="relative z-10 flex h-[85px] w-[85px] shrink-0 items-center justify-center"> */}
                   <img 
-                    
                     src={createRoomimg}
                     alt="Mascot" 
                     className=" h-40 border-2 border-[#FF4D8D]/30 object-cover shadow-[0_0_20px_rgba(255,77,141,0.4)]" 
                   />
-                {/* </div> */}
               </div>
 
               <div className="mt-4 grid grid-cols-3 gap-3">
@@ -242,7 +241,7 @@ const Home = () => {
                       type="button"
                       onClick={() => !option.disabled && setRoomType(option.type)}
                       disabled={option.disabled}
-                      className={`relative flex min-h-21.5 flex-col items-center justify-center rounded-[18px] border px-2 py-3 text-center transition-all ${isSelected ? 'border-[#FF4D8D] bg-[#FF4D8D]/20 text-white shadow-[0_0_20px_rgba(255,77,141,0.36)]' : 'border-white/10 bg-[#11111F] text-slate-300 hover:border-white/20'} ${option.disabled ? 'cursor-not-allowed opacity-55' : ''}`}
+                      className={`relative flex min-h-21.5 flex-col items-center justify-center rounded-[18px] border px-2 py-3 text-center transition-all ${isSelected ? 'border-[#FF4D8D] bg-[#FF4D8D]/20 text-white shadow-[0_0_20px_rgba(255,77,141,0.36)]' : 'border-white/10 bg-[#11111F]/50 backdrop-blur-sm text-slate-300 hover:border-white/20'} ${option.disabled ? 'cursor-not-allowed opacity-55' : ''}`}
                     >
                       <span className={isSelected ? 'text-[#FF4D8D]' : 'text-[#8D88B8]'}>{option.icon}</span>
                       <span className="mt-2 text-[14px] font-black">{option.title}</span>
@@ -278,7 +277,7 @@ const Home = () => {
                         type="button"
                         disabled={isDisabled}
                         onClick={() => handleLanguageChange(language)}
-                        className={`flex min-h-12 items-center gap-3 rounded-[14px] border px-3 text-left text-[14px] font-bold transition-colors ${isSelected ? 'border-[#FF4D8D] bg-[#FF4D8D]/16 text-white' : 'border-white/10 bg-[#10101D] text-slate-300'} ${isDisabled ? 'cursor-not-allowed opacity-45' : 'hover:border-white/20'}`}
+                        className={`flex min-h-12 items-center gap-3 rounded-[14px] border px-3 text-left text-[14px] font-bold transition-colors ${isSelected ? 'border-[#FF4D8D] bg-[#FF4D8D]/16 text-white' : 'border-white/10 bg-[#10101D]/50 backdrop-blur-sm text-slate-300'} ${isDisabled ? 'cursor-not-allowed opacity-45' : 'hover:border-white/20'}`}
                       >
                         <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md border ${isSelected ? 'border-[#FF4D8D] bg-[#FF4D8D] text-white' : 'border-white/15 bg-transparent text-transparent'}`}>
                           <Icons.Check />
@@ -309,7 +308,7 @@ const Home = () => {
                     <button
                       key={vibe.title}
                       type="button"
-                      className={`relative min-w-[118px] rounded-[18px] border px-3 py-4 text-left transition-colors ${index === 0 ? 'border-[#FF4D8D] bg-[#311029] shadow-[0_0_18px_rgba(255,77,141,0.32)]' : 'border-white/10 bg-[#11111F] hover:border-white/20'}`}
+                      className={`relative min-w-[118px] rounded-[18px] border px-3 py-4 text-left transition-colors ${index === 0 ? 'border-[#FF4D8D] bg-[#311029]/60 backdrop-blur-sm shadow-[0_0_18px_rgba(255,77,141,0.32)]' : 'border-white/10 bg-[#11111F]/50 backdrop-blur-sm hover:border-white/20'}`}
                     >
                       {index === 0 && (
                         <span className="absolute -right-2 -top-2 flex h-8 w-8 items-center justify-center rounded-full bg-[#FF4D8D] text-white shadow-[0_0_14px_rgba(255,77,141,0.6)]">
@@ -332,21 +331,21 @@ const Home = () => {
                   <span className="text-[17px] font-black text-white">Optional Settings</span>
                 </div>
                 <div className="grid gap-3 sm:grid-cols-3">
-                  <button type="button" className="flex min-h-18.5 items-center gap-3 rounded-3xl border border-white/10 bg-[#11111F] px-3 text-left">
+                  <button type="button" className="flex min-h-18.5 items-center gap-3 rounded-3xl border border-white/10 bg-[#11111F]/50 backdrop-blur-sm px-3 text-left">
                     <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#FF4D8D]/18 text-[#FF4D8D]"><Icons.Lock /></span>
                     <span className="min-w-0">
                       <span className="block text-[12px] font-black text-[#FF4D8D]">Room Privacy</span>
                       <span className="mt-1 flex items-center gap-1 text-[12px] font-bold text-white">Anyone can join <Icons.ChevronDown /></span>
                     </span>
                   </button>
-                  <button type="button" className="flex min-h-18.5 items-center gap-3 rounded-3xl border border-white/10 bg-[#11111F] px-3 text-left">
+                  <button type="button" className="flex min-h-18.5 items-center gap-3 rounded-3xl border border-white/10 bg-[#11111F]/50 backdrop-blur-sm px-3 text-left">
                     <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#7C3AED]/20 text-[#A855F7]"><Icons.UsersGroup /></span>
                     <span className="min-w-0">
                       <span className="block text-[12px] font-black text-[#FF4D8D]">Age Preference</span>
                       <span className="mt-1 flex items-center gap-1 text-[12px] font-bold text-white">18 - 25 <Icons.ChevronDown /></span>
                     </span>
                   </button>
-                  <div className="flex min-h-18.5 items-center justify-between gap-3 rounded-3xl border border-white/10 bg-[#11111F] px-3">
+                  <div className="flex min-h-18.5 items-center justify-between gap-3 rounded-3xl border border-white/10 bg-[#11111F]/50 backdrop-blur-sm px-3">
                     <div className="flex items-center gap-3">
                       <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#FF4D8D]/18 text-[#FF4D8D]"><Icons.Gift /></span>
                       <span className="text-[12px] font-black text-[#FF4D8D]">Allow Gifts</span>
@@ -359,24 +358,6 @@ const Home = () => {
               </div>
 
               <p className="mt-1 text-center text-[13px] font-semibold text-slate-300">Let the good vibes begin!</p>
-
-              <div className="mt-5 grid grid-cols-3 gap-3">
-                <div className="text-center">
-                  <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-[#FF4D8D]/15 text-[#FF4D8D]"><Icons.ShieldStar /></div>
-                  <p className="mt-2 text-[12px] font-black text-[#A855F7]">No Rules</p>
-                  <p className="text-[10px] font-semibold text-slate-400">Just Respect</p>
-                </div>
-                <div className="text-center">
-                  <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-[#FF4D8D]/15 text-[#FF4D8D]"><Icons.LockShield /></div>
-                  <p className="mt-2 text-[12px] font-black text-[#A855F7]">Safe & Secure</p>
-                  <p className="text-[10px] font-semibold text-slate-400">100% Moderated</p>
-                </div>
-                <div className="text-center">
-                  <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-[#6C3BFF]/20 text-[#8B5CF6]"><Icons.UsersGroup /></div>
-                  <p className="mt-2 text-[12px] font-black text-[#A855F7]">Real People</p>
-                  <p className="text-[10px] font-semibold text-slate-400">Real Connections</p>
-                </div>
-              </div>
             </div>
           </div>
         )}
@@ -386,8 +367,8 @@ const Home = () => {
           <div className="flex-1 overflow-y-auto px-4 pt-4 pb-24 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] scrollbar-none">
             <div className="flex flex-col gap-6">
 
-              {/* Boy Hero Banner */}
-              <div className="relative w-full rounded-2xl border mt-18 border-[#FF4D8D]/20 bg-linear-to-br from-[#2D1433] via-[#141021] to-[#0D111A] p-5 overflow-hidden shadow-lg flex items-center justify-between">
+              {/* Boy Hero Banner - Made gradient transparent and added blur */}
+              <div className="relative w-full rounded-2xl border mt-18 border-[#FF4D8D]/20 bg-linear-to-br from-[#2D1433]/70 via-[#141021]/70 to-[#0D111A]/70 backdrop-blur-md p-5 overflow-hidden shadow-lg flex items-center justify-between">
                 
                 {/* Static Background Glows */}
                 <div className="absolute top-0 right-0 -mr-10 -mt-10 h-32 w-32 rounded-full bg-[#FF4D8D] opacity-20"></div>
@@ -405,7 +386,6 @@ const Home = () => {
                   </button>
                 </div>
                 
-                {/* Embedded Mascot for Boy UI */}
                 <div className="relative z-10 flex h-24 w-24 shrink-0 items-center justify-center">
                   <img 
                     src="https://ik.imagekit.io/ufopzzlbh/addlovemodel.jpeg" 
@@ -418,7 +398,7 @@ const Home = () => {
               {/* Top Categories Scroll */}
               <div className="flex gap-3 overflow-x-auto pb-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] scrollbar-none">
                 {topCategories.map((c) => (
-                  <div key={c.id} className="min-w-33.75 shrink-0 cursor-pointer flex-col rounded-2xl border border-[#232336] bg-[#12131D] p-3 transition-colors hover:bg-[#1A1C29]">
+                  <div key={c.id} className="min-w-33.75 shrink-0 cursor-pointer flex-col rounded-2xl border border-[#232336] bg-[#12131D]/50 backdrop-blur-sm p-3 transition-colors hover:bg-[#1A1C29]/80">
                     <div className={`mb-2 flex h-8 w-8 items-center justify-center rounded-xl bg-white/5 ${c.color}`}>
                       {c.icon}
                     </div>
@@ -443,22 +423,19 @@ const Home = () => {
                 </div>
 
                 {isLoading ? (
-                  /* Loading Skeletons */
                   <div className="flex flex-col gap-3">
                     {[1, 2].map((n) => (
-                      <div key={n} className="flex h-27.5 w-full flex-col rounded-2xl border border-[#232336] bg-[#12131D] p-4 opacity-50"></div>
+                      <div key={n} className="flex h-27.5 w-full flex-col rounded-2xl border border-[#232336] bg-[#12131D]/50 backdrop-blur-sm p-4 opacity-50"></div>
                     ))}
                   </div>
                 ) : rooms && rooms.length > 0 ? (
-                  /* Exact Matching Room Card */
                   <div className="flex flex-col gap-4">
                     {rooms.map((room) => {
                       const isOccupied = room.status === 'occupied' || Boolean(room.currentBoy);
 
                       return (
-                        <div key={room.roomId || room._id} className={`relative rounded-[20px] border p-4 shadow-sm ${isOccupied ? 'border-yellow-400/25 bg-[#17151A]' : 'border-[#232336] bg-[#12131D]'}`}>
+                        <div key={room.roomId || room._id} className={`relative rounded-[20px] border p-4 shadow-sm backdrop-blur-md ${isOccupied ? 'border-yellow-400/25 bg-[#17151A]/60' : 'border-[#232336] bg-[#12131D]/60'}`}>
                           <div className="flex items-start justify-between">
-                            {/* Avatar & Info */}
                             <div className="flex gap-3.5">
                               <div className="relative shrink-0">
                                 <img
@@ -484,20 +461,9 @@ const Home = () => {
                                 <span className={`mt-1 w-fit rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${isOccupied ? 'border-yellow-400/25 bg-yellow-400/10 text-yellow-300' : 'border-emerald-400/25 bg-emerald-400/10 text-emerald-300'}`}>
                                   {isOccupied ? 'Occupied' : 'Available'}
                                 </span>
-
-                                {/* Audio Wave Visualizer & Listeners */}
-                                <div className="flex flex-col items-center justify-center transition-transform hover:scale-105">
-                                  <div className="bg-linear-to-b from-white to-[#FF4D8D] bg-clip-text text-2xl font-black text-transparent drop-shadow-[0_0_15px_rgba(255,77,141,0.8)]">
-                                    {room.totalFollowers || 0}
-                                  </div>
-                                  <div className="text-xs font-semibold tracking-widest text-[#FF4D8D] drop-shadow-[0_0_8px_rgba(255,77,141,0.6)]">
-                                    Followers
-                                  </div>
-                                </div>
                               </div>
                             </div>
 
-                            {/* Join Button */}
                             <div className="flex flex-col items-center justify-center gap-1.5 pt-1">
                               <button
                                 onClick={() => handleJoinRoom(room)}
@@ -521,7 +487,7 @@ const Home = () => {
                     })}
                   </div>
                 ) : (
-                  <div className="rounded-2xl border border-dashed border-[#232336] bg-[#12131D] px-4 py-8 text-center text-[13px] text-slate-400">
+                  <div className="rounded-2xl border border-dashed border-[#232336] bg-[#12131D]/50 backdrop-blur-sm px-4 py-8 text-center text-[13px] text-slate-400">
                     No active rooms right now. Check back soon!
                   </div>
                 )}
@@ -529,7 +495,7 @@ const Home = () => {
 
               {/* Only Girls Banner */}
               <div className="relative rounded-3xl bg-linear-to-r from-[#FF4D8D]/40 to-transparent p-px overflow-hidden">
-                <div className="flex items-center gap-3 rounded-3xl bg-[#120B15] px-4 py-3.5 relative z-10">
+                <div className="flex items-center gap-3 rounded-3xl bg-[#120B15]/80 backdrop-blur-sm px-4 py-3.5 relative z-10">
                   <div className="shrink-0 flex items-center justify-center h-10 w-10">
                     <Icons.HeartShield />
                   </div>
@@ -550,7 +516,7 @@ const Home = () => {
                 <h3 className="text-[15px] font-bold text-white px-1">Popular This Week</h3>
                 <div className="flex gap-2 overflow-x-auto pb-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] scrollbar-none">
                   {popularTagCards.map((tag) => (
-                    <div key={tag.id} className="min-w-30 shrink-0 rounded-2xl border border-[#232336] bg-[#12131D] p-3 flex flex-col items-center text-center gap-1.5 transition-colors hover:bg-[#1A1C29]">
+                    <div key={tag.id} className="min-w-30 shrink-0 rounded-2xl border border-[#232336] bg-[#12131D]/50 backdrop-blur-sm p-3 flex flex-col items-center text-center gap-1.5 transition-colors hover:bg-[#1A1C29]/80">
                       <div className="text-[22px] leading-none mb-1 drop-shadow-md">{tag.icon}</div>
                       <h4 className="text-[11px] font-bold text-white leading-tight">{tag.title}</h4>
                       <p className="text-[9px] font-medium text-slate-400">{tag.rooms}</p>
@@ -560,7 +526,7 @@ const Home = () => {
               </div>
 
               {/* Safety Priority Footer Banner */}
-              <div className="flex cursor-pointer items-center justify-between rounded-xl bg-[#12131D] border border-white/5 px-4 py-3 transition-colors hover:bg-white/5">
+              <div className="flex cursor-pointer items-center justify-between rounded-xl bg-[#12131D]/60 backdrop-blur-sm border border-white/5 px-4 py-3 transition-colors hover:bg-white/10">
                 <div className="flex items-center gap-3">
                   <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#FF4D8D]/15 text-[#FF4D8D]">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z" /></svg>
@@ -583,14 +549,14 @@ const Home = () => {
 
         {/* Error Handling */}
         {error && (
-          <p className="mx-6 mb-6 rounded-2xl border border-red-400/30 bg-red-500/10 px-4 py-3 text-sm text-red-200 text-center">
+          <p className="mx-6 mb-6 rounded-2xl border border-red-400/30 bg-red-500/20 backdrop-blur-md px-4 py-3 text-sm text-red-200 text-center">
             {error}
           </p>
         )}
 
         {/* Fallback for No Role */}
         {!isBoy && !isGirl && (
-          <div className="mt-6 rounded-2xl border border-dashed border-white/10 bg-white/5 px-4 py-6 text-center text-sm text-slate-400">
+          <div className="mt-6 rounded-2xl border border-dashed border-white/10 bg-white/5 backdrop-blur-sm px-4 py-6 text-center text-sm text-slate-400">
             No role found for this account.
           </div>
         )}

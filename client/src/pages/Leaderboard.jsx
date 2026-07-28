@@ -44,9 +44,9 @@ const Leaderboard = () => {
   );
 
   return (
-    <div className="min-h-screen bg-[#05000a] text-white font-sans relative pb-24 overflow-x-hidden">
+    <div className="min-h-screen bg-[url('./assets/leaderbord.png')]  text-white font-sans relative pb-24 overflow-x-hidden">
       {/* Background Starry effect (simulated with radial gradient & absolute dots if needed) */}
-      <div className="fixed inset-0 bg-[radial-gradient(circle_at_top,_#1a0b2e_0%,_#05000a_100%)] pointer-events-none z-0" />
+      <div className="fixed inset-0  pointer-events-none z-0" />
 
       {/* Sparkle background elements */}
       <div className="absolute top-20 left-10 w-1 h-1 bg-white rounded-full shadow-[0_0_5px_white]"></div>
@@ -86,7 +86,7 @@ const Leaderboard = () => {
                 : 'text-gray-500 border border-gray-800'
               }`}
           >
-            <span className="text-lg leading-none not-italic text-blue-400">♂</span> BOYS LEADERBOARD
+            <span className="text-lg leading-none not-italic text-blue-400"></span> BOYS LEADERBOARD
           </button>
           <button
             onClick={() => setActiveTab('girl')}
@@ -95,7 +95,7 @@ const Leaderboard = () => {
                 : 'text-gray-500 border border-gray-800'
               }`}
           >
-            <span className="text-lg leading-none not-italic text-pink-400">♀</span> GIRLS LEADERBOARD
+            <span className="text-lg leading-none not-italic text-pink-400"></span> GIRLS LEADERBOARD
           </button>
         </div>
 
@@ -198,7 +198,7 @@ const Leaderboard = () => {
                     <span className="font-bold italic text-[11px] uppercase tracking-wider text-center w-full truncate px-1">{user.fullName}</span>
                     <span className="text-[8px] text-gray-400 mt-1 mb-0.5 uppercase tracking-widest">{activeTab==="boy"?"Respect Points":"Rating"}</span>
                     <div className="flex items-center gap-1">
-                      <span className="font-bold text-sm">{user.ratingScore || 0}</span>
+                      <span className="font-bold text-sm">{user.averageRating || 0}</span>
                       {activeTab==='boy'?<img src={respact} className='h-5' alt="" />:'⭐'}
                     </div>
                   </div>
