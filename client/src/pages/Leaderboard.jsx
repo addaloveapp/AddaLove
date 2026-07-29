@@ -198,7 +198,7 @@ const Leaderboard = () => {
                     <span className="font-bold italic text-[11px] uppercase tracking-wider text-center w-full truncate px-1">{user.fullName}</span>
                     <span className="text-[8px] text-gray-400 mt-1 mb-0.5 uppercase tracking-widest">{activeTab==="boy"?"Respect Points":"Rating"}</span>
                     <div className="flex items-center gap-1">
-                      <span className="font-bold text-sm">{user.averageRating || 0}</span>
+                    {activeTab==='boy'?<span className="font-bold text-sm">{user.ratingScore || 0}</span>:  <span className="font-bold text-sm">{user.averageRating || 0}</span>}
                       {activeTab==='boy'?<img src={respact} className='h-5' alt="" />:'⭐'}
                     </div>
                   </div>
