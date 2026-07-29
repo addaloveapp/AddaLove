@@ -8,7 +8,7 @@ const transactionSchema = new mongoose.Schema({
     },
     receiverId: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
+        ref: 'Girls',
         required: true
     },
     coinAmount: {

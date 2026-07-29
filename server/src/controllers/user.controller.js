@@ -15,6 +15,7 @@ import mongoose from 'mongoose';
 import { userRateCalculate } from '../utils/calculateUserRateAVG.js';
 import axios from 'axios'
 import { respactPointCalculate } from '../utils/respactPointCalculate.js';
+import { calculateMiliScond } from '../utils/calculation.js';
 const sendOtp = asyncHandler(async (req, res) => {
     const { email, purpose } = req.body;
     if (!email) {
@@ -537,7 +538,7 @@ const currentUser = asyncHandler(async (req, res) => {
                 }
             }
         ]);
-
+       
         let userRank = 0;
         for (let i in leaderboard) {
             if (leaderboard[i]._id.toString() == req.user._id.toString()) {
@@ -554,7 +555,7 @@ const currentUser = asyncHandler(async (req, res) => {
             )
         );
     }
-
+    
     throw new ApiError(401, "Unauthorized");
 });
 
