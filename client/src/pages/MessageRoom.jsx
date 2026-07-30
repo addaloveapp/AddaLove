@@ -586,9 +586,6 @@ const MessageRoom = () => {
                         </>
                       )}
                     </button>
-                    <button className='flex h-[46px] w-[56px] items-center justify-center rounded-2xl border border-[#FF4D8D]/30 bg-transparent text-white transition hover:bg-[#FF4D8D]/10'>
-                      <Send size={18} />
-                    </button>
                   </div>
 
                   {/* Badges/Info row */}
