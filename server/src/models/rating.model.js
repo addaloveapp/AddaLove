@@ -24,10 +24,14 @@ const ratingSchema = new Schema({
     rating: {
         type: Number,
         required: true,
-        min: 1,
-        max: 5
+        min: 0.5
     }
 }, {timestamps: true});
+
+ratingSchema.index(
+    { ratedBy: 1, ratedUser: 1, userModel: 1, ratedUserModel: 1 },
+    { unique: true }
+);
 
 const Rating = model("Rating", ratingSchema);
 

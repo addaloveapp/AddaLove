@@ -4,6 +4,8 @@ import useUserStore from '../store/userStore.js';
 import useRoomStore from '../store/roomStore.js';
 import { MessageCircleMore } from 'lucide-react';
 import createRoomimg from "../assets/createRoom.png"
+import homeAndProfileMusic from '../assets/musics/homeAndProfile.mpeg';
+import PageMusicPlayer from '../components/PageMusicPlayer.jsx';
 const languages = ['Bengali', 'Hindi', 'Gujarati', 'English', 'Kannada', 'Marathi', 'Tamil', 'Telugu', 'Urdu', 'Punjabi'];
 
 const getRoomPath = (type, roomId) => {
@@ -136,13 +138,15 @@ const girlVibes = [
 
 const Home = () => {
   const navigate = useNavigate();
-  const { userRole } = useUserStore();
+  const { userRole, user } = useUserStore();
   const { isLoading, error, createRoom, joinRoom, rooms } = useRoomStore();
   const [roomType, setRoomType] = useState('message');
   const [selectedLanguages, setSelectedLanguages] = useState([]);
 
   const isBoy = useMemo(() => userRole === 'boy', [userRole]);
   const isGirl = useMemo(() => userRole === 'girl', [userRole]);
+  const getMinimumJoinCoins = (type) => (type === 'voice' ? 10 : type === 'message' ? 5 : 0);
+  const canJoinRoom = (room) => Number(user?.walletBlance || 0) >= getMinimumJoinCoins(room?.roomType);
 
   const handleLanguageChange = (language) => {
     setSelectedLanguages((currentLanguages) => {
@@ -175,6 +179,10 @@ const Home = () => {
       alert('This room is currently occupied. Try again shortly.');
       return;
     }
+    if (typeof targetRoom === 'object' && !canJoinRoom(targetRoom)) {
+      alert(`You need at least ${getMinimumJoinCoins(targetRoom.roomType)} coins to join this room.`);
+      return;
+    }
     if (!idToJoin || idToJoin.trim() === '') {
       alert('Please enter a room ID.');
       return;
@@ -189,6 +197,7 @@ const Home = () => {
 
   return (
     <div className={`min-h-screen ${isBoy || isGirl ? 'bg-[url("./assets/home.png")] bg-cover bg-center' : 'bg-bg-[url("./assets/home.png")] bg-cover bg-center'} text-white flex justify-center sm:items-center px-0 sm:px-4 sm:py-8`}>
+      <PageMusicPlayer src={homeAndProfileMusic} />
       {/* Changed background opacity and added backdrop-blur here */}
       <div className={`w-full max-w-md shadow-2xl relative overflow-hidden flex flex-col ${isBoy ? 'bg-[#0B0C13]/70 backdrop-blur-xl border-none sm:rounded-3xl sm:border sm:border-white/5' : isGirl ? 'bg-[#070812]/70 backdrop-blur-xl border-none sm:rounded-3xl sm:border sm:border-white/5' : 'bg-transparent backdrop-blur-xl rounded-3xl border border-white/10 p-6'}`}>
 
@@ -432,6 +441,8 @@ const Home = () => {
                   <div className="flex flex-col gap-4">
                     {rooms.map((room) => {
                       const isOccupied = room.status === 'occupied' || Boolean(room.currentBoy);
+                      const hasEnoughCoins = canJoinRoom(room);
+                      const isJoinDisabled = isOccupied || !hasEnoughCoins;
 
                       return (
                         <div key={room.roomId || room._id} className={`relative rounded-[20px] border p-4 shadow-sm backdrop-blur-md ${isOccupied ? 'border-yellow-400/25 bg-[#17151A]/60' : 'border-[#232336] bg-[#12131D]/60'}`}>
@@ -467,12 +478,13 @@ const Home = () => {
                             <div className="flex flex-col items-center justify-center gap-1.5 pt-1">
                               <button
                                 onClick={() => handleJoinRoom(room)}
-                                disabled={isOccupied}
-                                className={`flex h-[42px] w-[42px] items-center justify-center rounded-full shadow-[0_4px_14px_rgba(255,77,141,0.35)] transition-transform active:scale-95 ${isOccupied ? 'cursor-not-allowed bg-slate-700 opacity-60' : 'bg-linear-to-br from-[#4dffa6] to-[#55e11d] hover:scale-105'}`}
+                                disabled={isJoinDisabled}
+                                title={!hasEnoughCoins ? `Need ${getMinimumJoinCoins(room.roomType)} coins to join` : undefined}
+                                className={`flex h-[42px] w-[42px] items-center justify-center rounded-full shadow-[0_4px_14px_rgba(255,77,141,0.35)] transition-transform active:scale-95 ${isJoinDisabled ? 'cursor-not-allowed bg-slate-700 opacity-60' : 'bg-linear-to-br from-[#4dffa6] to-[#55e11d] hover:scale-105'}`}
                               >
                                 <Icons.Phone />
                               </button>
-                              <span className="text-[11px] font-medium text-slate-200">{isOccupied ? 'Busy' : 'Join'}</span>
+                              <span className="text-[11px] font-medium text-slate-200">{isOccupied ? 'Busy' : !hasEnoughCoins ? 'Low coins' : 'Join'}</span>
                             </div>
                           </div>
                           <div className="mt-4 flex flex-wrap gap-2">

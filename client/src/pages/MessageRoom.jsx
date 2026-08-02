@@ -14,12 +14,14 @@ import useReportStore from '../store/reportStore.js'
 import ReportPopup from '../components/ReportPopup.jsx'
 import useRatingStore from '../store/ratingStore.js'
 import RatingPopup from '../components/RatingPopup.jsx'
+import Emoji from '../components/Emoji.jsx'
 
 const MessageRoom = () => {
   const { roomId } = useParams()
   const navigate = useNavigate()
-  const { user, userRole } = useUserStore()
+  const { user, userRole, fetchUser } = useUserStore()
   const [messageText, setMessageText] = useState('')
+  const [isSendingMessage, setIsSendingMessage] = useState(false)
   const [isLeaving, setIsLeaving] = useState(false)
   const [isBoyInside, setIsBoyInside] = useState(userRole === 'boy')
   const [boyProfile, setBoyProfile] = useState(null)
@@ -36,6 +38,7 @@ const MessageRoom = () => {
   const [ratingTarget, setRatingTarget] = useState(null)
   const [afterRatingAction, setAfterRatingAction] = useState(null)
   const messagesEndRef = useRef(null)
+  const isSendingMessageRef = useRef(false)
   const hasPendingRatingRef = useRef(false)
   const suppressCloseRatingRef = useRef(false)
   const boyProfileRef = useRef(null)
@@ -52,11 +55,15 @@ const MessageRoom = () => {
   const { createRating, checkRating, isLoading: isRatingSubmitting } = useRatingStore()
 
   const handleSendMessage = async () => {
-    if (!isBoyInside) return
+    // A ref is set synchronously so a second click cannot start another
+    // request before React has a chance to disable the button.
+    if (!isBoyInside || isSendingMessageRef.current) return
 
     const trimmedMessage = messageText.trim()
     if (!trimmedMessage) return
 
+    isSendingMessageRef.current = true
+    setIsSendingMessage(true)
     try {
       await sendMessageToServer(roomId, {
         text: trimmedMessage,
@@ -65,6 +72,24 @@ const MessageRoom = () => {
       setMessageText('')
     } catch (error) {
       console.error('Error sending message:', error)
+    } finally {
+      isSendingMessageRef.current = false
+      setIsSendingMessage(false)
+    }
+  }
+
+  const handleEmojiSelect = async (emoji) => {
+    if (!isBoyInside || isSendingMessageRef.current) return
+
+    isSendingMessageRef.current = true
+    setIsSendingMessage(true)
+    try {
+      await sendMessageToServer(roomId, { text: emoji, messageType: 'emoji' })
+    } catch (error) {
+      console.error('Error sending emoji:', error)
+    } finally {
+      isSendingMessageRef.current = false
+      setIsSendingMessage(false)
     }
   }
 
@@ -80,6 +105,7 @@ const MessageRoom = () => {
     if (action === 'destroyThenExit') {
       suppressCloseRatingRef.current = true
       await destroyRoom(roomId)
+      await fetchUser()
       exitRoom()
       return
     }
@@ -88,26 +114,28 @@ const MessageRoom = () => {
       suppressCloseRatingRef.current = true
       exitRoom()
     }
-  }, [destroyRoom, exitRoom, roomId])
+  }, [destroyRoom, exitRoom, fetchUser, roomId])
 
   const openRatingPopup = useCallback(async (targetUser, action = null) => {
     if (!targetUser?._id || hasPendingRatingRef.current) return
 
-    try {
-      const hasRated = await checkRating(targetUser._id)
-      if (hasRated) {
-        await runAfterRatingAction(action)
-        return
+    if (userRole !== 'girl') {
+      try {
+        const hasRated = await checkRating(targetUser._id)
+        if (hasRated) {
+          await runAfterRatingAction(action)
+          return
+        }
+      } catch (error) {
+        console.error('Error checking rating:', error)
       }
-    } catch (error) {
-      console.error('Error checking rating:', error)
     }
 
     hasPendingRatingRef.current = true
     setRatingTarget(targetUser)
     setAfterRatingAction(action)
     setIsRatingOpen(true)
-  }, [checkRating, runAfterRatingAction])
+  }, [checkRating, runAfterRatingAction, userRole])
 
   const completeRatingFlow = useCallback(async () => {
     const action = afterRatingAction
@@ -126,6 +154,7 @@ const MessageRoom = () => {
     try {
       setIsLeaving(true)
       await leaveRoom(roomId)
+      await fetchUser()
       if (girlProfile?._id) {
         await openRatingPopup(girlProfile, 'exit')
       } else {
@@ -148,6 +177,7 @@ const MessageRoom = () => {
       }
       setIsLeaving(true)
       await destroyRoom(roomId)
+      await fetchUser()
       exitRoom()
     } catch (error) {
       console.error('Error destroying room:', error)
@@ -336,6 +366,7 @@ const MessageRoom = () => {
 
     const handleRoomClosed = (data) => {
       if (data.roomId !== roomId) return
+      fetchUser().catch(() => {})
 
       if (suppressCloseRatingRef.current) {
         exitRoom()
@@ -368,6 +399,7 @@ const MessageRoom = () => {
 
     const handleBoyLeft = (data) => {
       if (data.roomId !== roomId) return
+      fetchUser().catch(() => {})
 
       const leavingBoy = boyProfileRef.current
       setIsBoyInside(false)
@@ -399,7 +431,7 @@ const MessageRoom = () => {
       socket.off('boy_left', handleBoyLeft)
       clearMessages()
     }
-  }, [roomId, userRole, user, getRoomDetails, getMessages, addMessage, clearMessages, exitRoom, openRatingPopup])
+  }, [roomId, userRole, user, fetchUser, getRoomDetails, getMessages, addMessage, clearMessages, exitRoom, openRatingPopup])
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -610,6 +642,7 @@ const MessageRoom = () => {
                   <p className='text-center text-xs text-slate-500'>No messages yet. Say hello!</p>
                 ) : messages.map((message, index) => {
                   const ownMessage = isOwnMessage(message)
+                  const isEmojiMessage = message.messageType === 'emoji'
                   const messageTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) // Format as needed based on your message object
 
                   return (
@@ -625,13 +658,15 @@ const MessageRoom = () => {
                         </div>
                       )}
                       
-                      <div className={`relative max-w-[75%] px-4 py-3 text-sm shadow-md sm:max-w-[65%] ${
+                      <div className={`relative ${isEmojiMessage ? 'px-2 py-1' : 'max-w-[75%] px-4 py-3 text-sm shadow-md sm:max-w-[65%]'} ${
                         ownMessage 
-                          ? 'rounded-3xl rounded-br-sm bg-linear-to-r from-[#FF4D8D] to-purple-500 text-white shadow-[0_4px_15px_rgba(255,77,141,0.15)]' 
-                          : 'rounded-3xl rounded-bl-sm border border-blue-500/20 bg-[#121936] text-slate-200'
+                          ? isEmojiMessage ? '' : 'rounded-3xl rounded-br-sm bg-linear-to-r from-[#FF4D8D] to-purple-500 text-white shadow-[0_4px_15px_rgba(255,77,141,0.15)]'
+                          : isEmojiMessage ? '' : 'rounded-3xl rounded-bl-sm border border-blue-500/20 bg-[#121936] text-slate-200'
                         }`}
                       >
-                        <p className="pr-12">{message.messageType === 'text' ? message.text : message.fileUrl}</p>
+                        <p className={isEmojiMessage ? 'pr-8 text-6xl leading-none drop-shadow-[0_4px_8px_rgba(0,0,0,0.35)]' : 'pr-12'}>
+                          {['text', 'emoji'].includes(message.messageType) ? message.text : message.fileUrl}
+                        </p>
                         
                         <div className="absolute bottom-1.5 right-3 flex items-center gap-1">
                           <span className={`text-[9px] ${ownMessage ? 'text-white/80' : 'text-slate-400'}`}>
@@ -657,34 +692,33 @@ const MessageRoom = () => {
               : 'border-white/5 bg-white/5 opacity-60'
             }`}
           >
-            <button className="flex h-9 w-9 items-center justify-center rounded-full border border-[#FF4D8D]/40 bg-[#FF4D8D]/10 text-[#FF4D8D] transition hover:bg-[#FF4D8D]/20">
-              <Plus size={20} />
-            </button>
+            <Emoji onSelect={handleEmojiSelect} />
             
             <input
               type='text'
               value={messageText}
               placeholder={inputPlaceholder}
-              disabled={!isBoyInside}
+              disabled={!isBoyInside || isSendingMessage}
               className='min-w-0 flex-1 bg-transparent px-2 text-sm text-white outline-none placeholder:text-slate-500 disabled:cursor-not-allowed'
               onChange={(event) => setMessageText(event.target.value)}
               onKeyDown={(event) => {
-                if (event.key === 'Enter') handleSendMessage()
+                if (event.key === 'Enter') {
+                  event.preventDefault()
+                  handleSendMessage()
+                }
               }}
             />
             
-            <button className="flex h-9 w-9 items-center justify-center text-slate-400 transition hover:text-[#FF4D8D]">
-              <Smile size={22} />
-            </button>
+            
             
             <button
               type='button'
               aria-label='Send message'
               onClick={handleSendMessage}
-              disabled={!isBoyInside || !messageText.trim()}
+              disabled={!isBoyInside || !messageText.trim() || isSendingMessage}
               className='flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-full bg-linear-to-r from-[#FF4D8D] to-purple-500 text-white shadow-lg transition hover:scale-105 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:scale-100'
             >
-              <Send size={18} className="ml-0.5" />
+              {isSendingMessage ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} className="ml-0.5" />}
             </button>
           </div>
           {!isBoyInside && userRole === 'girl' && (

@@ -10,6 +10,10 @@ const createRating = asyncHandler(async (req, res) => {
     if (!ratedUserId || !rating) {
         throw new ApiError(400, 'ratedUserId and rating are required');
     }
+    const ratingValue = Number(rating);
+    if (!Number.isFinite(ratingValue) || ratingValue < 0.5 || ratingValue > 5) {
+        throw new ApiError(400, 'Rating must be between 0.5 and 5');
+    }
 
     const raterId = req.user._id;
     const raterModel = req.userType === 'girl' ? 'Girls' : 'User';
@@ -21,12 +25,29 @@ const createRating = asyncHandler(async (req, res) => {
         throw new ApiError(404, 'Rated user not found');
     }
 
-    const existingRating = await Rating.findOne({
+    const ratingFilter = {
         ratedBy: raterId,
         ratedUser: ratedUserId,
         userModel: raterModel,
         ratedUserModel
-    });
+    };
+
+    if (req.userType === 'girl') {
+        const ratingRecord = await Rating.findOneAndUpdate(
+            ratingFilter,
+            {
+                $inc: { rating: ratingValue },
+                $setOnInsert: ratingFilter
+            },
+            { new: true, upsert: true, runValidators: true }
+        );
+
+        return res.status(200).json(
+            new ApiResponse(200, ratingRecord, 'Rating points added successfully')
+        );
+    }
+
+    const existingRating = await Rating.findOne(ratingFilter);
     if (existingRating) {
         throw new ApiError(400, 'You have already rated this user');
     }
@@ -36,7 +57,7 @@ const createRating = asyncHandler(async (req, res) => {
         ratedUser: ratedUserId,
         userModel: raterModel,
         ratedUserModel,
-        rating
+        rating: ratingValue
     });
 
     return res.status(201).json(new ApiResponse(201, newRating, 'Rating created successfully'));

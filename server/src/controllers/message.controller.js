@@ -16,8 +16,8 @@ const sendMessage = asyncHandler(async (req, res) => {
     const senderId = isGirl ? req.user._id : req.user._id;
     const senderModel = isGirl ? 'Girls' : 'User';
 
-    if (!messageType || !['text', 'image', 'audio'].includes(messageType)) {
-        throw new ApiError(400, 'Invalid or missing messageType. Must be one of: text, image, audio');
+    if (!messageType || !['text', 'emoji', 'image', 'audio'].includes(messageType)) {
+        throw new ApiError(400, 'Invalid or missing messageType. Must be one of: text, emoji, image, audio');
     }
 
     const room = await Room.findOne({ roomId });
@@ -49,9 +49,9 @@ const sendMessage = asyncHandler(async (req, res) => {
     let fileId = null;
 
     // Handle file upload for image/audio
-    if (messageType === 'text') {
+    if (messageType === 'text' || messageType === 'emoji') {
         if (!text || !text.trim()) {
-            throw new ApiError(400, 'text is required for text messages');
+            throw new ApiError(400, `text is required for ${messageType} messages`);
         }
     } else {
         if (!req.file) {
@@ -69,7 +69,7 @@ const sendMessage = asyncHandler(async (req, res) => {
         sender: senderId,
         senderModel,
         messageType,
-        text: messageType === 'text' ? text.trim() : null,
+        text: ['text', 'emoji'].includes(messageType) ? text.trim() : null,
         fileUrl,
         fileId
     });
