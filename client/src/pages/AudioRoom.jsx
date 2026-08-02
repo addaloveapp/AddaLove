@@ -445,9 +445,39 @@ export default function AudioRoom() {
     };
   }, [addPendingCandidates, createOffer, ensureLocalStream, ensurePeer, exitRoom, fetchUser, getRoomDetails, isGirl, navigate, openRatingPopup, roomId, stopPeer, user?._id]);
 
+  const applySpeakerOutput = useCallback((speakerOn) => {
+    // In a regular browser, a page cannot choose a physical audio route, so
+    // "speaker off" mutes the remote call audio. The Android WebView bridge
+    // can route audio between the loudspeaker and earpiece instead.
+    const androidAudio = typeof window !== 'undefined' ? window.AddaLoveAudio : null;
+    const hasAndroidAudioBridge = typeof androidAudio?.setSpeakerphoneOn === 'function';
+
+    if (hasAndroidAudioBridge) {
+      try {
+        androidAudio.setSpeakerphoneOn(speakerOn);
+      } catch (bridgeError) {
+        console.warn('Could not change Android speaker output:', bridgeError);
+      }
+    }
+
+    if (remoteAudioRef.current) {
+      remoteAudioRef.current.muted = hasAndroidAudioBridge ? false : !speakerOn;
+    }
+
+    // This event also supports Capacitor/Cordova or another Android wrapper
+    // without coupling the React app to a particular native framework.
+    window.dispatchEvent(new CustomEvent('addalove:speaker-output-change', {
+      detail: { speakerOn },
+    }));
+  }, []);
+
   useEffect(() => {
-    if (remoteAudioRef.current) remoteAudioRef.current.muted = !isSpeakerOn;
-  }, [isSpeakerOn]);
+    applySpeakerOutput(isSpeakerOn);
+  }, [applySpeakerOutput, isSpeakerOn]);
+
+  const toggleSpeaker = () => {
+    setIsSpeakerOn((currentValue) => !currentValue);
+  };
 
   const toggleMicrophone = () => {
     const nextMuted = !isMuted;
@@ -688,12 +718,18 @@ export default function AudioRoom() {
           </div>
 
           {/* Speaker Button */}
-          <div className="flex flex-col items-center gap-2 cursor-pointer group" onClick={() => setIsSpeakerOn(!isSpeakerOn)}>
+          <button
+            type="button"
+            className="flex flex-col items-center gap-2 cursor-pointer group"
+            onClick={toggleSpeaker}
+            aria-label={isSpeakerOn ? 'Turn speaker off' : 'Turn speaker on'}
+            aria-pressed={isSpeakerOn}
+          >
             <div className={`flex h-16 w-16 items-center justify-center rounded-full border-[1.5px] transition-all duration-300 ${!isSpeakerOn ? 'border-[#4DA6FF] text-[#4DA6FF] shadow-[0_0_15px_rgba(77,166,255,0.3)]' : 'border-white/10 text-white group-hover:border-white/30'}`}>
               {isSpeakerOn ? <Volume2 size={26} /> : <VolumeX size={26} />}
             </div>
             <span className="text-[11px] font-medium text-slate-400 group-hover:text-white transition-colors">Speaker</span>
-          </div>
+          </button>
 
           {/* End Call Button */}
           <div className="flex flex-col items-center gap-2 cursor-pointer group" onClick={handleExit}>
