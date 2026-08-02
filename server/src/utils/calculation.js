@@ -17,8 +17,8 @@ const calculateMiliScond = async (userId, roomType) => {
     const userBalance = user.walletBlance || 0;
 
     const coinPerMinute = {
-        chatRoom: 12,
-        audioRoom: 20,
+        message: 12,
+        voice: 20,
     };
 
     if (!coinPerMinute[roomType]) {
@@ -41,8 +41,8 @@ const moneyTransfer = async (boyId, girlId, time, roomType) => {
         session.startTransaction();
 
         const chargePerMinute = {
-            chatRoom: 12,
-            audioRoom: 20,
+            message: 12,
+            voice: 20,
         };
 
         if (!chargePerMinute[roomType]) {

@@ -24,7 +24,7 @@ const fallbackAvatar = (name = 'User') =>
 export default function AudioRoom() {
   const { roomId } = useParams();
   const navigate = useNavigate();
-  const { user, userRole } = useUserStore();
+  const { user, userRole, fetchUser } = useUserStore();
   const { getRoomDetails, leaveRoom, destroyRoom, resetRoomState } = useRoomStore();
   const [girlProfile, setGirlProfile] = useState(null);
   const [boyProfile, setBoyProfile] = useState(null);
@@ -159,6 +159,7 @@ export default function AudioRoom() {
     if (action === 'destroyThenExit') {
       suppressCloseRatingRef.current = true;
       await destroyRoom(roomId);
+      await fetchUser();
       exitRoom();
       return;
     }
@@ -167,26 +168,28 @@ export default function AudioRoom() {
       suppressCloseRatingRef.current = true;
       exitRoom();
     }
-  }, [destroyRoom, exitRoom, roomId]);
+  }, [destroyRoom, exitRoom, fetchUser, roomId]);
 
   const openRatingPopup = useCallback(async (targetUser, action = null) => {
     if (!targetUser?._id || hasPendingRatingRef.current) return;
 
-    try {
-      const hasRated = await checkRating(targetUser._id);
-      if (hasRated) {
-        await runAfterRatingAction(action);
-        return;
+    if (userRole !== 'girl') {
+      try {
+        const hasRated = await checkRating(targetUser._id);
+        if (hasRated) {
+          await runAfterRatingAction(action);
+          return;
+        }
+      } catch (checkError) {
+        console.error('Error checking rating:', checkError);
       }
-    } catch (checkError) {
-      console.error('Error checking rating:', checkError);
     }
 
     hasPendingRatingRef.current = true;
     setRatingTarget(targetUser);
     setAfterRatingAction(action);
     setIsRatingOpen(true);
-  }, [checkRating, runAfterRatingAction]);
+  }, [checkRating, runAfterRatingAction, userRole]);
 
   const completeRatingFlow = useCallback(async () => {
     const action = afterRatingAction;
@@ -209,11 +212,13 @@ export default function AudioRoom() {
           return;
         }
         await destroyRoom(roomId);
+        await fetchUser();
         exitRoom();
         return;
       }
 
       await leaveRoom(roomId);
+      await fetchUser();
       if (girlProfile?._id) {
         await openRatingPopup(girlProfile, 'exit');
       } else {
@@ -336,6 +341,7 @@ export default function AudioRoom() {
     };
     const handleBoyLeft = (data) => {
       if (data.roomId !== roomId) return;
+      fetchUser().catch(() => {});
       const leavingBoy = boyProfileRef.current;
       stopPeer();
       
@@ -352,6 +358,7 @@ export default function AudioRoom() {
     };
     const handleRoomClosed = (data) => {
       if (data.roomId !== roomId) return;
+      fetchUser().catch(() => {});
 
       if (suppressCloseRatingRef.current) {
         exitRoom();
@@ -436,7 +443,7 @@ export default function AudioRoom() {
       localStreamRef.current?.getTracks().forEach((track) => track.stop());
       localStreamRef.current = null;
     };
-  }, [addPendingCandidates, createOffer, ensureLocalStream, ensurePeer, exitRoom, getRoomDetails, isGirl, navigate, openRatingPopup, roomId, stopPeer, user?._id]);
+  }, [addPendingCandidates, createOffer, ensureLocalStream, ensurePeer, exitRoom, fetchUser, getRoomDetails, isGirl, navigate, openRatingPopup, roomId, stopPeer, user?._id]);
 
   useEffect(() => {
     if (remoteAudioRef.current) remoteAudioRef.current.muted = !isSpeakerOn;

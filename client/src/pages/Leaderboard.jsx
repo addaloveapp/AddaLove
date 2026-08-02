@@ -13,6 +13,9 @@ import useUserStore from '../store/userStore';
 import useLeaderboardStore from '../store/leaderbordStore.js';
 import ladday from "../assets/ladday.png";
 import respact from "../assets/respectpointlogo.png"
+import boyLeaderboardMusic from '../assets/musics/boyLeaderbord.mpeg';
+import girlLeaderboardMusic from '../assets/musics/girlLeaderbord.mpeg';
+import PageMusicPlayer from '../components/PageMusicPlayer.jsx';
 
 const Leaderboard = () => {
   const [activeTab, setActiveTab] = useState('boy');
@@ -22,6 +25,7 @@ const Leaderboard = () => {
 
   const isBoy = useMemo(() => userRole === 'boy', [userRole]);
   const isGirl = useMemo(() => userRole === 'girl', [userRole]);
+  const leaderboardMusic = isGirl ? girlLeaderboardMusic : boyLeaderboardMusic;
   useEffect(() => {
     fetchLeaderboard(activeTab);
   }, [activeTab, fetchLeaderboard]);
@@ -45,6 +49,7 @@ const Leaderboard = () => {
 
   return (
     <div className="min-h-screen bg-[url('./assets/leaderbord.png')]  text-white font-sans relative pb-24 overflow-x-hidden">
+      {userRole && <PageMusicPlayer src={leaderboardMusic} />}
       {/* Background Starry effect (simulated with radial gradient & absolute dots if needed) */}
       <div className="fixed inset-0  pointer-events-none z-0" />
 

@@ -1,30 +1,35 @@
 import React, { useState } from 'react';
-import { 
-  Info, 
-  ChevronRight, 
-  Building2, 
-  CheckCircle2, 
+import {
+  Info,
+  ChevronRight,
+  Building2,
+  CheckCircle2,
   Circle,
-  ShieldCheck, 
-  Clock, 
+  ShieldCheck,
+  Clock,
   Receipt,
   ArrowRight,
   BadgeCheck,
   Zap,
   Coins
 } from 'lucide-react';
-import '../styles/WithdrawPage.css'; 
+import '../styles/WithdrawPage.css';
 import earning from '../assets/earning.png';
 import useUserStore from '../store/userStore';
 
 const Earning = () => {
   const [amount, setAmount] = useState('');
   const [withdrawMethod, setWithdrawMethod] = useState('bank');
-  const { user: useralldata , userRole} = useUserStore();
+  const { user: useralldata, userRole } = useUserStore();
 
   const handleQuickAmount = (value) => {
     setAmount(value);
   };
+
+  function coinToMoney(coins) {
+    const ratePerCoin = 0.09;
+    return (coins * ratePerCoin).toFixed(2);
+  }
 
   return (
     <div className="withdraw-wrapper">
@@ -32,7 +37,7 @@ const Earning = () => {
       <div className="navbar-spacer"></div>
 
       <div className="withdraw-content">
-        
+
         {/* Header Section */}
         <div className="header-section">
           <div className="header-text">
@@ -43,10 +48,10 @@ const Earning = () => {
           </div>
           {/* Top right image placeholder for wallet illustration */}
           <div className="header-image-container">
-            <img 
-              src={earning} 
-              alt="Wallet" 
-              className="wallet-illustration" 
+            <img
+              src={earning}
+              alt="Wallet"
+              className="wallet-illustration"
             />
           </div>
         </div>
@@ -56,7 +61,7 @@ const Earning = () => {
           <span className="balance-label">AVAILABLE BALANCE</span>
           <div className="balance-amount">
             <span className="currency-symbol">₹</span>
-            <span className="amount">{useralldata?.walletBlance}</span>
+            <span className="amount">{coinToMoney(useralldata?.walletBlance)}</span>
           </div>
           <div className="respect-points-pill">
             <span>= 12,500 Respect Points</span>
@@ -67,7 +72,7 @@ const Earning = () => {
         {/* NEW: Coin Exchange Rate Section */}
         <div className="exchange-rate-banner">
           <span className="rate-text">🪙1</span>
-          <span className="rate-text">= ₹1</span>
+          <span className="rate-text">= ₹0.09</span>
         </div>
 
         {/* Amount Input */}
@@ -75,19 +80,19 @@ const Earning = () => {
           <label className="section-label">ENTER AMOUNT</label>
           <div className="amount-input-wrapper">
             <span className="input-currency">₹</span>
-            <input 
-              type="number" 
-              className="amount-input" 
-              placeholder="0.00" 
-              value={amount} 
-              onChange={(e) => setAmount(e.target.value)} 
+            <input
+              type="number"
+              className="amount-input"
+              placeholder="0.00"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
             />
           </div>
           <div className="min-withdrawal">
             <ShieldCheck size={14} className="min-icon" />
             <span>Minimum withdrawal amount: ₹200</span>
           </div>
-          
+
           <div className="quick-amounts">
             <button className="quick-btn" onClick={() => handleQuickAmount('200')}>₹200</button>
             <button className="quick-btn" onClick={() => handleQuickAmount('500')}>₹500</button>
@@ -100,10 +105,10 @@ const Earning = () => {
         {/* Withdrawal Methods */}
         <div className="method-section">
           <label className="section-label">WITHDRAWAL METHOD</label>
-          
+
           <div className="method-options">
             {/* Bank Transfer Option */}
-            <div 
+            <div
               className={`method-card ${withdrawMethod === 'bank' ? 'active' : ''}`}
               onClick={() => setWithdrawMethod('bank')}
             >
@@ -128,7 +133,7 @@ const Earning = () => {
             </div>
 
             {/* UPI Option */}
-            <div 
+            <div
               className={`method-card ${withdrawMethod === 'upi' ? 'active' : ''}`}
               onClick={() => setWithdrawMethod('upi')}
             >

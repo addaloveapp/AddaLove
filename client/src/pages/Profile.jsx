@@ -4,6 +4,8 @@ import useUserStore from '../store/userStore';
 import { LogOut, Bell, ChevronLeft, CheckCircle2, Star, Trophy, Users, UserCheck, Wallet, Verified } from 'lucide-react';
 import { handleError } from '../components/ErrorMessage';
 import respact from "../assets/respectpointlogo.png"
+import homeAndProfileMusic from '../assets/musics/homeAndProfile.mpeg';
+import PageMusicPlayer from '../components/PageMusicPlayer.jsx';
 export default function Profile() {
   const { user: useralldata, userRole, userRate , userRank} = useUserStore();
   const [top,setTop]=useState(false)
@@ -88,6 +90,7 @@ export default function Profile() {
   if (!useralldata) {
     return (
       <div className="min-h-screen bg-[#090514] py-12 px-4 flex justify-center items-center">
+        <PageMusicPlayer src={homeAndProfileMusic} />
         <div className="w-full max-w-2xl bg-[#130E29] rounded-3xl p-8 animate-pulse border border-purple-900/20">
           <div className="flex items-center gap-6 mb-8">
             <div className="w-24 h-24 rounded-full bg-purple-950/50"></div>
@@ -108,6 +111,7 @@ export default function Profile() {
 
   return (
     <div className="min-h-screen bg-[#090514] text-white font-sans selection:bg-[#EC4899] selection:text-white pb-24">
+      <PageMusicPlayer src={homeAndProfileMusic} />
 
       {/* Top Navigation Bar Header from IMG-20260626-WA0012.jpg */}
 

@@ -18,7 +18,7 @@ const messageSchema = new Schema({
     messageType: {
         type: String,
         required: true,
-        enum: ['text', 'image', 'audio']
+        enum: ['text', 'emoji', 'image', 'audio']
     },
     // For text messages
     text: {

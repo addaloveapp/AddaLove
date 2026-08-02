@@ -10,21 +10,11 @@ import { io } from '../socket/socket.js';
 import mongoose from 'mongoose';
 import { respactPointCalculate } from '../utils/respactPointCalculate.js';
 import { userRateCalculate } from '../utils/calculateUserRateAVG.js';
-
-const SESSION_DURATIONS_SECONDS = {
-    '20_sec': 20,
-    '30_sec': 30,
-    '1_min': 60,
-    '2_min': 2 * 60,
-    '5_min': 5 * 60,
-    '10_min': 10 * 60
-};
+import { moneyTransfer, calculateMiliScond } from '../utils/calculation.js'
+import User from '../models/user.model.js';
 
 const ALLOWED_LANGUAGES = ['Bengali', 'Hindi', 'Gujarati', 'English', 'Kannada', 'Marathi', 'Tamil', 'Telugu', 'Urdu', 'Punjabi'];
-
-// Change only this key when you want a different hardcoded session time.
-const ACTIVE_SESSION_DURATION_KEY = '5_min';
-const ACTIVE_SESSION_DURATION_SECONDS = SESSION_DURATIONS_SECONDS[ACTIVE_SESSION_DURATION_KEY];
+const MINIMUM_JOIN_COINS = { message: 5, voice: 10 };
 const activeRoomTimers = new Map();
 
 const clearRoomTimer = (roomId) => {
@@ -35,11 +25,14 @@ const clearRoomTimer = (roomId) => {
     }
 };
 
-const createVisitHistory = async (room, boyId, exitReason) => {
-    const leftAt = new Date();
-    const durationSeconds = room.currentBoyJoinedAt
+const getSessionDurationSeconds = (room, leftAt = new Date()) => (
+    room.currentBoyJoinedAt
         ? Math.max(0, Math.round((leftAt - room.currentBoyJoinedAt) / 1000))
-        : 0;
+        : 0
+);
+
+const createVisitHistory = async (room, boyId, exitReason, leftAt = new Date()) => {
+    const durationSeconds = getSessionDurationSeconds(room, leftAt);
 
     await VisitHistory.create({
         roomId: room.roomId,
@@ -55,9 +48,59 @@ const createVisitHistory = async (room, boyId, exitReason) => {
     return { durationSeconds };
 };
 
+const processSessionPayment = async (room, boyId, durationSeconds) => {
+    const paymentClaim = await Room.collection.updateOne(
+        {
+            _id: room._id,
+            currentBoy: new mongoose.Types.ObjectId(boyId),
+            $or: [
+                { currentSessionPaymentStatus: 'pending' },
+                { currentSessionPaymentStatus: { $exists: false } },
+                { currentSessionPaymentStatus: null }
+            ]
+        },
+        { $set: { currentSessionPaymentStatus: 'processing' } }
+    );
+
+    if (paymentClaim.modifiedCount !== 1) {
+        const currentRoom = await Room.collection.findOne(
+            { _id: room._id },
+            { projection: { currentSessionPaymentStatus: 1 } }
+        );
+
+        return currentRoom?.currentSessionPaymentStatus === 'settled'
+            ? 'already_settled'
+            : 'processing';
+    }
+
+    try {
+        await moneyTransfer(boyId, room.createdBy, durationSeconds, room.roomType);
+    } catch (error) {
+        await Room.collection.updateOne(
+            { _id: room._id, currentSessionPaymentStatus: 'processing' },
+            { $set: { currentSessionPaymentStatus: 'pending' } }
+        );
+        throw error;
+    }
+
+    await Room.collection.updateOne(
+        { _id: room._id, currentSessionPaymentStatus: 'processing' },
+        { $set: { currentSessionPaymentStatus: 'settled' } }
+    );
+    return 'settled';
+};
+
 const completeBoySession = async (room, boyId, exitReason) => {
     const roomId = room.roomId;
-    const { durationSeconds } = await createVisitHistory(room, boyId, exitReason);
+    const leftAt = new Date();
+    const durationSeconds = getSessionDurationSeconds(room, leftAt);
+
+    const paymentStatus = await processSessionPayment(room, boyId, durationSeconds);
+    if (paymentStatus !== 'settled') {
+        return { durationSeconds, alreadyFinalizing: true };
+    }
+
+    await createVisitHistory(room, boyId, exitReason, leftAt);
 
     clearRoomTimer(roomId);
 
@@ -259,11 +302,21 @@ const destroyRoom = asyncHandler(async (req, res) => {
     }
 
     if (room.currentBoy) {
-        await createVisitHistory(room, room.currentBoy, 'room_destroyed');
-        io.to(room.currentBoy.toString()).emit('room_destroyed', {
-            roomId,
-            message: 'The room has been destroyed by the host'
-        });
+        const leftAt = new Date();
+        const durationSeconds = getSessionDurationSeconds(room, leftAt);
+        const paymentStatus = await processSessionPayment(room, room.currentBoy, durationSeconds);
+
+        if (paymentStatus === 'processing') {
+            throw new ApiError(409, 'The room session is being finalized. Please try again shortly.');
+        }
+
+        if (paymentStatus === 'settled') {
+            await createVisitHistory(room, room.currentBoy, 'room_destroyed', leftAt);
+            io.to(room.currentBoy.toString()).emit('room_destroyed', {
+                roomId,
+                message: 'The room has been destroyed by the host'
+            });
+        }
     }
 
     await Message.deleteMany({ roomId });
@@ -296,7 +349,24 @@ const joinRoom = asyncHandler(async (req, res) => {
         throw new ApiError(409, 'You are already inside another room');
     }
 
-    const sessionDurationMs = ACTIVE_SESSION_DURATION_SECONDS * 1000;
+    const roomToJoin = await Room.findOne({ roomId, status: 'open', currentBoy: null })
+        .select('roomType');
+    if (!roomToJoin) {
+        const roomExists = await Room.exists({ roomId });
+        if (!roomExists) throw new ApiError(404, 'Room not found');
+        throw new ApiError(409, 'Room is currently occupied. Try again shortly.');
+    }
+
+    const minimumCoins = MINIMUM_JOIN_COINS[roomToJoin.roomType];
+    if (minimumCoins) {
+        const boy = await User.findById(boyId).select('walletBlance').lean();
+        if (!boy || Number(boy.walletBlance || 0) < minimumCoins) {
+            throw new ApiError(403, `You need at least ${minimumCoins} coins to join this room`);
+        }
+    }
+
+    const boyDurationMs = await calculateMiliScond(boyId, roomToJoin.roomType);
+    const sessionDurationMs = boyDurationMs;
     const joinedAt = new Date();
     const room = await Room.findOneAndUpdate(
         { roomId, status: 'open', currentBoy: null },
@@ -316,6 +386,11 @@ const joinRoom = asyncHandler(async (req, res) => {
         throw new ApiError(409, 'Room is currently occupied. Try again shortly.');
     }
 
+    await Room.collection.updateOne(
+        { _id: room._id, currentBoy: new mongoose.Types.ObjectId(boyId) },
+        { $set: { currentSessionPaymentStatus: 'pending' } }
+    );
+
     io.to(roomId).emit('boy_joined', {
         roomId,
         boyId,
@@ -330,7 +405,7 @@ const joinRoom = asyncHandler(async (req, res) => {
             roomId: room.roomId,
             roomType: room.roomType,
             sessionDurationMs,
-            sessionDurationSeconds: ACTIVE_SESSION_DURATION_SECONDS,
+            sessionDurationSeconds: sessionDurationMs / 1000,
             joinedAt: room.currentBoyJoinedAt
         }, 'Joined room successfully')
     );
@@ -366,7 +441,7 @@ const leaveRoom = asyncHandler(async (req, res) => {
 const getRoomDetails = asyncHandler(async (req, res) => {
     const { roomId } = req.params;
     const requesterId = new mongoose.Types.ObjectId(req.user._id);
-    
+
     let [room] = await Room.aggregate([
 
         {
@@ -564,7 +639,7 @@ const getRoomDetails = asyncHandler(async (req, res) => {
                             },
                             isFollowingGirl: { $gt: [{ $size: '$_boyFollowsGirl' }, 0] },
                             isFollowedByGirl: { $gt: [{ $size: '$_girlFollowsBoy' }, 0] },
-                         
+
                         }
                     }
                 }
@@ -575,22 +650,22 @@ const getRoomDetails = asyncHandler(async (req, res) => {
     if (!room) {
         throw new ApiError(404, 'Room not found');
     }
-    let RespactPoint=0;
+    let RespactPoint = 0;
     if (room.currentBoy?._id) {
-         RespactPoint = await respactPointCalculate(room.currentBoy?._id);
+        RespactPoint = await respactPointCalculate(room.currentBoy?._id);
 
     }
-    const RespectObj={
-        "RespactPoint":Number(RespactPoint)*2
+    const RespectObj = {
+        "RespactPoint": Number(RespactPoint) * 2
     }
     const AvgRating = await userRateCalculate(room.createdBy?._id)
-    const AvgObj={
-        "AvgRating":AvgRating
+    const AvgObj = {
+        "AvgRating": AvgRating
     }
 
     const isOwner = room.createdBy?._id?.toString() === requesterId.toString();
     const isCurrentBoy = room.currentBoy?._id?.toString() === requesterId.toString();
-     room= {...room, ...RespectObj ,...AvgObj}
+    room = { ...room, ...RespectObj, ...AvgObj }
     console.log(room)
 
     if (!isOwner && !isCurrentBoy) {
