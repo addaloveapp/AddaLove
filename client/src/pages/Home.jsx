@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import useUserStore from '../store/userStore.js';
 import useRoomStore from '../store/roomStore.js';
 import { MessageCircleMore } from 'lucide-react';
+import playSound from '../utils/playSound';
+import joinAnyRoomSound from '../assets/sounds/joinAnyRoom.mpeg';
 import createRoomimg from "../assets/createRoom.png"
 import homeAndProfileMusic from '../assets/musics/homeAndProfile.mpeg';
 import PageMusicPlayer from '../components/PageMusicPlayer.jsx';
@@ -189,6 +191,7 @@ const Home = () => {
     }
     try {
       const joinedRoom = await joinRoom(idToJoin);
+      playSound(joinAnyRoomSound);
       navigate(getRoomPath(joinedRoom.roomType, idToJoin));
     } catch (error) {
       console.error('Error joining room:', error);

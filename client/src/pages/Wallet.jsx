@@ -19,6 +19,8 @@ import useUserStore from '../store/userStore';
 import loadRazorpay from '../utils/RazorpayLoder';
 import removeRazorpay from '../utils/RazorpayRemove';
 import Recharge from "../assets/Recharge.png"
+import playSound from '../utils/playSound';
+import boyCoinCraditSound from '../assets/sounds/boyCoinCradit.mpeg';
 const coinPackages = [
     { coins: 25, price: 9, bonus: null, tag: 'BASIC', tagType: 'basic' },
     { coins: 95, price: 29, bonus: null, tag: 'BASIC', tagType: 'basic' },
@@ -129,6 +131,7 @@ export default function AddaLoveRecharge() {
                     const data3 = await res.json();
                     console.log(data3);
                     if (data3.success) {
+                        playSound(boyCoinCraditSound);
                         setBalance(data3.data.newWlletBlance);
                         setIsProcessing(false);
                         setIsModalOpen(false);
