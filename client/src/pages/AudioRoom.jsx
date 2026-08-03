@@ -13,6 +13,9 @@ import ReportPopup from '../components/ReportPopup.jsx';
 import { handleError, handleSuccess } from '../components/ErrorMessage.jsx';
 import useRatingStore from '../store/ratingStore.js';
 import RatingPopup from '../components/RatingPopup.jsx';
+import playSound from '../utils/playSound.js';
+import joinAnyRoomSound from '../assets/sounds/joinAnyRoom.mpeg';
+import rechargeGoingToEndSound from '../assets/sounds/rechargeGoingToEnd.aac';
 
 const peerConfiguration = {
   iceServers: [{ urls: 'stun:stun.l.google.com:19302' }],
@@ -321,6 +324,7 @@ export default function AudioRoom() {
     };
     const handleBoyJoined = async (data) => {
       if (data.roomId !== roomId || !isGirl) return;
+      playSound(joinAnyRoomSound);
       try {
         const details = await getRoomDetails(roomId);
         if (!active) return;
@@ -353,6 +357,7 @@ export default function AudioRoom() {
         setElapsedTime('00:00:00');
         if (leavingBoy?._id) openRatingPopup(leavingBoy, null);
       } else if (String(data.boyId) === String(user._id)) {
+        if (data.exitReason === 'time_limit') playSound(rechargeGoingToEndSound);
         openRatingPopup(girlProfileRef.current, 'exit');
       }
     };

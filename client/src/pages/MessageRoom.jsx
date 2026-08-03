@@ -15,6 +15,9 @@ import ReportPopup from '../components/ReportPopup.jsx'
 import useRatingStore from '../store/ratingStore.js'
 import RatingPopup from '../components/RatingPopup.jsx'
 import Emoji from '../components/Emoji.jsx'
+import playSound from '../utils/playSound.js'
+import joinAnyRoomSound from '../assets/sounds/joinAnyRoom.mpeg'
+import rechargeGoingToEndSound from '../assets/sounds/rechargeGoingToEnd.aac'
 
 const MessageRoom = () => {
   const { roomId } = useParams()
@@ -387,6 +390,7 @@ const MessageRoom = () => {
 
       setIsBoyInside(true)
       if (userRole === 'girl') {
+        playSound(joinAnyRoomSound)
         try {
           const details = await getRoomDetails(roomId)
           boyProfileRef.current = details?.room?.currentBoy || null
@@ -408,6 +412,7 @@ const MessageRoom = () => {
       clearMessages()
 
       if (userRole === 'boy' && String(data.boyId) === String(user?._id)) {
+        if (data.exitReason === 'time_limit') playSound(rechargeGoingToEndSound)
         openRatingPopup(girlProfileRef.current, 'exit')
         return
       }

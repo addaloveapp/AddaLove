@@ -16,6 +16,9 @@ import {
 import '../styles/WithdrawPage.css';
 import earning from '../assets/earning.png';
 import useUserStore from '../store/userStore';
+import { handleError, handleSuccess } from '../components/ErrorMessage';
+import playSound from '../utils/playSound';
+import girlCoinWithdrawalSound from '../assets/sounds/girlCoinWithdrawal.aac';
 
 const Earning = () => {
   const [amount, setAmount] = useState('');
@@ -30,6 +33,28 @@ const Earning = () => {
     const ratePerCoin = 0.09;
     return (coins * ratePerCoin).toFixed(2);
   }
+  const handleWithdraw = () => {
+    const withdrawAmount = Number(amount);
+    const availableAmount = Number(coinToMoney(useralldata?.walletBlance || 0));
+
+    if (userRole !== 'girl') {
+      handleError('Only girls can withdraw earnings');
+      return;
+    }
+
+    if (!withdrawAmount || withdrawAmount < 200) {
+      handleError('Minimum withdrawal amount is Rs. 200');
+      return;
+    }
+
+    if (withdrawAmount > availableAmount) {
+      handleError('Not enough coins to withdraw this amount');
+      return;
+    }
+
+    playSound(girlCoinWithdrawalSound);
+    handleSuccess('Withdrawal request successful!');
+  };
 
   return (
     <div className="withdraw-wrapper">
@@ -183,7 +208,7 @@ const Earning = () => {
         </div>
 
         {/* Submit Button */}
-        <button className="withdraw-submit-btn">
+        <button className="withdraw-submit-btn" onClick={handleWithdraw}>
           PROCEED TO WITHDRAW
           <div className="btn-arrow">
             <ArrowRight size={18} />
