@@ -16,10 +16,12 @@ import respact from "../assets/respectpointlogo.png"
 import boyLeaderboardMusic from '../assets/musics/boyLeaderbord.mpeg';
 import girlLeaderboardMusic from '../assets/musics/girlLeaderbord.mpeg';
 import PageMusicPlayer from '../components/PageMusicPlayer.jsx';
+import leaderboardVideo from '../assets/Videos/Leaderbored.mp4';
 
 const Leaderboard = () => {
   const [activeTab, setActiveTab] = useState('boy');
-  const { leaderboard, isLoading, fetchLeaderboard } = useLeaderboardStore();
+  const [showIntroVideo, setShowIntroVideo] = useState(() => sessionStorage.getItem('leaderboardIntroPlayed') !== 'true');
+  const { leaderboard, isLoading, fetchLeaderboard, setActiveLeaderboard } = useLeaderboardStore();
   const { userRole } = useUserStore();
 
 
@@ -27,8 +29,17 @@ const Leaderboard = () => {
   const isGirl = useMemo(() => userRole === 'girl', [userRole]);
   const leaderboardMusic = isGirl ? girlLeaderboardMusic : boyLeaderboardMusic;
   useEffect(() => {
-    fetchLeaderboard(activeTab);
-  }, [activeTab, fetchLeaderboard]);
+    Promise.allSettled([fetchLeaderboard('boy'), fetchLeaderboard('girl')]);
+  }, [fetchLeaderboard]);
+
+  useEffect(() => {
+    setActiveLeaderboard(activeTab);
+  }, [activeTab, setActiveLeaderboard]);
+
+  const handleIntroVideoEnd = () => {
+    sessionStorage.setItem('leaderboardIntroPlayed', 'true');
+    setShowIntroVideo(false);
+  };
 
   const topThree = leaderboard?.slice(0, 3) || [];
   const restList = leaderboard?.slice(3) || [];
@@ -49,6 +60,18 @@ const Leaderboard = () => {
 
   return (
     <div className="min-h-screen bg-[url('./assets/leaderbord.png')]  text-white font-sans relative pb-24 overflow-x-hidden">
+      {showIntroVideo && (
+        <div className="fixed inset-0 z-[9999] bg-black flex items-center justify-center">
+          <video
+            src={leaderboardVideo}
+            className="w-full h-full object-cover"
+            autoPlay
+            muted
+            playsInline
+            onEnded={handleIntroVideoEnd}
+          />
+        </div>
+      )}
       {userRole && <PageMusicPlayer src={leaderboardMusic} />}
       {/* Background Starry effect (simulated with radial gradient & absolute dots if needed) */}
       <div className="fixed inset-0  pointer-events-none z-0" />
