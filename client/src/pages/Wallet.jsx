@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { handleError, handleSuccess } from '../components/ErrorMessage';
+import { handleError } from '../components/ErrorMessage';
 import { 
     History, 
     Shield, 
@@ -21,6 +21,7 @@ import removeRazorpay from '../utils/RazorpayRemove';
 import Recharge from "../assets/Recharge.png"
 import playSound from '../utils/playSound';
 import boyCoinCraditSound from '../assets/sounds/boyCoinCradit.mpeg';
+import paymentSuccessfulVideo from '../assets/Videos/PyamentSuccessful.mp4';
 const coinPackages = [
     { coins: 25, price: 9, bonus: null, tag: 'BASIC', tagType: 'basic' },
     { coins: 95, price: 29, bonus: null, tag: 'BASIC', tagType: 'basic' },
@@ -41,8 +42,9 @@ export default function AddaLoveRecharge() {
     const [selectedPkg, setSelectedPkg] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isProcessing, setIsProcessing] = useState(false);
-    const { user: useralldata } = useUserStore();
+    const { user: useralldata, fetchUser } = useUserStore();
     const [balance, setBalance] = useState(null);
+    const [showPaymentVideo, setShowPaymentVideo] = useState(false);
     const naviget = useNavigate();
 
     const handleclick = () => {
@@ -99,7 +101,6 @@ export default function AddaLoveRecharge() {
                 });
                 const data2 = await responce.json();
                 if (data2.success) {
-                    handleSuccess('Payment successful !');
                     console.log(orderdata);
                     let totalbouns;
                     if (orderdata.bonus === '+200 bonus') {
@@ -131,6 +132,8 @@ export default function AddaLoveRecharge() {
                     const data3 = await res.json();
                     console.log(data3);
                     if (data3.success) {
+                        setShowPaymentVideo(true);
+                        await fetchUser();
                         playSound(boyCoinCraditSound);
                         setBalance(data3.data.newWlletBlance);
                         setIsProcessing(false);
@@ -165,6 +168,18 @@ export default function AddaLoveRecharge() {
 
     return (
         <div className="min-h-screen bg-[url('./assets/Rechargebg.png')] text-slate-100 flex flex-col items-center py-6 px-4 font-sans relative overflow-x-hidden pb-32">
+            {showPaymentVideo && (
+                <div className="fixed inset-0 z-[9999] bg-black flex items-center justify-center">
+                    <video
+                        src={paymentSuccessfulVideo}
+                        className="w-full h-full object-cover"
+                        autoPlay
+                        muted
+                        playsInline
+                        onEnded={() => setShowPaymentVideo(false)}
+                    />
+                </div>
+            )}
             
             {/* Ambient Background Glow */}
             <div className="fixed inset-0 pointer-events-none overflow-hidden flex justify-center items-center">
