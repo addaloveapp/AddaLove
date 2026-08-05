@@ -34,6 +34,28 @@ const messageSchema = new Schema({
     fileId: {
         type: String,
         default: null
+    },
+    // A small snapshot lets replies remain visible even if the original message
+    // is no longer returned with the current message list.
+    replyTo: {
+        messageId: {
+            type: Schema.Types.ObjectId,
+            ref: 'Message',
+            default: null
+        },
+        text: {
+            type: String,
+            default: null
+        },
+        messageType: {
+            type: String,
+            enum: ['text', 'emoji', 'image', 'audio'],
+            default: null
+        },
+        sender: {
+            type: Schema.Types.ObjectId,
+            default: null
+        }
     }
 }, { timestamps: true });
 

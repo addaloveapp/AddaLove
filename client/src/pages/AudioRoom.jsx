@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import axios from 'axios';
 import { 
   Headphones, LoaderCircle, LogOut, Mic, MicOff, PhoneOff, Radio, Trash2, 
   TriangleAlert, Volume2, VolumeX, ChevronDown, MoreVertical, Bell, 
@@ -31,6 +32,8 @@ export default function AudioRoom() {
   const { getRoomDetails, leaveRoom, destroyRoom, resetRoomState } = useRoomStore();
   const [girlProfile, setGirlProfile] = useState(null);
   const [boyProfile, setBoyProfile] = useState(null);
+  const [isFollowingPartner, setIsFollowingPartner] = useState(false);
+  const [isFollowUpdating, setIsFollowUpdating] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [isSpeakerOn, setIsSpeakerOn] = useState(true);
   const [isLeaving, setIsLeaving] = useState(false);
@@ -67,6 +70,7 @@ export default function AudioRoom() {
   const partner = isGirl ? boyProfile : girlProfile;
   const partnerName = partner?.fullName || 'Guest';
   const isBoyInside = isGirl ? Boolean(boyProfile) : true;
+  const areBothParticipantsPresent = Boolean(girlProfile && boyProfile);
   const isBoy = useMemo(() => userRole === 'boy', [userRole]);
   
   useEffect(() => {
@@ -281,6 +285,28 @@ export default function AudioRoom() {
     await completeRatingFlow();
   };
 
+  const handleFollowToggle = async () => {
+    if (!partner?._id || !areBothParticipantsPresent || isFollowUpdating) return;
+
+    try {
+      setIsFollowUpdating(true);
+      const endpoint = isFollowingPartner ? 'unfollow' : 'add-followers';
+      await axios.post(
+        `${import.meta.env.VITE_BACKEND_URL}/api/follower/v1/${endpoint}`,
+        { profileUserId: partner._id },
+        { withCredentials: true }
+      );
+
+      setIsFollowingPartner((currentValue) => !currentValue);
+      if (isGirl) setBoyFollowers((count) => Math.max(0, count + (isFollowingPartner ? -1 : 1)));
+      else setGirlFollowers((count) => Math.max(0, count + (isFollowingPartner ? -1 : 1)));
+    } catch (followError) {
+      handleError(followError.response?.data?.message || 'Could not update follow status');
+    } finally {
+      setIsFollowUpdating(false);
+    }
+  };
+
   useEffect(() => {
     if (!roomId || !user?._id) return undefined;
     let active = true;
@@ -332,6 +358,9 @@ export default function AudioRoom() {
         setBoyProfile(details.room.currentBoy);
         setBoyFollowers(details.room.boyExtraDetails?.followerCount || 0);
         setGirlFollowers(details.room.girlsExtraDetails?.followerCount || 0);
+        setIsFollowingPartner(isGirl
+          ? Boolean(details.room.boyExtraDetails?.isFollowedByGirl)
+          : Boolean(details.room.girlsExtraDetails?.isFollowedByBoy));
         setBoyJoinedAt(details.room.currentBoyJoinedAt);
         
         // Optional additions for API extensions
@@ -354,6 +383,7 @@ export default function AudioRoom() {
         setBoyProfile(null);
         setBoyJoinedAt(null);
         setBoyFollowers(0);
+        setIsFollowingPartner(false);
         setElapsedTime('00:00:00');
         if (leavingBoy?._id) openRatingPopup(leavingBoy, null);
       } else if (String(data.boyId) === String(user._id)) {
@@ -413,6 +443,9 @@ export default function AudioRoom() {
         
         setBoyFollowers(details.room.boyExtraDetails?.followerCount || 0);
         setGirlFollowers(details.room.girlsExtraDetails?.followerCount || 0);
+        setIsFollowingPartner(isGirl
+          ? Boolean(details.room.boyExtraDetails?.isFollowedByGirl)
+          : Boolean(details.room.girlsExtraDetails?.isFollowedByBoy));
         
         // Optional additions for API extensions
         if (details.room.girlsExtraDetails?.topFollower) setGirlTopFollower(details.room.girlsExtraDetails.topFollower);
@@ -603,6 +636,16 @@ export default function AudioRoom() {
               <Heart size={12} fill="currentColor" />
               {girlData.followers}
             </div>
+            {!isGirl && areBothParticipantsPresent && (
+              <button
+                type="button"
+                onClick={handleFollowToggle}
+                disabled={isFollowUpdating}
+                className="mt-3 rounded-full border border-[#FF4D8D]/60 bg-[#FF4D8D]/15 px-4 py-1.5 text-xs font-bold text-[#FF9DBF] transition hover:bg-[#FF4D8D] hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isFollowUpdating ? 'Please wait...' : isFollowingPartner ? 'Unfollow' : 'Follow'}
+              </button>
+            )}
           </div>
 
           {/* Boy Avatar (Top Right) */}
@@ -625,6 +668,16 @@ export default function AudioRoom() {
               <User size={12} fill="currentColor" />
               {isBoyInside ? boyData.followers : 'Waiting'}
             </div>
+            {isGirl && areBothParticipantsPresent && (
+              <button
+                type="button"
+                onClick={handleFollowToggle}
+                disabled={isFollowUpdating}
+                className="mt-3 rounded-full border border-[#4DA6FF]/60 bg-[#4DA6FF]/15 px-4 py-1.5 text-xs font-bold text-[#8DCBFF] transition hover:bg-[#4DA6FF] hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isFollowUpdating ? 'Please wait...' : isFollowingPartner ? 'Unfollow' : 'Follow'}
+              </button>
+            )}
           </div>
 
         </div>

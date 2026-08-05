@@ -60,10 +60,13 @@ io.on('connection', (socket) => {
     const { userId, userType } = socket.data;
     const existingUser = onlineUsers.get(userId);
     if (existingUser?.socketId && existingUser.socketId !== socket.id) {
+        // Register the new connection first. The old socket's disconnect must
+        // not close the user's active room after a reconnect/tab replacement.
+        onlineUsers.set(userId, { socketId: socket.id, userType });
         io.sockets.sockets.get(existingUser.socketId)?.disconnect(true);
+    } else {
+        onlineUsers.set(userId, { socketId: socket.id, userType });
     }
-
-    onlineUsers.set(userId, { socketId: socket.id, userType });
     socket.join(userId);
 
     const onlineList = Array.from(onlineUsers.entries()).map(([id, info]) => ({
@@ -120,8 +123,12 @@ io.on('connection', (socket) => {
         }
     });
 
-    socket.on('disconnect', () => {
-        if (onlineUsers.get(userId)?.socketId === socket.id) onlineUsers.delete(userId);
+    socket.on('disconnect', async () => {
+        // Ignore a replaced socket; the same user is still connected through
+        // the newer socket and must remain in the room.
+        if (onlineUsers.get(userId)?.socketId !== socket.id) return;
+
+        onlineUsers.delete(userId);
         io.emit('user_offline', { userId, userType });
         io.emit('online_users', {
             users: Array.from(onlineUsers.entries()).map(([id, info]) => ({
@@ -129,6 +136,15 @@ io.on('connection', (socket) => {
                 userType: info.userType
             }))
         });
+
+        try {
+            // Dynamic import avoids a module-startup circular dependency:
+            // room.controller already imports this socket's `io` instance.
+            const { handleParticipantOffline } = await import('../controllers/room.controller.js');
+            await handleParticipantOffline(userId, userType);
+        } catch (error) {
+            console.error(`Offline room cleanup failed for userId=${userId}:`, error.message);
+        }
     });
 });
 

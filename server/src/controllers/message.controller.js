@@ -9,7 +9,7 @@ import { uploadToImageKit } from '../utils/imageKit.js';
 const sendMessage = asyncHandler(async (req, res) => {
 
     const { roomId } = req.params;
-    const { messageType, text } = req.body;
+    const { messageType, text, replyToId } = req.body;
 
     // Determine who is sending
     const isGirl = req.userType === 'girl';
@@ -45,6 +45,21 @@ const sendMessage = asyncHandler(async (req, res) => {
         throw new ApiError(403, 'You do not own this room');
     }
 
+    let replyTo = null;
+    if (replyToId) {
+        const repliedMessage = await Message.findOne({ _id: replyToId, roomId });
+        if (!repliedMessage) {
+            throw new ApiError(404, 'The message you are replying to was not found in this room');
+        }
+
+        replyTo = {
+            messageId: repliedMessage._id,
+            text: repliedMessage.text,
+            messageType: repliedMessage.messageType,
+            sender: repliedMessage.sender
+        };
+    }
+
     let fileUrl = null;
     let fileId = null;
 
@@ -71,7 +86,8 @@ const sendMessage = asyncHandler(async (req, res) => {
         messageType,
         text: ['text', 'emoji'].includes(messageType) ? text.trim() : null,
         fileUrl,
-        fileId
+        fileId,
+        replyTo
     });
 
     // Emit to everyone in the socket room
@@ -82,6 +98,7 @@ const sendMessage = asyncHandler(async (req, res) => {
         messageType,
         text: message.text,
         fileUrl: message.fileUrl,
+        replyTo: message.replyTo,
         createdAt: message.createdAt
     });
 
