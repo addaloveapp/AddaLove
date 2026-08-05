@@ -12,6 +12,8 @@ import jwt from "jsonwebtoken"
 import { options } from '../constants.js';
 import Certificate from '../models/certificate.model.js';
 import mongoose from 'mongoose';
+import sendaccpectemail from '../middlewares/sendAccpect.middleware.js';
+import sendRejectemail from '../middlewares/sendReject.middleware.js';
 const registerAdmin = asyncHandler(async (req, res) => {
     const { fullName, email, password } = req.body;
     if (!fullName || !email || !password) {
@@ -229,26 +231,56 @@ const allCoinPurchase = asyncHandler(async (req, res) => {
     );
 });
 
-const createCertificate=asyncHandler(async(req,res)=>{
-    const {fullName,email,position}=req.body;
+const createCertificate = asyncHandler(async (req, res) => {
+    const { fullName, email, position } = req.body;
     if (!fullName || !email || !position) {
         throw new ApiError(400, "All data are Required.")
     }
-    const newCertificate= new Certificate({
+    const newCertificate = new Certificate({
         fullName,
         email,
         position
     })
     await newCertificate.save();
-    return res.status(201).json(new ApiResponse(201,newCertificate._id," Certificate issue Successfully."))
+    return res.status(201).json(new ApiResponse(201, newCertificate._id, " Certificate issue Successfully."))
 })
-const checkCertificate=asyncHandler(async(req,res)=>{
+const checkCertificate = asyncHandler(async (req, res) => {
     const id = req.params.id;
 
     const certificateData = await Certificate.findById(id);
-    if(!certificateData){
-        throw new ApiError(404,"Certificate not found")
+    if (!certificateData) {
+        throw new ApiError(404, "Certificate not found")
     }
-    return res.status(200).json(new ApiResponse(200,certificateData,"Certificate found successful."))
+    return res.status(200).json(new ApiResponse(200, certificateData, "Certificate found successful."))
+});
+const accpectTheGirls = asyncHandler(async (req, res) => {
+    const { userID, email } = req.body;
+    if (!userID, !email) {
+        throw new ApiError(400, "All data Required.")
+    }
+    const girlsData = await Girls.findById(userID);
+    if (!girlsData) {
+        throw new ApiError(404, "Girl not found.")
+    }
+    const sendemail = await sendaccpectemail(email);
+    await Girls.findByIdAndUpdate(userID, { $set: { applicationStatus: "accepted" } }, { new: true });
+    return res.status(200).json(new ApiResponse(200, null, "Accpect the mail was send and account has been accpected."))
+
+
 })
-export { allApplication, allRoomsOpens, allReport, allCoinPurchase ,registerAdmin,loginAdmin,logoutAdmin,createCertificate,checkCertificate };
+const rejectTheGirls = asyncHandler(async (req, res) => {
+    const { userID, email } = req.body;
+    if (!userID, !email) {
+        throw new ApiError(400, "All data Required.")
+    }
+    const girlsData = await Girls.findById(userID);
+    if (!girlsData) {
+        throw new ApiError(404, "Girl not found.")
+    }
+    const sendemail = await sendRejectemail(email);
+    await Girls.findByIdAndUpdate(userID, { $set: { applicationStatus: "rejected" } }, { new: true });
+    return res.status(200).json(new ApiResponse(200, null, "Reject mail was send and account has been rejected."))
+
+
+})
+export { allApplication, allRoomsOpens, allReport, allCoinPurchase, registerAdmin, loginAdmin, logoutAdmin, createCertificate, checkCertificate, accpectTheGirls, rejectTheGirls };

@@ -739,9 +739,10 @@ export default function SignupGirls() {
                     name='email'
                     value={formData.email}
                     onChange={handleInputChange}
-                    placeholder='Email Address (Optional)'
+                    placeholder='Email Address'
                     className="w-full bg-transparent text-white placeholder-slate-500 ml-3 outline-none text-sm disabled:opacity-50"
                     disabled={loading}
+                    required
                   />
                 </div>
               </div>
