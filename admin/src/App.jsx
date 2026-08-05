@@ -274,7 +274,7 @@ function App() {
             <div className="rounded-3xl bg-white p-4 shadow-inner mb-6">
               <QRCodeCanvas
                 id="qr-canvas-element"
-                value={`https://addalove.com/${generatedCertId}`}
+                value={`https://addalove.com/officalverification/${generatedCertId}`}
                 size={220}
                 level={"H"}
                 includeMargin={true}
