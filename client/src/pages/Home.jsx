@@ -147,7 +147,7 @@ const Home = () => {
 
   const isBoy = useMemo(() => userRole === 'boy', [userRole]);
   const isGirl = useMemo(() => userRole === 'girl', [userRole]);
-  const getMinimumJoinCoins = (type) => (type === 'voice' ? 10 : type === 'message' ? 5 : 0);
+  const getMinimumJoinCoins = (type) => (type === 'voice' ? 20 : type === 'message' ? 12 : 0);
   const canJoinRoom = (room) => Number(user?.walletBlance || 0) >= getMinimumJoinCoins(room?.roomType);
 
   const handleLanguageChange = (language) => {
@@ -404,6 +404,37 @@ const Home = () => {
                     alt="Mascot" 
                     className="h-[85px] w-[85px] rounded-full border-2 border-[#6C3BFF]/30 object-cover shadow-[0_0_20px_rgba(108,59,255,0.4)]" 
                   />
+                </div>
+              </div>
+
+              {/* Boy Pricing Highlight */}
+              <div className="relative overflow-hidden rounded-[22px] border border-[#FF4D8D]/30 bg-[#120B15]/75 p-4 shadow-[0_0_28px_rgba(255,77,141,0.18)] backdrop-blur-md">
+                <div className="absolute -right-8 -top-10 h-24 w-24 rounded-full bg-[#FF4D8D]/25 blur-2xl"></div>
+                <div className="absolute -left-8 bottom-0 h-20 w-20 rounded-full bg-[#6C3BFF]/20 blur-2xl"></div>
+                <div className="relative z-10 flex items-start justify-between gap-3">
+                  <div>
+                    <p className="font-rounded text-[10px] font-black uppercase tracking-[0.22em] text-[#FFB6D2]">Coin Charges</p>
+                    <h3 className="font-display mt-1 text-[19px] font-black leading-tight text-white">Pay only while you talk or chat</h3>
+                  </div>
+                  <span className="rounded-full border border-amber-300/30 bg-amber-300/10 px-3 py-1 font-rounded text-[11px] font-black text-amber-200">For Boys</span>
+                </div>
+                <div className="relative z-10 mt-4 grid grid-cols-2 gap-3">
+                  <div className="rounded-2xl border border-[#55e11d]/25 bg-[#0F2418]/70 px-3 py-3">
+                    <div className="flex items-center gap-2 text-[#7DFF9F]">
+                      <Icons.Mic />
+                      <span className="font-rounded text-[12px] font-black uppercase tracking-wide">Voice Call</span>
+                    </div>
+                    <p className="mt-2 font-display text-[24px] font-black leading-none text-white">20</p>
+                    <p className="mt-1 font-friendly text-[11px] font-semibold text-slate-300">coins / 1 min</p>
+                  </div>
+                  <div className="rounded-2xl border border-[#FF4D8D]/25 bg-[#2A1023]/70 px-3 py-3">
+                    <div className="flex items-center gap-2 text-[#FF8DB8]">
+                      <MessageCircleMore className="h-4 w-4" />
+                      <span className="font-rounded text-[12px] font-black uppercase tracking-wide">Chat</span>
+                    </div>
+                    <p className="mt-2 font-display text-[24px] font-black leading-none text-white">12</p>
+                    <p className="mt-1 font-friendly text-[11px] font-semibold text-slate-300">coins / 1 min</p>
+                  </div>
                 </div>
               </div>
 
