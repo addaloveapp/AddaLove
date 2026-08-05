@@ -123,6 +123,64 @@ const completeBoySession = async (room, boyId, exitReason) => {
     return { durationSeconds };
 };
 
+// Used by both the authenticated destroy endpoint and socket disconnects so a
+// host leaving unexpectedly follows the exact same room cleanup flow.
+const destroyRoomInternally = async (room, message = 'The room has been destroyed by the host') => {
+    const roomId = room.roomId;
+
+    const mediaMessages = await Message.find({
+        roomId,
+        messageType: { $in: ['image', 'audio'] },
+        fileId: { $ne: null }
+    });
+
+    for (const msg of mediaMessages) {
+        try {
+            await deleteFromImageKit(msg.fileId);
+        } catch (error) {
+            console.error(`ImageKit delete failed for fileId=${msg.fileId}:`, error.message);
+        }
+    }
+
+    if (room.currentBoy) {
+        const leftAt = new Date();
+        const durationSeconds = getSessionDurationSeconds(room, leftAt);
+        const paymentStatus = await processSessionPayment(room, room.currentBoy, durationSeconds);
+
+        if (paymentStatus === 'processing') {
+            throw new ApiError(409, 'The room session is being finalized. Please try again shortly.');
+        }
+
+        if (paymentStatus === 'settled') {
+            await createVisitHistory(room, room.currentBoy, 'room_destroyed', leftAt);
+            io.to(room.currentBoy.toString()).emit('room_destroyed', { roomId, message });
+        }
+    }
+
+    await Message.deleteMany({ roomId });
+    await Room.deleteOne({ _id: room._id });
+    clearRoomTimer(roomId);
+    io.emit('room_closed', { roomId });
+};
+
+// Called by the socket server after it has confirmed this is the user's last
+// active connection. This deliberately uses the normal session lifecycle.
+const handleParticipantOffline = async (userId, userType) => {
+    if (userType === 'boy') {
+        const room = await Room.findOne({ currentBoy: userId, status: 'occupied' });
+        if (room) await completeBoySession(room, userId, 'boy_left');
+        return;
+    }
+
+    if (userType === 'girl') {
+        const room = await Room.findOne({
+            createdBy: userId,
+            status: { $in: ['open', 'occupied'] }
+        });
+        if (room) await destroyRoomInternally(room, 'The room host went offline');
+    }
+};
+
 const scheduleBoyAutoLeave = (roomId, boyId, durationMs) => {
     clearRoomTimer(roomId);
 
@@ -286,45 +344,7 @@ const destroyRoom = asyncHandler(async (req, res) => {
         throw new ApiError(400, 'Room is already destroyed');
     }
 
-    // Delete all media messages (images + audio) from ImageKit
-    const mediaMessages = await Message.find({
-        roomId,
-        messageType: { $in: ['image', 'audio'] },
-        fileId: { $ne: null }
-    });
-
-    for (const msg of mediaMessages) {
-        try {
-            await deleteFromImageKit(msg.fileId);
-        } catch (e) {
-            console.error(`ImageKit delete failed for fileId=${msg.fileId}:`, e.message);
-        }
-    }
-
-    if (room.currentBoy) {
-        const leftAt = new Date();
-        const durationSeconds = getSessionDurationSeconds(room, leftAt);
-        const paymentStatus = await processSessionPayment(room, room.currentBoy, durationSeconds);
-
-        if (paymentStatus === 'processing') {
-            throw new ApiError(409, 'The room session is being finalized. Please try again shortly.');
-        }
-
-        if (paymentStatus === 'settled') {
-            await createVisitHistory(room, room.currentBoy, 'room_destroyed', leftAt);
-            io.to(room.currentBoy.toString()).emit('room_destroyed', {
-                roomId,
-                message: 'The room has been destroyed by the host'
-            });
-        }
-    }
-
-    await Message.deleteMany({ roomId });
-    await Room.deleteOne({ roomId });
-    clearRoomTimer(roomId);
-
-    // Notify everyone watching the room list
-    io.emit('room_closed', { roomId });
+    await destroyRoomInternally(room);
 
     return res.status(200).json(
         new ApiResponse(200, null, 'Room destroyed successfully')
@@ -751,5 +771,6 @@ export {
     getOpenRooms,
     getRoomMessages,
     getGirlHistory,
-    getBoyHistory
+    getBoyHistory,
+    handleParticipantOffline
 }

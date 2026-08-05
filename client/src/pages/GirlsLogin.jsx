@@ -62,7 +62,7 @@ export default function GirlsLogin() {
             if (data.success) {
                 // Handle successful login
                 handleSuccess('Login successful!');
-                navigate('/')
+                window.location.href = '/';
                 // Redirect to dashboard or home
             } else {
                 setErrors({ submit: data.message || 'Login failed' });

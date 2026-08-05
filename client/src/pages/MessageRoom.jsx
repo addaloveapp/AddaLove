@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { 
-  Coins, Loader2, LogOut, MessageCircle, Send, Trash2, TriangleAlert, 
-  UserMinus, UserRoundPlus, Users, User, Crown, BadgeCheck, ShieldCheck, 
+import {
+  Coins, Loader2, LogOut, MessageCircle, Send, Trash2, TriangleAlert,
+  UserMinus, UserRoundPlus, Users, User, Crown, BadgeCheck, ShieldCheck,
   Plus, Smile, Info, Video, Star
 } from 'lucide-react'
 import useUserStore from '../store/userStore.js'
@@ -24,6 +24,7 @@ const MessageRoom = () => {
   const navigate = useNavigate()
   const { user, userRole, fetchUser } = useUserStore()
   const [messageText, setMessageText] = useState('')
+  const [replyingTo, setReplyingTo] = useState(null)
   const [isSendingMessage, setIsSendingMessage] = useState(false)
   const [isLeaving, setIsLeaving] = useState(false)
   const [isBoyInside, setIsBoyInside] = useState(userRole === 'boy')
@@ -41,12 +42,13 @@ const MessageRoom = () => {
   const [ratingTarget, setRatingTarget] = useState(null)
   const [afterRatingAction, setAfterRatingAction] = useState(null)
   const messagesEndRef = useRef(null)
+  const swipeStartXRef = useRef(null)
   const isSendingMessageRef = useRef(false)
   const hasPendingRatingRef = useRef(false)
   const suppressCloseRatingRef = useRef(false)
   const boyProfileRef = useRef(null)
   const girlProfileRef = useRef(null)
-  const { leaveRoom, destroyRoom, getRoomDetails } = useRoomStore()
+  const { leaveRoom, destroyRoom, getRoomDetails, resetRoomState } = useRoomStore()
   const {
     sendMessage: sendMessageToServer,
     getMessages,
@@ -71,8 +73,10 @@ const MessageRoom = () => {
       await sendMessageToServer(roomId, {
         text: trimmedMessage,
         messageType: 'text',
+        ...(replyingTo?._id && { replyToId: replyingTo._id }),
       })
       setMessageText('')
+      setReplyingTo(null)
     } catch (error) {
       console.error('Error sending message:', error)
     } finally {
@@ -87,7 +91,12 @@ const MessageRoom = () => {
     isSendingMessageRef.current = true
     setIsSendingMessage(true)
     try {
-      await sendMessageToServer(roomId, { text: emoji, messageType: 'emoji' })
+      await sendMessageToServer(roomId, {
+        text: emoji,
+        messageType: 'emoji',
+        ...(replyingTo?._id && { replyToId: replyingTo._id }),
+      })
+      setReplyingTo(null)
     } catch (error) {
       console.error('Error sending emoji:', error)
     } finally {
@@ -205,7 +214,7 @@ const MessageRoom = () => {
       socket.emit('leave_room', { roomId, userId: user._id })
     }
   }, [roomId, user?._id])
-  
+
   const isBoy = useMemo(() => userRole === 'boy', [userRole]);
   const isGirl = useMemo(() => userRole === 'girl', [userRole]);
   const [isFollow, setIsFollow] = useState(false)
@@ -342,21 +351,37 @@ const MessageRoom = () => {
 
     clearMessages()
 
-    getRoomDetails(roomId)
-      .then((data) => {
-        const room = data?.room
-        setBoyFollowers(room?.boyExtraDetails?.followerCount || 0);
-        setBoyFollowing(room?.boyExtraDetails?.followingCount || 0)
-        setRespectPoint(room?.RespactPoint || 0)
-        setAvgReacting(room?.AvgRating || 0)
-        setGirlFollowers(room?.girlsExtraDetails?.followerCount || 0)
-        setGirlFollowing(room?.girlsExtraDetails?.followingCount || 0)
-        setIsBoyInside(userRole === 'boy' || Boolean(room?.currentBoy))
-        boyProfileRef.current = room?.currentBoy || null
-        girlProfileRef.current = room?.createdBy || null
-        setBoyProfile(room?.currentBoy || null)
-        setGirlProfile(room?.createdBy || null)
-      })
+    // A room can be fetched once while empty and again when a boy joins. Keep
+    // only the newest response so an older empty-room response cannot erase
+    // the joined boy's profile and stats.
+    let isActive = true
+    let detailsRequestId = 0
+    const applyRoomDetails = (room) => {
+      if (!room) return
+
+      setBoyFollowers(room.boyExtraDetails?.followerCount || 0)
+      setBoyFollowing(room.boyExtraDetails?.followingCount || 0)
+      setRespectPoint(room.RespactPoint || 0)
+      setAvgReacting(room.AvgRating || 0)
+      setGirlFollowers(room.girlsExtraDetails?.followerCount || 0)
+      setGirlFollowing(room.girlsExtraDetails?.followingCount || 0)
+      setIsBoyInside(userRole === 'boy' || Boolean(room.currentBoy))
+      boyProfileRef.current = room.currentBoy || null
+      girlProfileRef.current = room.createdBy || null
+      setBoyProfile(room.currentBoy || null)
+      setGirlProfile(room.createdBy || null)
+    }
+
+    const loadRoomDetails = async () => {
+      const requestId = ++detailsRequestId
+      const data = await getRoomDetails(roomId)
+      if (!isActive || requestId !== detailsRequestId) return null
+
+      applyRoomDetails(data?.room)
+      return data?.room || null
+    }
+
+    loadRoomDetails()
       .catch((error) => console.error('Error loading room details:', error))
 
     getMessages(roomId).catch((error) => {
@@ -369,7 +394,10 @@ const MessageRoom = () => {
 
     const handleRoomClosed = (data) => {
       if (data.roomId !== roomId) return
-      fetchUser().catch(() => {})
+      fetchUser().catch(() => { })
+      // A host destroy reaches the boy through a socket event, not his leave
+      // API call. Clear the room state so Home renders its navigation again.
+      resetRoomState()
 
       if (suppressCloseRatingRef.current) {
         exitRoom()
@@ -392,9 +420,7 @@ const MessageRoom = () => {
       if (userRole === 'girl') {
         playSound(joinAnyRoomSound)
         try {
-          const details = await getRoomDetails(roomId)
-          boyProfileRef.current = details?.room?.currentBoy || null
-          setBoyProfile(details?.room?.currentBoy || null)
+          await loadRoomDetails()
         } catch (error) {
           console.error('Error loading joined boy details:', error)
         }
@@ -403,7 +429,7 @@ const MessageRoom = () => {
 
     const handleBoyLeft = (data) => {
       if (data.roomId !== roomId) return
-      fetchUser().catch(() => {})
+      fetchUser().catch(() => { })
 
       const leavingBoy = boyProfileRef.current
       setIsBoyInside(false)
@@ -429,6 +455,7 @@ const MessageRoom = () => {
     socket.on('boy_left', handleBoyLeft)
 
     return () => {
+      isActive = false
       socket.off('new_message', handleNewMessage)
       socket.off('boy_joined', handleBoyJoined)
       socket.off('room_destroyed', handleRoomClosed)
@@ -436,7 +463,7 @@ const MessageRoom = () => {
       socket.off('boy_left', handleBoyLeft)
       clearMessages()
     }
-  }, [roomId, userRole, user, fetchUser, getRoomDetails, getMessages, addMessage, clearMessages, exitRoom, openRatingPopup])
+  }, [roomId, userRole, user, fetchUser, getRoomDetails, getMessages, addMessage, clearMessages, exitRoom, openRatingPopup, resetRoomState])
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -500,6 +527,17 @@ const MessageRoom = () => {
   const isOwnMessage = (message) =>
     String(message.sender?.id || message.sender?._id) === String(user?._id)
 
+  const getReplyPreview = (message) => {
+    if (['text', 'emoji'].includes(message?.messageType)) return message.text
+    if (message?.messageType === 'image') return 'Photo'
+    if (message?.messageType === 'audio') return 'Audio message'
+    return 'Message'
+  }
+
+  const selectReply = (message) => {
+    setReplyingTo(message)
+  }
+
   const exitLabel = userRole === 'girl' ? 'Destroy Room' : 'Leave Room'
   const inputPlaceholder = isBoyInside ? 'Type your message...' : 'No boy is in the room yet'
   const chatPartner = userRole === 'boy' ? girlProfile : boyProfile
@@ -530,12 +568,12 @@ const MessageRoom = () => {
               <p className='text-[11px] text-green-400'>In the room</p>
             </div>
           </div>
-          
+
           <div className='flex items-center gap-2'>
             <div className='flex items-center gap-1 rounded-3xl border border-yellow-400/20 bg-yellow-500/10 px-2 py-1 text-xs'>
               <CoinIcon className="w-3.5 h-3.5 text-yellow-400" /> {useralldata.walletBlance}
             </div>
-            
+
             {/* The user's exact original styles for these buttons */}
             <button
               type='button'
@@ -602,8 +640,8 @@ const MessageRoom = () => {
                     </div>
                     <div className='flex flex-1 flex-col items-center justify-center rounded-2xl border border-white/5 bg-white/5 py-3 transition hover:bg-white/10'>
                       <Crown size={20} className="mb-1 text-yellow-500" />
-                      <span className='text-base font-bold text-yellow-400'>{isBoy?avgReating:respectPoint}</span>
-                      <span className='text-[10px] uppercase tracking-wider text-slate-400'>{isBoy?"Rating":"Respect"}</span>
+                      <span className='text-base font-bold text-yellow-400'>{isBoy ? avgReating : respectPoint}</span>
+                      <span className='text-[10px] uppercase tracking-wider text-slate-400'>{isBoy ? "Rating" : "Respect"}</span>
                     </div>
                   </div>
 
@@ -626,7 +664,7 @@ const MessageRoom = () => {
                   </div>
 
                   {/* Badges/Info row */}
-                  
+
                   <div className='mt-4 flex w-full items-center justify-center gap-2 rounded-xl border border-purple-500/20 bg-purple-500/10 py-2.5 text-xs font-medium text-purple-300'>
                     <ShieldCheck size={16} /> Verified & Trusted Member
                   </div>
@@ -651,7 +689,17 @@ const MessageRoom = () => {
                   const messageTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) // Format as needed based on your message object
 
                   return (
-                    <div key={message._id || index} className={`flex items-end gap-2 ${ownMessage ? 'justify-end' : 'justify-start'}`}>
+                    <div
+                      key={message._id || index}
+                      className={`flex items-end gap-2 ${ownMessage ? 'justify-end' : 'justify-start'}`}
+                      onTouchStart={(event) => { swipeStartXRef.current = event.touches[0].clientX }}
+                      onTouchEnd={(event) => {
+                        if (swipeStartXRef.current === null) return
+                        const distance = event.changedTouches[0].clientX - swipeStartXRef.current
+                        swipeStartXRef.current = null
+                        if (Math.abs(distance) >= 45) selectReply(message)
+                      }}
+                    >
                       {!ownMessage && (
                         <div className="rounded-full p-[1px] bg-linear-to-tr from-[#FF4D8D] to-[#4D8DFF] mb-1">
                           <img
@@ -662,17 +710,22 @@ const MessageRoom = () => {
                           />
                         </div>
                       )}
-                      
-                      <div className={`relative ${isEmojiMessage ? 'px-2 py-1' : 'max-w-[75%] px-4 py-3 text-sm shadow-md sm:max-w-[65%]'} ${
-                        ownMessage 
+
+                      <div className={`relative ${isEmojiMessage ? 'px-2 py-1' : 'max-w-[75%] px-4 py-3 text-sm shadow-md sm:max-w-[65%]'} ${ownMessage
                           ? isEmojiMessage ? '' : 'rounded-3xl rounded-br-sm bg-linear-to-r from-[#FF4D8D] to-purple-500 text-white shadow-[0_4px_15px_rgba(255,77,141,0.15)]'
                           : isEmojiMessage ? '' : 'rounded-3xl rounded-bl-sm border border-blue-500/20 bg-[#121936] text-slate-200'
                         }`}
                       >
+                        {message.replyTo?.messageId && (
+                          <div className={`mb-2 max-w-full border-l-2 px-2 py-1 text-xs ${ownMessage ? 'border-white/70 bg-white/15 text-white/90' : 'border-[#FF4D8D] bg-black/15 text-slate-300'}`}>
+                            <p className='truncate font-semibold'>{String(message.replyTo.sender) === String(user?._id) ? 'You' : partnerName}</p>
+                            <p className='truncate opacity-80'>{getReplyPreview(message.replyTo)}</p>
+                          </div>
+                        )}
                         <p className={isEmojiMessage ? 'pr-8 text-6xl leading-none drop-shadow-[0_4px_8px_rgba(0,0,0,0.35)]' : 'pr-12'}>
                           {['text', 'emoji'].includes(message.messageType) ? message.text : message.fileUrl}
                         </p>
-                        
+
                         <div className="absolute bottom-1.5 right-3 flex items-center gap-1">
                           <span className={`text-[9px] ${ownMessage ? 'text-white/80' : 'text-slate-400'}`}>
                             {messageTime}
@@ -691,14 +744,24 @@ const MessageRoom = () => {
 
         {/* Chat Input Footer */}
         <footer className='bg-[#0a0f24] px-4 py-3 sm:px-6'>
-          <div className={`flex items-center gap-2 rounded-full border p-1.5 transition-all ${
-            isBoyInside 
-              ? 'border-[#FF4D8D]/40 bg-[#121936] shadow-[0_0_15px_rgba(255,77,141,0.05)] focus-within:border-[#FF4D8D]' 
+          {replyingTo && (
+            <div className='mx-1 mb-2 flex items-center justify-between gap-3 rounded-xl border border-[#FF4D8D]/30 bg-[#121936] px-3 py-2 text-xs'>
+              <div className='min-w-0 border-l-2 border-[#FF4D8D] pl-2'>
+                <p className='font-semibold text-[#FF8AB6]'>Replying to {isOwnMessage(replyingTo) ? 'yourself' : partnerName}</p>
+                <p className='truncate text-slate-400'>{getReplyPreview(replyingTo)}</p>
+              </div>
+              <button type='button' onClick={() => setReplyingTo(null)} className='shrink-0 text-slate-400 hover:text-white' aria-label='Cancel reply'>
+                ×
+              </button>
+            </div>
+          )}
+          <div className={`flex items-center gap-2 rounded-full border p-1.5 transition-all ${isBoyInside
+              ? 'border-[#FF4D8D]/40 bg-[#121936] shadow-[0_0_15px_rgba(255,77,141,0.05)] focus-within:border-[#FF4D8D]'
               : 'border-white/5 bg-white/5 opacity-60'
             }`}
           >
             <Emoji onSelect={handleEmojiSelect} />
-            
+
             <input
               type='text'
               value={messageText}
@@ -713,9 +776,9 @@ const MessageRoom = () => {
                 }
               }}
             />
-            
-            
-            
+
+
+
             <button
               type='button'
               aria-label='Send message'
@@ -731,7 +794,7 @@ const MessageRoom = () => {
           )}
         </footer>
       </div>
-      
+
       <ReportPopup
         isOpen={isReportOpen}
         userName={partnerName}
