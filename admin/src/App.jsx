@@ -282,7 +282,7 @@ function App() {
             </div>
             
             <p className="mb-8 w-full truncate rounded-2xl bg-[#040711] px-4 py-3 text-xs text-slate-300 ring-1 ring-white/10">
-              https://addalove.com/{generatedCertId}
+              https://addalove.com/officalverification/{generatedCertId}
             </p>
             
             <div className="flex w-full gap-3">
