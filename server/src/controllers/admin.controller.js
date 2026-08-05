@@ -6,22 +6,81 @@ import Room from '../models/room.model.js';
 import Report from '../models/report.model.js';
 import Transaction from '../models/transaction.model.js';
 import CoinTransaction from '../models/coinsTransaction.model.js';
-
-
-const allApplication=asyncHandler(async(req,res)=>{
-    const allApplicationData = await Girls.find({})
-    if(!allApplicationData){
-        return res.status(200).json(new ApiResponse(200,null,"No application"))
+import Admin from '../models/admin.model.js';
+import bcrypt from "bcrypt"
+import jwt from "jsonwebtoken"
+import { options } from '../constants.js';
+import Certificate from '../models/certificate.model.js';
+import mongoose from 'mongoose';
+const registerAdmin = asyncHandler(async (req, res) => {
+    const { fullName, email, password } = req.body;
+    if (!fullName || !email || !password) {
+        throw new ApiError(400, "All data are Required.")
     }
-    return res.status(200).json(new ApiResponse(200,allApplicationData,"All application retrived."))
+    const isHaveAccount = await Admin.findOne({ email });
+    if (isHaveAccount) {
+        throw new ApiError(400, "You already have an account.")
+    }
+    const slat = await bcrypt.genSalt(12);
+    const haspass = await bcrypt.hash(password, slat);
+    const newAdmin = new Admin({
+        fullName,
+        email,
+        password: haspass
+
+    })
+    await newAdmin.save();
+    return res.status(201).json(new ApiResponse(201, null, "New Admin register Successfully."))
+
+});
+const loginAdmin = asyncHandler(async (req, res) => {
+    const { email, password } = req.body;
+    if (!email || !password) {
+        throw new ApiError(400, "All data are Required.")
+    }
+    const isHaveAccount = await Admin.findOne({ email });
+    if (!isHaveAccount) {
+        throw new ApiError(400, " Invalid credential.")
+    }
+    const varifyPassowrd = await bcrypt.compare(password, isHaveAccount?.password);
+    if (!varifyPassowrd) {
+        throw new ApiError(400, 'Invalid credential')
+    }
+    const authToken = jwt.sign({
+        userId: isHaveAccount._id,
+        phoneNumber: isHaveAccount.email,
+        userType: "admin"
+    }, process.env.JWT_SERECT);
+    return res
+        .status(200)
+        .cookie("authToken", authToken, options)
+        .json(
+            new ApiResponse(200, { token: authToken }, "User logged in successfully")
+        )
+
+})
+const logoutAdmin = asyncHandler(async (req, res) => {
+    const userId = req.user._id;
+    if (!userId) {
+        throw new ApiError(401, "Unauthorized");
+    }
+    res.clearCookie("authToken", options);
+    return res.status(200).json(new ApiResponse(200, null, 'Logout done'))
+})
+const allApplication = asyncHandler(async (req, res) => {
+    const allApplicationData = await Girls.find({})
+    if (!allApplicationData) {
+        return res.status(200).json(new ApiResponse(200, null, "No application"))
+    }
+    return res.status(200).json(new ApiResponse(200, allApplicationData, "All application retrived."))
 });
 
-const allRoomsOpens= asyncHandler(async(req,res)=>{
-    const allOpensRoomsData= await Room.find({});
-    if(!allOpensRoomsData){
-        return res.status(200).json(new ApiResponse(200,null,"No opens room."))
+const allRoomsOpens = asyncHandler(async (req, res) => {
+    const allOpensRoomsData = await Room.find({});
+    if (!allOpensRoomsData) {
+        return res.status(200).json(new ApiResponse(200, null, "No opens room."))
     }
-    return res.status(200).json(new ApiResponse(200,allOpensRoomsData,"All open room retrived."))
+    return res.status(200).json(new ApiResponse(200, allOpensRoomsData, "All open room retrived."))
 });
 const allReport = asyncHandler(async (req, res) => {
     const reports = await Report.aggregate([
@@ -169,4 +228,27 @@ const allCoinPurchase = asyncHandler(async (req, res) => {
         new ApiResponse(200, allCoinPurchaseData, "All data retrieved")
     );
 });
-export {allApplication,allRoomsOpens,allReport,allCoinPurchase};
+
+const createCertificate=asyncHandler(async(req,res)=>{
+    const {fullName,email,position}=req.body;
+    if (!fullName || !email || !position) {
+        throw new ApiError(400, "All data are Required.")
+    }
+    const newCertificate= new Certificate({
+        fullName,
+        email,
+        position
+    })
+    await newCertificate.save();
+    return res.status(201).json(new ApiResponse(201,newCertificate._id," Certificate issue Successfully."))
+})
+const checkCertificate=asyncHandler(async(req,res)=>{
+    const id = req.params.id;
+
+    const certificateData = await Certificate.findById(id);
+    if(!certificateData){
+        throw new ApiError(404,"Certificate not found")
+    }
+    return res.status(200).json(new ApiResponse(200,certificateData,"Certificate found successful."))
+})
+export { allApplication, allRoomsOpens, allReport, allCoinPurchase ,registerAdmin,loginAdmin,logoutAdmin,createCertificate,checkCertificate };
