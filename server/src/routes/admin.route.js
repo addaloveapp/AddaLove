@@ -1,5 +1,5 @@
 import express from 'express';
-import { allApplication, allCoinPurchase, allReport, allRoomsOpens, checkCertificate, createCertificate, loginAdmin, logoutAdmin, registerAdmin } from '../controllers/admin.controller.js';
+import { accpectTheGirls, allApplication, allCoinPurchase, allReport, allRoomsOpens, checkCertificate, createCertificate, loginAdmin, logoutAdmin, registerAdmin, rejectTheGirls } from '../controllers/admin.controller.js';
 import { verifyAdmin } from '../middlewares/admin.middleware.js';
 
 const AdminRoute = express.Router();
@@ -13,5 +13,7 @@ AdminRoute.get("/all-report",verifyAdmin,allReport);
 AdminRoute.get("/all-transaction",verifyAdmin,allCoinPurchase);
 AdminRoute.post("/create-certificate",verifyAdmin,createCertificate);
 AdminRoute.get("/issuecertificate/:id",checkCertificate);
+AdminRoute.post("/accpect",verifyAdmin,accpectTheGirls);
+AdminRoute.post("/reject",verifyAdmin,rejectTheGirls);
 
 export default AdminRoute;
