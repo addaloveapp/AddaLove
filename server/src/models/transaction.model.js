@@ -13,7 +13,11 @@ const transactionSchema = new mongoose.Schema({
     },
     coinAmount: {
         type: Number,
-    }
+    },
+    roomId: {
+        type: String,
+        required: true
+    },
 }, { timestamps: true });
 
 const Transaction = mongoose.model('Transaction', transactionSchema);

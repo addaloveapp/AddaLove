@@ -34,7 +34,7 @@ const calculateMiliScond = async (userId, roomType) => {
 
     return Math.floor(totalMilliseconds);
 };
-const moneyTransfer = async (boyId, girlId, time, roomType) => {
+const moneyTransfer = async (boyId, girlId, time, roomType, roomId) => {
     const session = await mongoose.startSession();
 
     try {
@@ -76,8 +76,8 @@ const moneyTransfer = async (boyId, girlId, time, roomType) => {
         const newCoinTransaction= new Transaction({
             senderId:mongoBoyId,
             receiverId:mongoGirlId,
-            coinAmount:coins
-
+            coinAmount:coins,
+            roomId:roomId
         }) 
         await newCoinTransaction.save({session});
         await boy.save({ session });
