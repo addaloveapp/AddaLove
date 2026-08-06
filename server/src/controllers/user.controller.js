@@ -16,6 +16,8 @@ import { userRateCalculate } from '../utils/calculateUserRateAVG.js';
 import axios from 'axios'
 import { respactPointCalculate } from '../utils/respactPointCalculate.js';
 import { calculateMiliScond } from '../utils/calculation.js';
+import VisitHistory from '../models/visitHistory.model.js';
+import CoinTransaction from '../models/coinsTransaction.model.js';
 const sendOtp = asyncHandler(async (req, res) => {
     const { email, purpose } = req.body;
     if (!email) {
@@ -369,7 +371,7 @@ const currentUser = asyncHandler(async (req, res) => {
                 }
             },
             { $sort: { ratingScore: -1 } },
-            { $limit: 100},
+            { $limit: 100 },
             {
                 $project: {
                     _id: 1,
@@ -538,7 +540,7 @@ const currentUser = asyncHandler(async (req, res) => {
                 }
             }
         ]);
-       
+
         let userRank = 0;
         for (let i in leaderboard) {
             if (leaderboard[i]._id.toString() == req.user._id.toString()) {
@@ -550,12 +552,12 @@ const currentUser = asyncHandler(async (req, res) => {
         return res.status(200).json(
             new ApiResponse(
                 200,
-                { userInfo, userRateAVG ,userRank },
+                { userInfo, userRateAVG, userRank },
                 "Current user details retrieved successfully"
             )
         );
     }
-    
+
     throw new ApiError(401, "Unauthorized");
 });
 
@@ -611,6 +613,145 @@ const forgetPassword = asyncHandler(async (req, res) => {
 
 })
 
+const getUserFullHistory = asyncHandler(async (req, res) => {
+    const userId = req.user._id;
+    const userType = req.user.userType;
+
+    if (!userId) {
+        throw new ApiError(400, 'User ID is required');
+    }
+
+    let fullHistory = [];
+
+    if (userType === 'Boy') {
+        const callHistory = await VisitHistory.aggregate([
+            {
+                $match: { boy: new mongoose.Types.ObjectId(userId) }
+            },
+            {
+                $lookup: {
+                    from: 'transactions',
+                    localField: 'roomId',
+                    foreignField: 'roomId',
+                    as: 'transactionDetails'
+                }
+            },
+            {
+                $unwind: { path: '$transactionDetails', preserveNullAndEmptyArrays: true }
+            },
+            {
+                $lookup: {
+                    from: 'girls',
+                    localField: 'girl',
+                    foreignField: '_id',
+                    as: 'girlProfile'
+                }
+            },
+            {
+                $unwind: { path: '$girlProfile', preserveNullAndEmptyArrays: true }
+            },
+            {
+                $project: {
+                    _id: 1,
+                    recordType: { $literal: 'call_spend' },
+                    roomId: 1,
+                    roomType: 1,
+                    durationSeconds: 1,
+                    joinedAt: 1,
+                    leftAt: 1,
+                    coinsSpent: { $ifNull: ['$transactionDetails.coinAmount', 0] },
+                    otherUser: {
+                        _id: '$girlProfile._id',
+                        fullName: '$girlProfile.fullName',
+                        imageUrl: '$girlProfile.imageUrl'
+                    },
+                    createdAt: 1
+                }
+            }
+        ]);
+
+        const rechargeHistory = await CoinTransaction.aggregate([
+            {
+                $match: { userId: new mongoose.Types.ObjectId(userId) }
+            },
+            {
+                $project: {
+                    _id: 1,
+                    recordType: { $literal: 'recharge' },
+                    coins: 1,
+                    bonus: 1,
+                    amount: 1,
+                    paymentId: '$razorpay_payment_id',
+                    createdAt: 1
+                }
+            }
+        ]);
+
+        fullHistory = [...callHistory, ...rechargeHistory].sort(
+            (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+        );
+
+    } else if (userType === 'Girl') {
+        const callHistory = await VisitHistory.aggregate([
+            {
+                $match: { girl: new mongoose.Types.ObjectId(userId) }
+            },
+            {
+                $lookup: {
+                    from: 'transactions',
+                    localField: 'roomId',
+                    foreignField: 'roomId',
+                    as: 'transactionDetails'
+                }
+            },
+            {
+                $unwind: { path: '$transactionDetails', preserveNullAndEmptyArrays: true }
+            },
+            {
+                $lookup: {
+                    from: 'users',
+                    localField: 'boy',
+                    foreignField: '_id',
+                    as: 'boyProfile'
+                }
+            },
+            {
+                $unwind: { path: '$boyProfile', preserveNullAndEmptyArrays: true }
+            },
+            {
+                $project: {
+                    _id: 1,
+                    recordType: { $literal: 'call_earn' },
+                    roomId: 1,
+                    roomType: 1,
+                    durationSeconds: 1,
+                    joinedAt: 1,
+                    leftAt: 1,
+                    coinsEarned: { $ifNull: ['$transactionDetails.coinAmount', 0] },
+                    otherUser: {
+                        _id: '$boyProfile._id',
+                        fullName: '$boyProfile.fullName',
+                        imageUrl: '$boyProfile.imageUrl'
+                    },
+                    createdAt: 1
+                }
+            }
+        ]);
+
+
+        fullHistory = callHistory.sort(
+            (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+        );
+
+    } else {
+        throw new ApiError(400, 'Invalid user type');
+    }
+
+    return res.status(200).json(
+        new ApiResponse(200, { history: fullHistory }, 'Transaction and call history retrieved successfully')
+    );
+});
+
 export {
     sendOtp,
     otpVerify,
@@ -624,5 +765,6 @@ export {
     logOut,
     messageOtpSend,
     findUserDataForForgetPassword,
-    forgetPassword
+    forgetPassword,
+    getUserFullHistory
 };
