@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import latter from "../assets/latter.png"
 import logo from '../assets/logo2.png'
+import { Link } from 'react-router';
 const AddaLoveLandingPage = () => {
     return (
         <div className="min-h-screen bg-[#070514] text-white font-sans selection:bg-pink-500/30">
@@ -296,11 +297,23 @@ const AddaLoveLandingPage = () => {
                         <h4 className="font-semibold mb-6">Quick Links</h4>
                         <div className="grid gap-x-4 gap-y-3">
 
-                            <a href="#" className="text-sm text-gray-400 hover:text-pink-500 transition-colors">Privacy Policy</a>
+                            <Link onClick={() => {
+                                window.scrollTo({
+                                    top: 0,
+                                    left: 0,
+                                    behavior: 'smooth',
+                                });
+                            }} to="/PrivacyPolicy" className="text-sm text-gray-400 hover:text-pink-500 transition-colors">Privacy Polic</Link>
+                            <a href="#" className="text-sm text-gray-400 hover:text-pink-500 transition-colors">Terms & Conditionsy</a>
 
-                            <a href="#" className="text-sm text-gray-400 hover:text-pink-500 transition-colors">Terms & Conditions</a>
 
-                            <a href="#" className="text-sm text-gray-400 hover:text-pink-500 transition-colors">Community Guidelines</a>
+                            <Link onClick={() => {
+                                window.scrollTo({
+                                    top: 0,
+                                    left: 0,
+                                    behavior: 'smooth',
+                                });
+                            }} to="/communityguidelines" className="text-sm text-gray-400 hover:text-pink-500 transition-colors">Community Guidelines</Link>
 
                         </div>
                     </div>
