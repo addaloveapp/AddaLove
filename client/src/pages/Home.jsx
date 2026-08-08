@@ -8,6 +8,7 @@ import joinAnyRoomSound from '../assets/sounds/joinAnyRoom.mpeg';
 import createRoomimg from "../assets/createRoom.png"
 import homeAndProfileMusic from '../assets/musics/homeAndProfile.mpeg';
 import PageMusicPlayer from '../components/PageMusicPlayer.jsx';
+import PopularProfiles from '../components/PopularProfiles.jsx';
 const languages = ['Bengali', 'Hindi', 'Gujarati', 'English', 'Kannada', 'Marathi', 'Tamil', 'Telugu', 'Urdu', 'Punjabi'];
 
 const getRoomPath = (type, roomId) => {
@@ -457,6 +458,8 @@ const Home = () => {
               </div>
 
               {/* Active Rooms Section */}
+              <PopularProfiles />
+
               <div className="flex flex-col gap-4">
                 <div className="flex items-end justify-between px-1">
                   <h3 className="text-[17px] font-bold text-white">Active Rooms</h3>
