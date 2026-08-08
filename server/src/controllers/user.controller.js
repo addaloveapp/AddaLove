@@ -752,6 +752,58 @@ const getUserFullHistory = asyncHandler(async (req, res) => {
     );
 });
 
+// This intentionally exposes only the public fields needed by the home-page
+// profile cards.  It is restricted to boys because this is a discovery view.
+const getGirlProfiles = asyncHandler(async (req, res) => {
+    if (req.userType !== 'boy') {
+        throw new ApiError(403, 'Only boys can view girl profiles');
+    }
+
+    const profiles = await Girls.aggregate([
+        { $match: { applicationStatus: 'accepted' } },
+        {
+            $lookup: {
+                from: 'followers',
+                let: { girlId: '$_id' },
+                pipeline: [
+                    { $match: { $expr: { $and: [
+                        { $eq: ['$following', '$$girlId'] },
+                        { $eq: ['$followingModel', 'Girls'] }
+                    ] } } },
+                    { $count: 'count' }
+                ],
+                as: 'followerData'
+            }
+        },
+        {
+            $lookup: {
+                from: 'ratings',
+                let: { girlId: '$_id' },
+                pipeline: [
+                    { $match: { $expr: { $and: [
+                        { $eq: ['$ratedUser', '$$girlId'] },
+                        { $eq: ['$ratedUserModel', 'Girls'] }
+                    ] } } },
+                    { $group: { _id: null, average: { $avg: '$rating' } } }
+                ],
+                as: 'ratingData'
+            }
+        },
+        {
+            $project: {
+                _id: 1,
+                fullName: 1,
+                imageUrl: 1,
+                followersCount: { $ifNull: [{ $arrayElemAt: ['$followerData.count', 0] }, 0] },
+                rating: { $round: [{ $ifNull: [{ $arrayElemAt: ['$ratingData.average', 0] }, 0] }, 1] }
+            }
+        },
+        { $sort: { rating: -1, followersCount: -1, fullName: 1 } }
+    ]);
+
+    return res.status(200).json(new ApiResponse(200, profiles, 'Girl profiles retrieved successfully'));
+});
+
 export {
     sendOtp,
     otpVerify,
@@ -766,5 +818,6 @@ export {
     messageOtpSend,
     findUserDataForForgetPassword,
     forgetPassword,
-    getUserFullHistory
+    getUserFullHistory,
+    getGirlProfiles
 };
