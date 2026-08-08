@@ -38,6 +38,24 @@ const useUserStore = create((set) => ({
             set({ user: null, isAuthenticated: false, userRole: null });
             throw error;
         }
+    },
+    history: null,
+    fetchUserHistory: async () => {
+        set({ isLoading: true, error: null });
+        try {
+            const response = await axios.get(
+                `${import.meta.env.VITE_BACKEND_URL}/api/auth/v1/user-full-history`,
+                {
+                    withCredentials: true,
+                }
+            );
+            console.log("User history response:", response.data.data.history);
+            set({ history: response.data.data.history, isLoading: false });
+            return response.data.data.history;
+        } catch (error) {
+            set({ history: null, isLoading: false });
+            throw error;
+        }
     }
 }));
 

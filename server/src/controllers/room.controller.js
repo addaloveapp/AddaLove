@@ -74,7 +74,7 @@ const processSessionPayment = async (room, boyId, durationSeconds) => {
     }
 
     try {
-        await moneyTransfer(boyId, room.createdBy, durationSeconds, room.roomType);
+        await moneyTransfer(boyId, room.createdBy, durationSeconds, room.roomType, room.roomId);
     } catch (error) {
         await Room.collection.updateOne(
             { _id: room._id, currentSessionPaymentStatus: 'processing' },
