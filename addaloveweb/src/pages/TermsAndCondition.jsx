@@ -42,7 +42,7 @@ const TermsAndConditions = () => {
     }
   };
 
-  const Cite = () => <span className="text-gray-600/50 text-[10px] ml-1 select-none">[cite: 3]</span>;
+  const Cite = () => <span className="text-gray-600/50 text-[10px] ml-1 select-none"></span>;
 
   return (
     <div className="min-h-screen bg-[#070514] text-gray-300 font-sans selection:bg-pink-500/30">

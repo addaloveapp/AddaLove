@@ -766,10 +766,16 @@ const getGirlProfiles = asyncHandler(async (req, res) => {
                 from: 'followers',
                 let: { girlId: '$_id' },
                 pipeline: [
-                    { $match: { $expr: { $and: [
-                        { $eq: ['$following', '$$girlId'] },
-                        { $eq: ['$followingModel', 'Girls'] }
-                    ] } } },
+                    {
+                        $match: {
+                            $expr: {
+                                $and: [
+                                    { $eq: ['$following', '$$girlId'] },
+                                    { $eq: ['$followingModel', 'Girls'] }
+                                ]
+                            }
+                        }
+                    },
                     { $count: 'count' }
                 ],
                 as: 'followerData'
@@ -780,10 +786,16 @@ const getGirlProfiles = asyncHandler(async (req, res) => {
                 from: 'ratings',
                 let: { girlId: '$_id' },
                 pipeline: [
-                    { $match: { $expr: { $and: [
-                        { $eq: ['$ratedUser', '$$girlId'] },
-                        { $eq: ['$ratedUserModel', 'Girls'] }
-                    ] } } },
+                    {
+                        $match: {
+                            $expr: {
+                                $and: [
+                                    { $eq: ['$ratedUser', '$$girlId'] },
+                                    { $eq: ['$ratedUserModel', 'Girls'] }
+                                ]
+                            }
+                        }
+                    },
                     { $group: { _id: null, average: { $avg: '$rating' } } }
                 ],
                 as: 'ratingData'
@@ -803,7 +815,37 @@ const getGirlProfiles = asyncHandler(async (req, res) => {
 
     return res.status(200).json(new ApiResponse(200, profiles, 'Girl profiles retrieved successfully'));
 });
+const addAvatarProfilePhoto = asyncHandler(async (req, res) => {
+    const { url } = req.body;
+    const userId = req.user._id;
+    const userType = req.user.userType;
+    if (!url) {
+        throw new ApiError("Url is required.")
+    }
+    if(!userId || !userType){
+        throw new ApiError("USer id required.")
+    }
+    if(userType=="Boy"){
+        const user= await User.findById(userId).lean();
+        if(!user){
+            throw new ApiError("User is not found.")
+        }
+        await User.findByIdAndUpdate(userId,{$set:{imageUrl:url}},{new:true})
+        return res.status(200).json(new ApiResponse(200,"Update Successful."))
+    }
+    if(userType=="Girl"){
+        const user= await Girls.findById(userId).lean();
+        if(!user){
+            throw new ApiError("User is not found.")
+        }
+        await Girls.findByIdAndUpdate(userId,{$set:{imageUrl:url}},{new:true})
+        return res.status(200).json(new ApiResponse(200,"Update Successful."))
 
+    }
+
+
+
+})
 export {
     sendOtp,
     otpVerify,
@@ -819,5 +861,6 @@ export {
     findUserDataForForgetPassword,
     forgetPassword,
     getUserFullHistory,
-    getGirlProfiles
+    getGirlProfiles,
+    addAvatarProfilePhoto
 };

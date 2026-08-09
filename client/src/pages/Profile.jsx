@@ -1,48 +1,98 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router';
 import useUserStore from '../store/userStore';
-import { LogOut, Bell, ChevronLeft, CheckCircle2, Star, Trophy, Users, UserCheck, Wallet, Verified, Phone, MoveLeft, MoveRight } from 'lucide-react';
+import { Camera, LogOut, Bell, ChevronLeft, CheckCircle2, Star, Trophy, Users, UserCheck, Wallet, Verified, Phone, MoveLeft, MoveRight } from 'lucide-react';
 import { handleError } from '../components/ErrorMessage';
 import respact from "../assets/respectpointlogo.png"
 import homeAndProfileMusic from '../assets/musics/homeAndProfile.mpeg';
 import PageMusicPlayer from '../components/PageMusicPlayer.jsx';
 export default function Profile() {
-  const { user: useralldata, userRole, userRate, userRank } = useUserStore();
+  const { user: useralldata, userRole, userRate, userRank, fetchUser } = useUserStore();
   const [top, setTop] = useState(false)
   const [count, setCount] = useState(0)
   const naviget = useNavigate();
 
-  // State for Modal and Form
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [loder, setLoder] = useState(false);
-  const [formData, setFormData] = useState({
-    fullName: '',
-    age: '',
-    userType: '',
-    imageUrl: ''
-  });
+  const [avatarMode, setAvatarMode] = useState('avatar');
+  const [selectedAvatarUrl, setSelectedAvatarUrl] = useState('');
+  const [avatarLoading, setAvatarLoading] = useState(false);
 
   const isBoy = useMemo(() => userRole === 'boy', [userRole]);
   const isGirl = useMemo(() => userRole === 'girl', [userRole]);
 
-  // Open modal and pre-fill data
+  const avatarOptions = useMemo(() => {
+    if (isBoy) {
+      return [
+        'https://ik.imagekit.io/vn9p5q5si/boy1.png',
+        'https://ik.imagekit.io/vn9p5q5si/boy2.png',
+        'https://ik.imagekit.io/vn9p5q5si/boy3.png',
+        'https://ik.imagekit.io/vn9p5q5si/boy4.png',
+        'https://ik.imagekit.io/vn9p5q5si/boy5.png',
+        'https://ik.imagekit.io/vn9p5q5si/boy6.png',
+        'https://ik.imagekit.io/vn9p5q5si/boy7.png',
+        'https://ik.imagekit.io/vn9p5q5si/boy8.png',
+        'https://ik.imagekit.io/vn9p5q5si/boy9.png',
+        'https://ik.imagekit.io/vn9p5q5si/boy10.png',
+      ];
+    }
+    return [
+      'https://ik.imagekit.io/vn9p5q5si/girl1.png',
+      'https://ik.imagekit.io/vn9p5q5si/girl2.png',
+      'https://ik.imagekit.io/vn9p5q5si/girl3.png',
+      'https://ik.imagekit.io/vn9p5q5si/girl4.png',
+      'https://ik.imagekit.io/vn9p5q5si/girl5.png',
+      'https://ik.imagekit.io/vn9p5q5si/girl6.png',
+      'https://ik.imagekit.io/vn9p5q5si/girl7.png',
+      'https://ik.imagekit.io/vn9p5q5si/girl8.png',
+      'https://ik.imagekit.io/vn9p5q5si/girl9.png',
+      'https://ik.imagekit.io/vn9p5q5si/girl10.png',
+    ];
+  }, [isBoy]);
+
+  // Open modal and initialize avatar selection
   const handleOpenModal = () => {
     if (useralldata) {
-      setFormData({
-        fullName: useralldata.fullName || '',
-        age: useralldata.age || '',
-        userType: useralldata.userType || '',
-        imageUrl: useralldata.imageUrl || ''
-      });
+      setAvatarMode('avatar');
+      setSelectedAvatarUrl(useralldata.imageUrl || avatarOptions[0] || '');
       setIsModalOpen(true);
     }
   };
 
-  // Handle Input Changes
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+  const handleSelectAvatar = (url) => {
+    setSelectedAvatarUrl(url);
   };
+
+  const handleAvatarDone = async () => {
+    if (!selectedAvatarUrl) {
+      handleError('Please select an avatar image.');
+      return;
+    }
+
+    setAvatarLoading(true);
+    try {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/auth/v1/add-avatar`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ url: selectedAvatarUrl }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.success) {
+        handleError(data.message || 'Failed to update avatar.');
+        return;
+      }
+
+      await fetchUser();
+      setIsModalOpen(false);
+    } catch (error) {
+      console.error(error);
+      handleError('Network issue while updating avatar.');
+    } finally {
+      setAvatarLoading(false);
+    }
+  };
+
 
   const handelTopUp = () => {
     console.log("hello")
@@ -57,12 +107,6 @@ export default function Profile() {
   };
 
   // Handle Form Submission
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    console.log('Updated Data:', formData);
-    // Add API call or context update here
-    setIsModalOpen(false);
-  };
 
   const handelLogout = async () => {
     try {
@@ -126,10 +170,19 @@ export default function Profile() {
             <div className="relative">
               {userRank === 1 ? <div className="absolute -top-4 left-1/2 -translate-x-1/2 text-lg drop-shadow-[0_2px_5px_rgba(236,72,153,0.5)] z-20">👑</div> : ''}
               <div className="relative p-1 rounded-full bg-linear-to-tr from-[#8B5CF6] via-[#EC4899] to-[#F472B6] shadow-[0_0_20px_rgba(236,72,153,0.25)]">
+                <button
+                  type="button"
+                  onClick={handleOpenModal}
+                  className="absolute -right-1 -bottom-1 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-linear-to-br from-pink-500 to-violet-600 text-white shadow-lg shadow-pink-500/20 border border-white/20 hover:scale-105 transition-transform"
+                  aria-label="Update profile photo"
+                >
+                  <Camera className="w-4 h-4" />
+                </button>
                 <img
                   src={useralldata.imageUrl}
                   alt={useralldata.fullName}
-                  className="w-20 h-20 rounded-full object-cover border-2 border-[#130E29] bg-[#1A1235]"
+                  className="w-20 h-20 rounded-full object-cover border-2 border-[#130E29] bg-[#1A1235] cursor-pointer"
+                  onClick={handleOpenModal}
                 />
               </div>
               <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 px-2.5 py-0.5 rounded-full bg-linear-to-r from-[#EC4899] to-[#8B5CF6] text-[9px] font-black tracking-wider uppercase whitespace-nowrap shadow-md shadow-pink-500/20 border border-white/10">
@@ -278,10 +331,10 @@ export default function Profile() {
       {/* Edit Profile Glassmorphism Modal Context */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md transition-opacity">
-          <div className="w-full max-w-md bg-[#130E29] border border-purple-500/20 rounded-3xl shadow-2xl overflow-hidden transform transition-all">
+          <div className="w-full max-w-md bg-[#130E29] border border-purple-500/20 rounded-3xl shadow-2xl overflow-hidden transform transition-all max-h-[85vh]">
 
             <div className="px-6 py-4 border-b border-purple-900/30 flex justify-between items-center bg-purple-950/20">
-              <h2 className="text-base font-bold text-white tracking-wide">Edit Profile Settings</h2>
+              <h2 className="text-base font-bold text-white tracking-wide">Update Profile Photo</h2>
               <button
                 onClick={() => setIsModalOpen(false)}
                 className="text-slate-400 hover:text-white transition-colors p-1.5 rounded-full hover:bg-white/5"
@@ -290,72 +343,89 @@ export default function Profile() {
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="p-6 space-y-4">
-              <div>
-                <label className="block text-xs font-semibold text-slate-400 mb-1.5 tracking-wider uppercase">Full Name</label>
-                <input
-                  type="text"
-                  name="fullName"
-                  value={formData.fullName}
-                  onChange={handleInputChange}
-                  className="w-full bg-[#090514] border border-purple-900/40 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-pink-500 focus:ring-1 focus:ring-pink-500/30 transition-all font-medium"
-                  required
-                />
+            <div className="p-6 space-y-5 max-h-[72vh] overflow-y-auto pr-2">
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => setAvatarMode('avatar')}
+                  className={`py-3 rounded-2xl text-sm font-semibold uppercase tracking-wider transition-all ${avatarMode === 'avatar'
+                    ? 'bg-linear-to-r from-[#8B5CF6] to-[#EC4899] text-white shadow-lg shadow-purple-500/20'
+                    : 'bg-[#090514] border border-purple-900/40 text-slate-300 hover:bg-[#130E29]'}`}
+                >
+                  Upload Avatar
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAvatarMode('own')}
+                  disabled
+                  className="py-3 rounded-2xl bg-[#0E0B1E] border border-purple-900/40 text-slate-500 text-sm font-semibold uppercase tracking-wider cursor-not-allowed"
+                >
+                  Upload Own Photo
+                </button>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-400 mb-1.5 tracking-wider uppercase">Age</label>
-                  <input
-                    type="number"
-                    name="age"
-                    value={formData.age}
-                    onChange={handleInputChange}
-                    className="w-full bg-[#090514] border border-purple-900/40 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-pink-500 focus:ring-1 focus:ring-pink-500/30 transition-all font-medium"
-                    required
-                  />
+              {avatarMode === 'avatar' ? (
+                <div className="space-y-4">
+                  <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Choose one avatar below</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    {avatarOptions.map((url) => (
+                      <button
+                        key={url}
+                        type="button"
+                        onClick={() => handleSelectAvatar(url)}
+                        className={`relative overflow-hidden rounded-3xl border p-0.5 transition-all ${selectedAvatarUrl === url ? 'border-pink-400 shadow-[0_0_0_3px_rgba(236,72,153,0.18)]' : 'border-purple-900/30 hover:border-pink-500'}`}
+                      >
+                        <img
+                          src={url}
+                          alt="Avatar option"
+                          className="h-[165px] w-full rounded-3xl object-cover"
+                        />
+                        {selectedAvatarUrl === url && (
+                          <span className="absolute right-2 top-2 inline-flex items-center gap-1 rounded-full bg-pink-500/95 px-2 py-1 text-[10px] font-bold uppercase text-white shadow-lg shadow-pink-500/20">
+                            <CheckCircle2 className="h-3.5 w-3.5" />
+                            Selected
+                          </span>
+                        )}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-400 mb-1.5 tracking-wider uppercase">User Type</label>
-                  <input
-                    type="text"
-                    name="userType"
-                    value={formData.userType}
-                    onChange={handleInputChange}
-                    className="w-full bg-[#090514] border border-purple-900/40 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500/30 transition-all font-medium"
-                    required
-                  />
+              ) : (
+                <div className="rounded-3xl border border-purple-900/40 bg-[#0B0718] p-5 text-sm text-slate-400">
+                  Upload own photo is temporarily disabled. Please choose one of the avatar options.
                 </div>
-              </div>
+              )}
 
-              <div>
-                <label className="block text-xs font-semibold text-slate-400 mb-1.5 tracking-wider uppercase">Profile Image URL</label>
-                <input
-                  type="url"
-                  name="imageUrl"
-                  value={formData.imageUrl}
-                  onChange={handleInputChange}
-                  className="w-full bg-[#090514] border border-purple-900/40 rounded-xl px-4 py-2.5 text-xs text-slate-200 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500/30 transition-all font-mono"
-                  required
-                />
-              </div>
-
-              <div className="pt-4 flex gap-3">
+              <div className="flex items-center justify-between gap-3">
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="flex-1 py-2.5 rounded-xl border border-purple-900/40 text-xs font-bold text-slate-300 hover:bg-white/5 hover:text-white transition-all"
+                  className="flex-1 py-3 rounded-2xl border border-purple-900/40 text-xs font-bold text-slate-300 hover:bg-white/5 transition-all"
                 >
                   Cancel
                 </button>
                 <button
-                  type="submit"
-                  className="flex-1 py-2.5 rounded-xl bg-linear-to-r from-[#8B5CF6] to-[#EC4899] text-xs font-black uppercase tracking-wider text-white shadow-lg shadow-purple-500/20 hover:opacity-90 transition-all"
+                  type="button"
+                  onClick={handleAvatarDone}
+                  disabled={avatarLoading || avatarMode !== 'avatar'}
+                  className={`flex-1 py-3 rounded-2xl text-xs font-black uppercase tracking-wider text-white transition-all ${avatarMode === 'avatar'
+                    ? 'bg-linear-to-r from-[#8B5CF6] to-[#EC4899] shadow-lg shadow-purple-500/20 hover:opacity-90'
+                    : 'bg-purple-950/40 cursor-not-allowed text-slate-500'}`}
                 >
-                  Save Changes
+                  {avatarLoading ? (
+                    <span className="inline-flex items-center justify-center gap-2">
+                      <svg className="animate-spin h-4 w-4 text-white" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                      </svg>
+                      Updating
+                    </span>
+                  ) : (
+                    'Done'
+                  )}
                 </button>
               </div>
-            </form>
+            </div>
           </div>
         </div>
       )}

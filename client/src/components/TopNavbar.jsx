@@ -39,21 +39,13 @@ export default function TopNavbar() {
                     <button
                         onClick={handlecoinclick}
                         disabled={isGirl}
-                        className="md:hidden bg-slate-800/80 hover:bg-slate-700/80 px-3 py-1.5 rounded-full flex items-center gap-1.5 text-xs font-bold border border-[#6C3BFF]/30"
+                        className="md:hidden bg-slate-800/80 hover:bg-slate-700/80 px-5 py-1.5 rounded-full flex items-center gap-1.5 text-xs font-bold border border-[#6C3BFF]/30"
                     >
-                        <span className="text-yellow-400">🪙</span>
+                        <span className="text-yellow-400 text-[18px]">🪙</span>
                         <span className="text-slate-200">{useralldata?.walletBlance}</span>
                     </button>
 
-                    <button
-                        onClick={() => triggerToast("All active connections are premium and secure.")}
-                        className="w-10 h-10 rounded-full bg-slate-800 hover:bg-slate-700 flex items-center justify-center transition-all relative"
-                    >
-                        <svg className="w-5 h-5 text-slate-300" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                        </svg>
-                        <span className="absolute top-2.5 right-2.5 w-2.5 h-2.5 bg-[#FF4D8D] rounded-full ring-2 ring-[#0F172A]"></span>
-                    </button>
+                    
                 </div>
             </header>
         </div>
