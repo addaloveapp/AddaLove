@@ -190,9 +190,7 @@ const Leaderboard = () => {
 
                   {/* Avatar Container with Laurels */}
                   <div className="relative flex flex-col items-center mb-4">
-                    {rank === 1 && (
-                      <Crown className={`absolute -top-6 w-8 h-8 ${styles.textClass} drop-shadow-[0_0_10px_rgba(234,179,8,1)] z-20`} />
-                    )}
+                    
 
                     <div className="relative">
                       {/* Placeholder for SVG Laurel Wreaths */}
@@ -204,7 +202,7 @@ const Leaderboard = () => {
                       <img
                         src={user.imageUrl || '/api/placeholder/150/150'}
                         alt={user.fullName}
-                        className={`${styles.avatarSize} rounded-full object-cover border-2 ${styles.borderClass} ${styles.ringShadow} relative z-10 p-0.5 bg-black`}
+                        className={`${styles.avatarSize} rounded-full object-cover border-2 animate-bounce ${styles.borderClass} ${styles.ringShadow} relative z-10 p-0.5 bg-black`}
                       />
 
                       {/* Rank / Icon badge overlapping avatar and pedestal */}
@@ -223,7 +221,7 @@ const Leaderboard = () => {
                   {/* Pedestal Box */}
                   <div className={`w-full ${styles.height} rounded-2xl border-2 ${styles.borderClass} ${styles.shadow} bg-black/40 backdrop-blur-md flex flex-col items-center justify-end pb-3 pt-6 relative`}>
                     <span className="font-bold text-lg mb-1">{rank}</span>
-                    <span className="font-bold italic text-[11px] uppercase tracking-wider text-center w-full truncate px-1">{user.fullName}</span>
+                    <span className="font-bold italic text-[11px] uppercase tracking-wider text-center w-full  px-1">{user.fullName}</span>
                     <span className="text-[8px] text-gray-400 mt-1 mb-0.5 uppercase tracking-widest">{activeTab==="boy"?"Respect Points":"Rating"}</span>
                     <div className="flex items-center gap-1">
                     {activeTab==='boy'?<span className="font-bold text-sm">{user.ratingScore || 0}</span>:  <span className="font-bold text-sm">{user.averageRating || 0}</span>}
