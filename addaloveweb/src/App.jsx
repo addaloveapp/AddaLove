@@ -5,6 +5,7 @@ import AddaLoveLandingPage from './pages/Home'
 import CertificateVerify from './pages/CertificateVerify'
 import PrivacyPolicy from './pages/PricacyAndPolicy'
 import CommunityGuidelines from './pages/CommunityGuidelines'
+import TermsAndConditions from './pages/TermsAndCondition'
 
 function App() {
 
@@ -17,6 +18,7 @@ function App() {
       <Route path='/officalverification/:id' element={<CertificateVerify/>}/>
       <Route path='/privacypolicy' element={<PrivacyPolicy/>}/>
       <Route path='/communityguidelines' element={<CommunityGuidelines/>}/>
+      <Route path='/termsAndconditions' element={<TermsAndConditions/>}/>
     </Routes>
     </BrowserRouter>
 
