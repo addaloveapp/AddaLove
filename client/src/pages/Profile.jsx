@@ -1,15 +1,15 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router';
 import useUserStore from '../store/userStore';
-import { LogOut, Bell, ChevronLeft, CheckCircle2, Star, Trophy, Users, UserCheck, Wallet, Verified } from 'lucide-react';
+import { LogOut, Bell, ChevronLeft, CheckCircle2, Star, Trophy, Users, UserCheck, Wallet, Verified, Phone, MoveLeft, MoveRight } from 'lucide-react';
 import { handleError } from '../components/ErrorMessage';
 import respact from "../assets/respectpointlogo.png"
 import homeAndProfileMusic from '../assets/musics/homeAndProfile.mpeg';
 import PageMusicPlayer from '../components/PageMusicPlayer.jsx';
 export default function Profile() {
-  const { user: useralldata, userRole, userRate , userRank} = useUserStore();
-  const [top,setTop]=useState(false)
-  const [count,setCount]=useState(0)
+  const { user: useralldata, userRole, userRate, userRank } = useUserStore();
+  const [top, setTop] = useState(false)
+  const [count, setCount] = useState(0)
   const naviget = useNavigate();
 
   // State for Modal and Form
@@ -53,7 +53,7 @@ export default function Profile() {
   const handlewithdraw = () => {
     console.log("hello")
     window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
-    naviget('/withdraw');
+    naviget('/earning');
   };
 
   // Handle Form Submission
@@ -124,7 +124,7 @@ export default function Profile() {
           <div className="flex items-start gap-4">
             {/* Crown Avatar Badge Container */}
             <div className="relative">
-              {userRank===1?<div className="absolute -top-4 left-1/2 -translate-x-1/2 text-lg drop-shadow-[0_2px_5px_rgba(236,72,153,0.5)] z-20">👑</div>:''}
+              {userRank === 1 ? <div className="absolute -top-4 left-1/2 -translate-x-1/2 text-lg drop-shadow-[0_2px_5px_rgba(236,72,153,0.5)] z-20">👑</div> : ''}
               <div className="relative p-1 rounded-full bg-linear-to-tr from-[#8B5CF6] via-[#EC4899] to-[#F472B6] shadow-[0_0_20px_rgba(236,72,153,0.25)]">
                 <img
                   src={useralldata.imageUrl}
@@ -133,7 +133,7 @@ export default function Profile() {
                 />
               </div>
               <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 px-2.5 py-0.5 rounded-full bg-linear-to-r from-[#EC4899] to-[#8B5CF6] text-[9px] font-black tracking-wider uppercase whitespace-nowrap shadow-md shadow-pink-500/20 border border-white/10">
-                {isGirl ? userRank===1? 'Top Girl':`Rank ${userRank===0?'100+':userRank}` : userRank==1? 'Top Boy':`Rank ${userRank===0?'100+':userRank}`}
+                {isGirl ? userRank === 1 ? 'Top Girl' : `Rank ${userRank === 0 ? '100+' : userRank}` : userRank == 1 ? 'Top Boy' : `Rank ${userRank === 0 ? '100+' : userRank}`}
               </div>:
             </div>
 
@@ -149,7 +149,7 @@ export default function Profile() {
               </div>
 
               <p className="text-xs text-slate-400 italic max-w-50 leading-relaxed py-0.5">
-               {useralldata?.userBio || ''}
+                {useralldata?.userBio || ''}
               </p>
 
               {/* Badges Info Chips Grid Row */}
@@ -191,14 +191,14 @@ export default function Profile() {
           </div>
 
           <div className="bg-[#130E29]/60 border border-purple-900/30 rounded-2xl p-3 text-center flex flex-col justify-center items-center">
-            {isBoy?<img src={respact} alt="Repact point logo" className='h-7' />:<Star className="w-4 h-4 text-yellow-500 fill-yellow-500 mb-1" />}
-            <span className="text-sm font-black text-slate-200">{isBoy?Number(userRate)*2:userRate || '0'}</span>
-            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">{isBoy?'Respect point':'Avg. Rating'}</span>
+            {isBoy ? <img src={respact} alt="Repact point logo" className='h-7' /> : <Star className="w-4 h-4 text-yellow-500 fill-yellow-500 mb-1" />}
+            <span className="text-sm font-black text-slate-200">{isBoy ? Number(userRate) * 2 : userRate || '0'}</span>
+            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">{isBoy ? 'Respect point' : 'Avg. Rating'}</span>
           </div>
 
           <div className="bg-[#130E29]/60 border border-purple-900/30 rounded-2xl p-3 text-center flex flex-col justify-center items-center">
             <Trophy className="w-4 h-4 text-orange-400 mb-1" />
-            <span className="text-sm font-black text-slate-200">Rank {userRank===0?'100+':userRank}</span>
+            <span className="text-sm font-black text-slate-200">Rank {userRank === 0 ? '100+' : userRank}</span>
             <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Leaderboard</span>
           </div>
         </section>
@@ -221,8 +221,8 @@ export default function Profile() {
           </div>
 
           <button
-            onClick={isBoy?handelTopUp:handlewithdraw}
-           
+            onClick={isBoy ? handelTopUp : handlewithdraw}
+
             className={`px-5 py-2 rounded-full text-xs font-black uppercase tracking-wider text-white shadow-lg transition-all hover:scale-105 active:scale-95 cursor-pointer ${isGirl
               ? 'bg-linear-to-r from-pink-500 to-rose-600 shadow-pink-500/20'
               : 'bg-linear-to-r from-blue-500 to-[#8B5CF6] shadow-blue-500/20'
@@ -234,6 +234,26 @@ export default function Profile() {
 
         {/* Global Action Management Controls Area */}
         <section className="space-y-3 mt-6">
+          <button
+            onClick={() => {
+              naviget("/call-history")
+              window.scrollTo({
+                top: 0,
+                left: 0,
+                behavior: 'smooth',
+              });
+            }}
+            disabled={loder}
+            className="w-full flex items-center justify-center gap-2.5 p-4 rounded-2xl bg-green-950/20 border border-green-900/30 hover:bg-red-950/40 text-green-400 font-bold text-sm tracking-wide transition-all active:scale-[0.99] disabled:opacity-50"
+          >
+
+
+            <Phone className="w-4 h-4" />
+            <span>Call history</span>
+            <MoveRight className="w-4 h-4" />
+
+
+          </button>
           <button
             onClick={handelLogout}
             disabled={loder}

@@ -26,6 +26,7 @@ import AudioRoom from './pages/AudioRoom.jsx'
 import SendOtp from './pages/SendOtp.jsx'
 import ForgetPassword from './pages/ForgetPassword.jsx'
 import Leaderboard from './pages/Leaderboard.jsx'
+import CallHistory from './pages/CalllHistory.jsx'
 
 const router = createBrowserRouter([
   {
@@ -91,6 +92,10 @@ const router = createBrowserRouter([
       {
         path: "/withdraw",
         element: <ProtectRoute><WithdrawMoney /></ProtectRoute>
+      },
+      {
+        path: "/call-history",
+        element: <ProtectRoute><CallHistory /></ProtectRoute>
       },
       {
         path: "/leaderboard",

@@ -28,7 +28,7 @@ const fallbackAvatar = (name = 'User') =>
 export default function AudioRoom() {
   const { roomId } = useParams();
   const navigate = useNavigate();
-  const { user, userRole, fetchUser } = useUserStore();
+  const { user, userRole, fetchUser  ,fetchUserHistory} = useUserStore();
   const { getRoomDetails, leaveRoom, destroyRoom, resetRoomState } = useRoomStore();
   const [girlProfile, setGirlProfile] = useState(null);
   const [boyProfile, setBoyProfile] = useState(null);
@@ -220,12 +220,14 @@ export default function AudioRoom() {
         }
         await destroyRoom(roomId);
         await fetchUser();
+        await fetchUserHistory();
         exitRoom();
         return;
       }
 
       await leaveRoom(roomId);
       await fetchUser();
+      await fetchUserHistory();
       if (girlProfile?._id) {
         await openRatingPopup(girlProfile, 'exit');
       } else {
