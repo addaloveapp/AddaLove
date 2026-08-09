@@ -10,7 +10,7 @@ import TopNavbar from './components/TopNavbar'
 import ButtomNavbar from './components/ButtomNavbar'
 
 function App() {
-  const { fetchUser, isAuthenticated, user, userRole } = useUserStore();
+  const { fetchUser, isAuthenticated, user, userRole, fetchUserHistory } = useUserStore();
   const {getOpenRooms, isEnterTheRoom, startRoomSocketListeners, stopRoomSocketListeners } = useRoomStore();
   const [screenloder, setScreenloder] = useState(true);
   const location = useLocation();
@@ -21,6 +21,7 @@ function App() {
       try {
         await fetchUser();
         await getOpenRooms();
+        await fetchUserHistory();
       } catch (error) {
         disconnectSocket();
       }finally {
@@ -30,7 +31,7 @@ function App() {
     };
    console.log(location.pathname)
     loadInitialData();
-  }, [fetchUser, getOpenRooms]);
+  }, [fetchUser, getOpenRooms, fetchUserHistory]);
 
   useEffect(() => {
     if (isAuthenticated && user?._id && userRole) {
