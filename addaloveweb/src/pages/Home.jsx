@@ -304,7 +304,13 @@ const AddaLoveLandingPage = () => {
                                     behavior: 'smooth',
                                 });
                             }} to="/PrivacyPolicy" className="text-sm text-gray-400 hover:text-pink-500 transition-colors">Privacy Polic</Link>
-                            <a href="#" className="text-sm text-gray-400 hover:text-pink-500 transition-colors">Terms & Conditionsy</a>
+                            <Link  onClick={() => {
+                                window.scrollTo({
+                                    top: 0,
+                                    left: 0,
+                                    behavior: 'smooth',
+                                });
+                            }} to="/termsAndconditions" className="text-sm text-gray-400 hover:text-pink-500 transition-colors">Terms & Conditionsy</Link>
 
 
                             <Link onClick={() => {
@@ -324,11 +330,11 @@ const AddaLoveLandingPage = () => {
                         <div className="space-y-4">
                             <div className="flex items-center gap-3">
                                 <Mail className="w-4 h-4 text-purple-500" />
-                                <span className="text-sm text-gray-400">hello@addalove.com</span>
+                                <a href="mailto:hello@addalove.com"><span className="text-sm text-gray-400">hello@addalove.com</span></a>
                             </div>
                             <div className="flex items-center gap-3">
                                 <Phone className="w-4 h-4 text-purple-500" />
-                                <span className="text-sm text-gray-400">+91 7362999841</span>
+                               <a href="tel:9477723538"><span className="text-sm text-gray-400">+91 9477723538</span></a> 
                             </div>
                             <div className="flex items-center gap-3">
                                 <Globe className="w-4 h-4 text-purple-500" />
