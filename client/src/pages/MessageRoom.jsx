@@ -3,7 +3,8 @@ import { useNavigate, useParams } from 'react-router-dom'
 import {
   Coins, Loader2, LogOut, MessageCircle, Send, Trash2, TriangleAlert,
   UserMinus, UserRoundPlus, Users, User, Crown, BadgeCheck, ShieldCheck,
-  Plus, Smile, Info, Video, Star
+  Plus, Smile, Info, Video, Star,
+  CheckCheck
 } from 'lucide-react'
 import useUserStore from '../store/userStore.js'
 import { connectSocket, socket } from '../socket/socket.js'
@@ -18,11 +19,11 @@ import Emoji from '../components/Emoji.jsx'
 import playSound from '../utils/playSound.js'
 import joinAnyRoomSound from '../assets/sounds/joinAnyRoom.mpeg'
 import rechargeGoingToEndSound from '../assets/sounds/rechargeGoingToEnd.aac'
-
+import respact from "../assets/respectpointlogo.png"
 const MessageRoom = () => {
   const { roomId } = useParams()
   const navigate = useNavigate()
-  const { user, userRole, fetchUser } = useUserStore()
+  const { user, userRole, fetchUser ,fetchUserHistory } = useUserStore()
   const [messageText, setMessageText] = useState('')
   const [replyingTo, setReplyingTo] = useState(null)
   const [isSendingMessage, setIsSendingMessage] = useState(false)
@@ -167,6 +168,7 @@ const MessageRoom = () => {
       setIsLeaving(true)
       await leaveRoom(roomId)
       await fetchUser()
+      await fetchUserHistory(); 
       if (girlProfile?._id) {
         await openRatingPopup(girlProfile, 'exit')
       } else {
@@ -190,6 +192,7 @@ const MessageRoom = () => {
       setIsLeaving(true)
       await destroyRoom(roomId)
       await fetchUser()
+      await fetchUserHistory()
       exitRoom()
     } catch (error) {
       console.error('Error destroying room:', error)
@@ -639,8 +642,8 @@ const MessageRoom = () => {
                       <span className='text-[10px] uppercase tracking-wider text-slate-400'>Following</span>
                     </div>
                     <div className='flex flex-1 flex-col items-center justify-center rounded-2xl border border-white/5 bg-white/5 py-3 transition hover:bg-white/10'>
-                      <Crown size={20} className="mb-1 text-yellow-500" />
-                      <span className='text-base font-bold text-yellow-400'>{isBoy ? avgReating : respectPoint}</span>
+                     { isBoy?<Star size={20} className="mb-1 text-yellow-500" /> :<img src={respact} className='h-6' alt="" /> }
+                      <span className='text-base font-bold text-white'>{isBoy ? avgReating : respectPoint}</span>
                       <span className='text-[10px] uppercase tracking-wider text-slate-400'>{isBoy ? "Rating" : "Respect"}</span>
                     </div>
                   </div>
@@ -730,7 +733,7 @@ const MessageRoom = () => {
                           <span className={`text-[9px] ${ownMessage ? 'text-white/80' : 'text-slate-400'}`}>
                             {messageTime}
                           </span>
-                          {ownMessage && <BadgeCheck size={10} className="text-white/90" />}
+                          {ownMessage && <CheckCheck  size={15} className="text-blue-400" />}
                         </div>
                       </div>
                     </div>
