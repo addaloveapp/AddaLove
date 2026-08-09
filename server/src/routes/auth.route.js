@@ -1,5 +1,5 @@
 import express from 'express';
-import {sendOtp,otpVerify,register,login,girlRegister, girlVedioUpload, checkApplicationStatus, girlsLogin, currentUser, logOut, messageOtpSend, findUserDataForForgetPassword, forgetPassword, getUserFullHistory} from "../controllers/user.controller.js"
+import {sendOtp,otpVerify,register,login,girlRegister, girlVedioUpload, checkApplicationStatus, girlsLogin, currentUser, logOut, messageOtpSend, findUserDataForForgetPassword, forgetPassword, getUserFullHistory, getGirlProfiles} from "../controllers/user.controller.js"
 import {upload} from '../middlewares/multer.middleware.js'
 import { verifyUser } from '../middlewares/user.middleware.js';
 const AuthRoute= express.Router();
@@ -18,6 +18,7 @@ AuthRoute.get('/logout',verifyUser,logOut)
 AuthRoute.post('/find-user-for-forget', findUserDataForForgetPassword)
 AuthRoute.post('/forget-password', forgetPassword)
 AuthRoute.get('/user-full-history', verifyUser, getUserFullHistory)
+AuthRoute.get('/girl-profiles', verifyUser, getGirlProfiles)
 
 export default AuthRoute; 
 

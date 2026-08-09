@@ -13,6 +13,15 @@ const io = new Server(server, {
 
 const onlineUsers = new Map();
 
+const emitOnlineUsers = () => {
+    io.emit('online_users', {
+        users: Array.from(onlineUsers.entries()).map(([id, info]) => ({
+            userId: id,
+            userType: info.userType
+        }))
+    });
+};
+
 const readCookie = (cookieHeader, name) => {
     const cookies = String(cookieHeader || '').split(';');
     for (const cookie of cookies) {
@@ -69,11 +78,16 @@ io.on('connection', (socket) => {
     }
     socket.join(userId);
 
-    const onlineList = Array.from(onlineUsers.entries()).map(([id, info]) => ({
-        userId: id,
-        userType: info.userType
-    }));
-    socket.emit('online_users', { users: onlineList });
+    emitOnlineUsers();
+
+    socket.on('get_online_users', () => {
+        socket.emit('online_users', {
+            users: Array.from(onlineUsers.entries()).map(([id, info]) => ({
+                userId: id,
+                userType: info.userType
+            }))
+        });
+    });
 
     socket.on('join_room', async ({ roomId } = {}) => {
         if (!roomId) return socket.emit('room_error', { message: 'roomId is required' });
@@ -130,12 +144,7 @@ io.on('connection', (socket) => {
 
         onlineUsers.delete(userId);
         io.emit('user_offline', { userId, userType });
-        io.emit('online_users', {
-            users: Array.from(onlineUsers.entries()).map(([id, info]) => ({
-                userId: id,
-                userType: info.userType
-            }))
-        });
+        emitOnlineUsers();
 
         try {
             // Dynamic import avoids a module-startup circular dependency:
