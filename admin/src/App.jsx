@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { QRCodeCanvas } from 'qrcode.react'
 import './App.css'
 
@@ -67,6 +67,8 @@ function App() {
   const [transactions, setTransactions] = useState([])
   const [rooms, setRooms] = useState([])
   const [applications, setApplications] = useState([])
+  const [boys, setBoys] = useState([])
+  const [fetchingBoys, setFetchingBoys] = useState(false)
   const [applicationActionLoading, setApplicationActionLoading] = useState({})
 
   useEffect(() => {
@@ -92,6 +94,7 @@ function App() {
     setTransactions([])
     setRooms([])
     setApplications([])
+    setBoys([])
     setMessage('')
     setError('')
   }
@@ -143,6 +146,25 @@ function App() {
       setFetchingData(false)
     }
   }
+
+  const loadOnlineBoys = useCallback(async () => {
+    if (!token) return
+
+    setFetchingBoys(true)
+    setError('')
+    try {
+      const response = await request('/all-boys')
+      setBoys(response?.data || [])
+    } catch (err) {
+      if (err.message.toLowerCase().includes('unauthorized')) {
+        clearSession()
+      } else {
+        setError(showError(err.message))
+      }
+    } finally {
+      setFetchingBoys(false)
+    }
+  }, [token])
 
   const handleLoginSubmit = async (event) => {
     event.preventDefault()
@@ -253,7 +275,10 @@ function App() {
   const NavLink = ({ label, id }) => (
     <button
       type="button"
-      onClick={() => setView(id)}
+      onClick={() => {
+        setView(id)
+        if (id === 'onlineBoys') loadOnlineBoys()
+      }}
       className={`transition rounded-full border px-4 py-2 text-sm font-semibold tracking-wide ${view === id ? 'border-transparent bg-[#ff2a73] text-white shadow-[0_14px_35px_rgba(255,41,148,0.26)]' : 'border-white/10 bg-white/5 text-slate-200 hover:border-[#8B2BFF]/50 hover:bg-[#8B2BFF]/10'}`}
     >
       {label}
@@ -316,6 +341,7 @@ function App() {
             <NavLink label="Reports" id="reports" />
             <NavLink label="Transactions" id="transactions" />
             <NavLink label="Applications" id="applications" />
+            <NavLink label="Online Boys" id="onlineBoys" />
             <NavLink label="Create Certificate" id="certificate" />
             <button
               type="button"
@@ -456,8 +482,10 @@ function App() {
                       ) : (
                         reports.slice(0, 4).map((report) => (
                           <div key={report._id || Math.random()} className="rounded-3xl border border-white/10 bg-[#070a13]/90 px-4 py-3">
-                            <p className="text-sm font-semibold text-white">{report?.reportedByDetails?.fullName || report?.reportedByDetails?.phoneNumber || 'Reporter'}</p>
-                            <p className="mt-1 text-sm text-slate-300">Target: {report?.reportedUserDetails?.fullName || report?.reportedUserDetails?.phoneNumber || 'Unknown'}</p>
+                            <p className="text-sm font-semibold text-white">{report?.reportedByDetails?.fullName || 'Reporter'}</p>
+                            <p className="mt-1 text-xs text-slate-400">Phone: {report?.reportedByDetails?.phoneNumber ?? 'N/A'}</p>
+                            <p className="mt-2 text-sm text-slate-300">Target: {report?.reportedUserDetails?.fullName || 'Unknown'}</p>
+                            <p className="mt-1 text-xs text-slate-400">Target phone: {report?.reportedUserDetails?.phoneNumber ?? 'N/A'}</p>
                             <p className="mt-2 text-xs uppercase tracking-[0.22em] text-[#ff2a73]/80">{report?.userModel || report?.reportedUserModel || 'Report'}</p>
                           </div>
                         ))
@@ -623,12 +651,14 @@ function App() {
                       <div className="space-y-3 rounded-3xl bg-white/5 p-4 border border-white/5">
                         <div>
                           <p className="text-[11px] uppercase tracking-widest text-slate-500 mb-1">Reported by</p>
-                          <p className="text-sm text-slate-100 font-semibold">{report?.reportedByDetails?.fullName || report?.reportedByDetails?.phoneNumber || 'Unknown'}</p>
+                          <p className="text-sm text-slate-100 font-semibold">{report?.reportedByDetails?.fullName || 'Unknown'}</p>
+                          <p className="mt-1 text-sm text-slate-400">Phone: {report?.reportedByDetails?.phoneNumber ?? 'N/A'}</p>
                         </div>
                         <div className="h-[1px] w-full bg-white/10"></div>
                         <div>
                           <p className="text-[11px] uppercase tracking-widest text-slate-500 mb-1">Target Account</p>
-                          <p className="text-sm text-slate-100 font-semibold">{report?.reportedUserDetails?.fullName || report?.reportedUserDetails?.phoneNumber || 'Unknown'}</p>
+                          <p className="text-sm text-slate-100 font-semibold">{report?.reportedUserDetails?.fullName || 'Unknown'}</p>
+                          <p className="mt-1 text-sm text-slate-400">Phone: {report?.reportedUserDetails?.phoneNumber ?? 'N/A'}</p>
                         </div>
                       </div>
                     </div>
@@ -647,6 +677,87 @@ function App() {
                 ))
               )}
             </div>
+          </section>
+        )}
+
+        {token && view === 'onlineBoys' && (
+          <section className="space-y-6">
+            <div className="glass-card rounded-[32px] p-6">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-sm uppercase tracking-[0.24em] text-[#8b5cff]/70">Community presence</p>
+                  <h2 className="mt-2 text-3xl font-bold text-white">Online Boys</h2>
+                  <p className="mt-2 text-sm text-slate-400">Online profiles appear first. Use Refresh to load the latest status.</p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="rounded-3xl border border-white/10 bg-[#ffffff0d] px-4 py-2 text-sm text-slate-200">
+                    Online: {boys.filter((boy) => boy.isOnline).length} / {boys.length}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={loadOnlineBoys}
+                    disabled={fetchingBoys}
+                    className="rounded-full border border-[#8b5cff]/30 bg-[#8b5cff]/10 px-4 py-2 text-sm font-semibold text-[#d8c7ff] transition hover:bg-[#8b5cff]/20 disabled:cursor-wait disabled:opacity-60"
+                  >
+                    {fetchingBoys ? 'Refreshing...' : 'Refresh'}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {fetchingBoys && boys.length === 0 ? (
+              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                <SkeletonListItem />
+                <SkeletonListItem />
+                <SkeletonListItem />
+              </div>
+            ) : boys.length ? (
+              <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+                {boys.map((boy) => (
+                  <article key={boy._id} className="relative overflow-hidden rounded-[32px] border border-white/10 bg-[#0b1220]/90 p-5 shadow-xl shadow-black/10">
+                    <span
+                      title={boy.isOnline ? 'Online' : 'Offline'}
+                      className={`absolute right-5 top-5 h-3.5 w-3.5 rounded-full border-2 border-[#0b1220] shadow-sm ${boy.isOnline ? 'bg-emerald-400 shadow-emerald-400/60' : 'bg-slate-500'}`}
+                    />
+                    <div className="flex items-center gap-4 pr-6">
+                      <img
+                        src={boy.imageUrl || 'https://ik.imagekit.io/ufopzzlbh/p.jpeg'}
+                        alt={boy.fullName || 'Boy profile'}
+                        className="h-16 w-16 rounded-2xl border border-white/10 object-cover bg-[#040711]"
+                      />
+                      <div className="min-w-0">
+                        <p className="truncate text-lg font-bold text-white">{boy.fullName || 'Unknown user'}</p>
+                        <p className={`mt-1 text-xs font-semibold uppercase tracking-widest ${boy.isOnline ? 'text-emerald-300' : 'text-slate-500'}`}>
+                          {boy.isOnline ? 'Online' : 'Offline'}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="mt-5 grid grid-cols-2 gap-3 border-t border-white/10 pt-4">
+                      <div className="rounded-2xl bg-white/5 p-3">
+                        <p className="text-[10px] uppercase tracking-widest text-slate-500">Respect points</p>
+                        <p className="mt-1 text-lg font-bold text-[#c9b3ff]">{boy.respectPoints ?? 0}</p>
+                      </div>
+                      <div className="rounded-2xl bg-white/5 p-3">
+                        <p className="text-[10px] uppercase tracking-widest text-slate-500">Followers</p>
+                        <p className="mt-1 text-lg font-bold text-[#ff9abc]">{boy.followersCount ?? 0}</p>
+                      </div>
+                    </div>
+                    <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                      <div className="rounded-2xl bg-white/5 p-3">
+                        <p className="text-[10px] uppercase tracking-widest text-slate-500">Mobile number</p>
+                        <p className="mt-1 break-all text-sm font-semibold text-slate-100">{boy.phoneNumber ?? 'N/A'}</p>
+                      </div>
+                      <div className="rounded-2xl bg-white/5 p-3">
+                        <p className="text-[10px] uppercase tracking-widest text-slate-500">Coin balance</p>
+                        <p className="mt-1 text-sm font-semibold text-amber-200">{boy.walletBlance ?? 0}</p>
+                      </div>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            ) : (
+              <div className="glass-card rounded-[32px] p-10 text-center text-sm text-slate-400">No boy profiles are available yet.</div>
+            )}
           </section>
         )}
 
