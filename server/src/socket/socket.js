@@ -5,20 +5,16 @@ import app from '../app.js';
 import Room from '../models/room.model.js';
 import User from '../models/user.model.js';
 import Girls from '../models/girls.model.js';
+import { getOnlineUser, getOnlineUsers, removeOnlineUser, setOnlineUser } from './onlineUsers.js';
 
 const server = http.createServer(app);
 const io = new Server(server, {
     cors: { origin: true, credentials: true }
 });
 
-const onlineUsers = new Map();
-
 const emitOnlineUsers = () => {
     io.emit('online_users', {
-        users: Array.from(onlineUsers.entries()).map(([id, info]) => ({
-            userId: id,
-            userType: info.userType
-        }))
+        users: getOnlineUsers()
     });
 };
 
@@ -67,14 +63,14 @@ const getParticipantRoom = async (roomId, userId, userType) => {
 
 io.on('connection', (socket) => {
     const { userId, userType } = socket.data;
-    const existingUser = onlineUsers.get(userId);
+    const existingUser = getOnlineUser(userId);
     if (existingUser?.socketId && existingUser.socketId !== socket.id) {
         // Register the new connection first. The old socket's disconnect must
         // not close the user's active room after a reconnect/tab replacement.
-        onlineUsers.set(userId, { socketId: socket.id, userType });
+        setOnlineUser(userId, { socketId: socket.id, userType });
         io.sockets.sockets.get(existingUser.socketId)?.disconnect(true);
     } else {
-        onlineUsers.set(userId, { socketId: socket.id, userType });
+        setOnlineUser(userId, { socketId: socket.id, userType });
     }
     socket.join(userId);
 
@@ -82,10 +78,7 @@ io.on('connection', (socket) => {
 
     socket.on('get_online_users', () => {
         socket.emit('online_users', {
-            users: Array.from(onlineUsers.entries()).map(([id, info]) => ({
-                userId: id,
-                userType: info.userType
-            }))
+            users: getOnlineUsers()
         });
     });
 
@@ -140,9 +133,9 @@ io.on('connection', (socket) => {
     socket.on('disconnect', async () => {
         // Ignore a replaced socket; the same user is still connected through
         // the newer socket and must remain in the room.
-        if (onlineUsers.get(userId)?.socketId !== socket.id) return;
+        if (getOnlineUser(userId)?.socketId !== socket.id) return;
 
-        onlineUsers.delete(userId);
+        removeOnlineUser(userId);
         io.emit('user_offline', { userId, userType });
         emitOnlineUsers();
 

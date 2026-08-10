@@ -2,6 +2,7 @@ import { asyncHandler } from '../utils/asyncHandler.js'
 import { ApiResponse } from "../utils/apiResponse.js";
 import { ApiError } from '../utils/apiError.js';
 import Girls from '../models/girls.model.js';
+import User from '../models/user.model.js';
 import Room from '../models/room.model.js';
 import Report from '../models/report.model.js';
 import Transaction from '../models/transaction.model.js';
@@ -14,6 +15,7 @@ import Certificate from '../models/certificate.model.js';
 import mongoose from 'mongoose';
 import sendaccpectemail from '../middlewares/sendAccpect.middleware.js';
 import sendRejectemail from '../middlewares/sendReject.middleware.js';
+import { getOnlineUsers } from '../socket/onlineUsers.js';
 const registerAdmin = asyncHandler(async (req, res) => {
     const { fullName, email, password } = req.body;
     if (!fullName || !email || !password) {
@@ -77,6 +79,61 @@ const allApplication = asyncHandler(async (req, res) => {
     return res.status(200).json(new ApiResponse(200, allApplicationData, "All application retrived."))
 });
 
+const allBoysWithPresence = asyncHandler(async (req, res) => {
+    const onlineBoyIds = new Set(
+        getOnlineUsers()
+            .filter((entry) => entry.userType === 'boy')
+            .map((entry) => entry.userId)
+    );
+
+    const boys = await User.aggregate([
+        {
+            $lookup: {
+                from: 'followers',
+                let: { boyId: '$_id' },
+                pipeline: [
+                    { $match: { $expr: { $and: [
+                        { $eq: ['$following', '$$boyId'] },
+                        { $eq: ['$followingModel', 'User'] }
+                    ] } } },
+                    { $count: 'count' }
+                ],
+                as: 'followerData'
+            }
+        },
+        {
+            $lookup: {
+                from: 'ratings',
+                let: { boyId: '$_id' },
+                pipeline: [
+                    { $match: { $expr: { $and: [
+                        { $eq: ['$ratedUser', '$$boyId'] },
+                        { $eq: ['$ratedUserModel', 'User'] }
+                    ] } } },
+                    { $group: { _id: null, totalRating: { $sum: '$rating' } } }
+                ],
+                as: 'ratingData'
+            }
+        },
+        {
+            $project: {
+                fullName: 1,
+                imageUrl: 1,
+                phoneNumber: 1,
+                walletBlance: 1,
+                followersCount: { $ifNull: [{ $arrayElemAt: ['$followerData.count', 0] }, 0] },
+                respectPoints: { $multiply: [{ $ifNull: [{ $arrayElemAt: ['$ratingData.totalRating', 0] }, 0] }, 2] }
+            }
+        }
+    ]);
+
+    const profiles = boys
+        .map((boy) => ({ ...boy, isOnline: onlineBoyIds.has(String(boy._id)) }))
+        .sort((a, b) => Number(b.isOnline) - Number(a.isOnline) || a.fullName.localeCompare(b.fullName));
+
+    return res.status(200).json(new ApiResponse(200, profiles, 'Boy profiles retrieved successfully'));
+});
+
 const allRoomsOpens = asyncHandler(async (req, res) => {
     const allOpensRoomsData = await Room.find({});
     if (!allOpensRoomsData) {
@@ -86,115 +143,99 @@ const allRoomsOpens = asyncHandler(async (req, res) => {
 });
 const allReport = asyncHandler(async (req, res) => {
     const reports = await Report.aggregate([
-        // Reported By (User)
         {
             $lookup: {
                 from: "users",
                 localField: "reportedBy",
                 foreignField: "_id",
-                pipeline: [
-                    {
-                        $project: {
-                            fullName: 1,
-                            imageUrl: 1,
-                            phoneNumber: 1
-                        }
-                    }
-                ],
                 as: "reportedByUser"
             }
         },
-
-        // Reported By (Girls)
         {
             $lookup: {
                 from: "girls",
                 localField: "reportedBy",
                 foreignField: "_id",
-                pipeline: [
-                    {
-                        $project: {
-                            fullName: 1,
-                            imageUrl: 1,
-                            phoneNumber: 1
-                        }
-                    }
-                ],
                 as: "reportedByGirl"
             }
         },
-
-        // Reported User (User)
         {
             $lookup: {
                 from: "users",
                 localField: "reportedUser",
                 foreignField: "_id",
-                pipeline: [
-                    {
-                        $project: {
-                            fullName: 1,
-                            imageUrl: 1,
-                            phoneNumber: 1
-                        }
-                    }
-                ],
                 as: "reportedUserUser"
             }
         },
-
-        // Reported User (Girls)
         {
             $lookup: {
                 from: "girls",
                 localField: "reportedUser",
                 foreignField: "_id",
-                pipeline: [
-                    {
-                        $project: {
-                            fullName: 1,
-                            imageUrl: 1,
-                            phoneNumber: 1
-                        }
-                    }
-                ],
                 as: "reportedUserGirl"
             }
         },
-
-        // Select the correct lookup result
         {
             $addFields: {
                 reportedByDetails: {
-                    $cond: [
-                        { $eq: ["$userModel", "User"] },
-                        { $arrayElemAt: ["$reportedByUser", 0] },
-                        { $arrayElemAt: ["$reportedByGirl", 0] }
+                    $ifNull: [
+                        {
+                            $cond: {
+                                if: { $eq: ["$userModel", "User"] },
+                                then: { $arrayElemAt: ["$reportedByUser", 0] },
+                                else: { $arrayElemAt: ["$reportedByGirl", 0] }
+                            }
+                        },
+                        {}
                     ]
                 },
                 reportedUserDetails: {
-                    $cond: [
-                        { $eq: ["$reportedUserModel", "User"] },
-                        { $arrayElemAt: ["$reportedUserUser", 0] },
-                        { $arrayElemAt: ["$reportedUserGirl", 0] }
+                    $ifNull: [
+                        {
+                            $cond: {
+                                if: { $eq: ["$reportedUserModel", "User"] },
+                                then: { $arrayElemAt: ["$reportedUserUser", 0] },
+                                else: { $arrayElemAt: ["$reportedUserGirl", 0] }
+                            }
+                        },
+                        {}
                     ]
                 }
             }
         },
-
         {
             $project: {
-                reportedByUser: 0,
-                reportedByGirl: 0,
-                reportedUserUser: 0,
-                reportedUserGirl: 0
+                reason: 1,
+                userModel: 1,
+                reportedUserModel: 1,
+                createdAt: 1,
+                updatedAt: 1,
+
+                "reportedByDetails._id": 1,
+                "reportedByDetails.fullName": 1,
+                "reportedByDetails.email": 1,
+                "reportedByDetails.phoneNumber": 1,
+                "reportedByDetails.imageUrl": 1,
+
+                "reportedUserDetails._id": 1,
+                "reportedUserDetails.fullName": 1,
+                "reportedUserDetails.email": 1,
+                "reportedUserDetails.phoneNumber": 1,
+                "reportedUserDetails.imageUrl": 1
             }
+        },
+        {
+            $sort: { createdAt: -1 }
         }
     ]);
 
+    if (!reports || reports.length === 0) {
+        throw new ApiError(400, "All data are Required.");
+    }
+
     return res
         .status(200)
-        .json(new ApiResponse(200, reports, "All reports retrieved."));
+        .json(new ApiResponse(200, reports, "Reports fetched Successfully."));
 });
 
 const allCoinPurchase = asyncHandler(async (req, res) => {
@@ -283,4 +324,4 @@ const rejectTheGirls = asyncHandler(async (req, res) => {
 
 
 })
-export { allApplication, allRoomsOpens, allReport, allCoinPurchase, registerAdmin, loginAdmin, logoutAdmin, createCertificate, checkCertificate, accpectTheGirls, rejectTheGirls };
+export { allApplication, allBoysWithPresence, allRoomsOpens, allReport, allCoinPurchase, registerAdmin, loginAdmin, logoutAdmin, createCertificate, checkCertificate, accpectTheGirls, rejectTheGirls };
