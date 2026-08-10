@@ -687,7 +687,7 @@ const getUserFullHistory = asyncHandler(async (req, res) => {
             }
         ]);
 
-        fullHistory = [...callHistory, ...rechargeHistory].sort(
+        fullHistory = [...callHistory].sort(
             (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
         );
 
