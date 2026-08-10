@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router';
 import useUserStore from '../store/userStore';
 import { Camera, LogOut, Bell, ChevronLeft, CheckCircle2, Star, Trophy, Users, UserCheck, Wallet, Verified, Phone, MoveLeft, MoveRight } from 'lucide-react';
@@ -17,6 +17,16 @@ export default function Profile() {
   const [avatarMode, setAvatarMode] = useState('avatar');
   const [selectedAvatarUrl, setSelectedAvatarUrl] = useState('');
   const [avatarLoading, setAvatarLoading] = useState(false);
+  const [modalType, setModalType] = useState('photo'); // 'photo' | 'profile'
+  const [profileName, setProfileName] = useState('');
+  const [profileBio, setProfileBio] = useState('');
+  const [profileLoading, setProfileLoading] = useState(false);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [filePreviewUrl, setFilePreviewUrl] = useState('');
+  const [photoUploadLoading, setPhotoUploadLoading] = useState(false);
+  const [ownPhotoMethod, setOwnPhotoMethod] = useState('camera');
+  const fileInputRef = useRef(null);
+  const cameraInputRef = useRef(null);
 
   const isBoy = useMemo(() => userRole === 'boy', [userRole]);
   const isGirl = useMemo(() => userRole === 'girl', [userRole]);
@@ -53,8 +63,22 @@ export default function Profile() {
   // Open modal and initialize avatar selection
   const handleOpenModal = () => {
     if (useralldata) {
+      setModalType('photo');
       setAvatarMode('avatar');
+      setOwnPhotoMethod('camera');
+      setSelectedFile(null);
+      setFilePreviewUrl('');
       setSelectedAvatarUrl(useralldata.imageUrl || avatarOptions[0] || '');
+      setIsModalOpen(true);
+    }
+  };
+
+  // Open profile edit modal (name + bio)
+  const handleOpenProfileModal = () => {
+    if (useralldata) {
+      setModalType('profile');
+      setProfileName(useralldata.fullName || '');
+      setProfileBio(useralldata.userBio || '');
       setIsModalOpen(true);
     }
   };
@@ -62,6 +86,35 @@ export default function Profile() {
   const handleSelectAvatar = (url) => {
     setSelectedAvatarUrl(url);
   };
+
+  const handleOpenCamera = () => {
+    setOwnPhotoMethod('camera');
+    if (cameraInputRef.current) {
+      cameraInputRef.current.click();
+    }
+  };
+
+  const handleOpenGallery = () => {
+    setOwnPhotoMethod('gallery');
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
+
+  const handleFileChange = (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    setSelectedFile(file);
+    setFilePreviewUrl(URL.createObjectURL(file));
+  };
+
+  useEffect(() => {
+    return () => {
+      if (filePreviewUrl) {
+        URL.revokeObjectURL(filePreviewUrl);
+      }
+    };
+  }, [filePreviewUrl]);
 
   const handleAvatarDone = async () => {
     if (!selectedAvatarUrl) {
@@ -90,6 +143,65 @@ export default function Profile() {
       handleError('Network issue while updating avatar.');
     } finally {
       setAvatarLoading(false);
+    }
+  };
+
+  const handleUploadOwnPhoto = async () => {
+    if (!selectedFile) {
+      handleError('Please take or choose a photo first.');
+      return;
+    }
+
+    setPhotoUploadLoading(true);
+    try {
+      const formData = new FormData();
+      formData.append('profilePhoto', selectedFile);
+
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/auth/v1/upload-profile`, {
+        method: 'POST',
+        credentials: 'include',
+        body: formData,
+      });
+
+      const data = await response.json();
+      if (!response.ok || !data.success) {
+        handleError(data.message || 'Failed to upload profile photo.');
+        return;
+      }
+
+      await fetchUser();
+      setIsModalOpen(false);
+      setSelectedFile(null);
+      setFilePreviewUrl('');
+    } catch (error) {
+      console.error(error);
+      handleError('Network issue while uploading photo.');
+    } finally {
+      setPhotoUploadLoading(false);
+    }
+  };
+
+  const handleProfileSave = async () => {
+    setProfileLoading(true);
+    try {
+      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/auth/v1/profile-data-update`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ name: profileName, bio: profileBio }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        handleError(data.message || 'Failed to update profile data.');
+        return;
+      }
+      await fetchUser();
+      setIsModalOpen(false);
+    } catch (error) {
+      console.error(error);
+      handleError('Network issue while updating profile.');
+    } finally {
+      setProfileLoading(false);
     }
   };
 
@@ -222,7 +334,7 @@ export default function Profile() {
 
           {/* Action Call for Editing */}
           <button
-            onClick={handleOpenModal}
+            onClick={handleOpenProfileModal}
             className="shrink-0 px-4 py-1.5 text-xs font-bold rounded-full bg-linear-to-r from-[#8B5CF6] to-[#EC4899] hover:opacity-90 shadow-lg shadow-purple-500/20 active:scale-95 transition-transform"
           >
             Edit Profile
@@ -334,7 +446,7 @@ export default function Profile() {
           <div className="w-full max-w-md bg-[#130E29] border border-purple-500/20 rounded-3xl shadow-2xl overflow-hidden transform transition-all max-h-[85vh]">
 
             <div className="px-6 py-4 border-b border-purple-900/30 flex justify-between items-center bg-purple-950/20">
-              <h2 className="text-base font-bold text-white tracking-wide">Update Profile Photo</h2>
+              <h2 className="text-base font-bold text-white tracking-wide">{modalType === 'photo' ? 'Update Profile Photo' : 'Edit Profile'}</h2>
               <button
                 onClick={() => setIsModalOpen(false)}
                 className="text-slate-400 hover:text-white transition-colors p-1.5 rounded-full hover:bg-white/5"
@@ -344,87 +456,187 @@ export default function Profile() {
             </div>
 
             <div className="p-6 space-y-5 max-h-[72vh] overflow-y-auto pr-2">
-              <div className="grid grid-cols-2 gap-3">
-                <button
-                  type="button"
-                  onClick={() => setAvatarMode('avatar')}
-                  className={`py-3 rounded-2xl text-sm font-semibold uppercase tracking-wider transition-all ${avatarMode === 'avatar'
-                    ? 'bg-linear-to-r from-[#8B5CF6] to-[#EC4899] text-white shadow-lg shadow-purple-500/20'
-                    : 'bg-[#090514] border border-purple-900/40 text-slate-300 hover:bg-[#130E29]'}`}
-                >
-                  Upload Avatar
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setAvatarMode('own')}
-                  disabled
-                  className="py-3 rounded-2xl bg-[#0E0B1E] border border-purple-900/40 text-slate-500 text-sm font-semibold uppercase tracking-wider cursor-not-allowed"
-                >
-                  Upload Own Photo
-                </button>
-              </div>
-
-              {avatarMode === 'avatar' ? (
-                <div className="space-y-4">
-                  <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Choose one avatar below</p>
+              {modalType === 'photo' ? (
+                <>
                   <div className="grid grid-cols-2 gap-3">
-                    {avatarOptions.map((url) => (
-                      <button
-                        key={url}
-                        type="button"
-                        onClick={() => handleSelectAvatar(url)}
-                        className={`relative overflow-hidden rounded-3xl border p-0.5 transition-all ${selectedAvatarUrl === url ? 'border-pink-400 shadow-[0_0_0_3px_rgba(236,72,153,0.18)]' : 'border-purple-900/30 hover:border-pink-500'}`}
-                      >
-                        <img
-                          src={url}
-                          alt="Avatar option"
-                          className="h-[165px] w-full rounded-3xl object-cover"
-                        />
-                        {selectedAvatarUrl === url && (
-                          <span className="absolute right-2 top-2 inline-flex items-center gap-1 rounded-full bg-pink-500/95 px-2 py-1 text-[10px] font-bold uppercase text-white shadow-lg shadow-pink-500/20">
-                            <CheckCircle2 className="h-3.5 w-3.5" />
-                            Selected
-                          </span>
+                    <button
+                      type="button"
+                      onClick={() => setAvatarMode('avatar')}
+                      className={`py-3 rounded-2xl text-sm font-semibold uppercase tracking-wider transition-all ${avatarMode === 'avatar'
+                        ? 'bg-linear-to-r from-[#8B5CF6] to-[#EC4899] text-white shadow-lg shadow-purple-500/20'
+                        : 'bg-[#090514] border border-purple-900/40 text-slate-300 hover:bg-[#130E29]'}`}
+                    >
+                      Upload Avatar
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setAvatarMode('own')}
+                      className={`py-3 rounded-2xl text-sm font-semibold uppercase tracking-wider transition-all ${avatarMode === 'own'
+                        ? 'bg-linear-to-r from-[#ec4899] to-[#f472b6] text-white shadow-lg shadow-pink-500/20'
+                        : 'bg-[#090514] border border-purple-900/40 text-slate-300 hover:bg-[#130E29]'}`}
+                    >
+                      Upload Own Photo
+                    </button>
+                  </div>
+
+                  {avatarMode === 'avatar' ? (
+                    <div className="space-y-4">
+                      <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Choose one avatar below</p>
+                      <div className="grid grid-cols-2 gap-3">
+                        {avatarOptions.map((url) => (
+                          <button
+                            key={url}
+                            type="button"
+                            onClick={() => handleSelectAvatar(url)}
+                            className={`relative overflow-hidden rounded-3xl border p-0.5 transition-all ${selectedAvatarUrl === url ? 'border-pink-400 shadow-[0_0_0_3px_rgba(236,72,153,0.18)]' : 'border-purple-900/30 hover:border-pink-500'}`}
+                          >
+                            <img
+                              src={url}
+                              alt="Avatar option"
+                              className="h-40 w-full rounded-3xl object-cover"
+                            />
+                            {selectedAvatarUrl === url && (
+                              <span className="absolute right-2 top-2 inline-flex items-center gap-1 rounded-full bg-pink-500/95 px-2 py-1 text-[10px] font-bold uppercase text-white shadow-lg shadow-pink-500/20">
+                                <CheckCircle2 className="h-3.5 w-3.5" />
+                                Selected
+                              </span>
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Take a selfie or choose from gallery</p>
+                      <div className="grid grid-cols-2 gap-3">
+                        <button
+                          type="button"
+                          onClick={handleOpenCamera}
+                          className="py-3 rounded-2xl bg-[#090514] border border-purple-900/40 text-slate-200 font-semibold uppercase tracking-wider hover:bg-[#130E29] transition-all"
+                        >
+                          Selfie
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleOpenGallery}
+                          className="py-3 rounded-2xl bg-[#090514] border border-purple-900/40 text-slate-200 font-semibold uppercase tracking-wider hover:bg-[#130E29] transition-all"
+                        >
+                          Gallery
+                        </button>
+                      </div>
+
+                      <input
+                        ref={cameraInputRef}
+                        type="file"
+                        accept="image/*"
+                        capture="user"
+                        className="hidden"
+                        onChange={handleFileChange}
+                      />
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={handleFileChange}
+                      />
+
+                      <div className="rounded-3xl border border-purple-900/40 bg-[#0B0718] overflow-hidden">
+                        {filePreviewUrl ? (
+                          <img
+                            src={filePreviewUrl}
+                            alt="Selected profile preview"
+                            className="w-full h-56 object-cover"
+                          />
+                        ) : (
+                          <div className="flex h-56 items-center justify-center text-sm text-slate-500 px-4">
+                            No photo selected yet. Use Selfie or Gallery to pick one.
+                          </div>
                         )}
-                      </button>
-                    ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="flex items-center justify-between gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setIsModalOpen(false)}
+                      className="flex-1 py-3 rounded-2xl border border-purple-900/40 text-xs font-bold text-slate-300 hover:bg-white/5 transition-all"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      onClick={avatarMode === 'avatar' ? handleAvatarDone : handleUploadOwnPhoto}
+                      disabled={avatarMode === 'avatar' ? avatarLoading : photoUploadLoading || !selectedFile}
+                      className={`flex-1 py-3 rounded-2xl text-xs font-black uppercase tracking-wider text-white transition-all ${avatarMode === 'avatar'
+                        ? 'bg-linear-to-r from-[#8B5CF6] to-[#EC4899] shadow-lg shadow-purple-500/20 hover:opacity-90'
+                        : 'bg-linear-to-r from-[#EC4899] to-[#F97316] shadow-lg shadow-orange-500/20 hover:opacity-90'} ${avatarMode === 'own' && !selectedFile ? 'opacity-70 cursor-not-allowed' : ''}`}
+                    >
+                      {(avatarMode === 'avatar' ? avatarLoading : photoUploadLoading) ? (
+                        <span className="inline-flex items-center justify-center gap-2">
+                          <svg className="animate-spin h-4 w-4 text-white" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                          </svg>
+                          {avatarMode === 'avatar' ? 'Updating' : 'Uploading'}
+                        </span>
+                      ) : (
+                        avatarMode === 'avatar' ? 'Done' : 'Upload'
+                      )}
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <div className="space-y-4">
+                  <p className="text-sm font-bold text-white">Edit Profile</p>
+                  <div>
+                    <label className="text-xs text-slate-400">Name</label>
+                    <input
+                      value={profileName}
+                      onChange={(e) => setProfileName(e.target.value)}
+                      className="mt-2 w-full rounded-xl bg-[#0B0718] border border-purple-900/30 px-3 py-2 text-white"
+                      placeholder="Full name"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-slate-400">Bio</label>
+                    <textarea
+                      value={profileBio}
+                      onChange={(e) => setProfileBio(e.target.value)}
+                      className="mt-2 w-full rounded-xl bg-[#0B0718] border border-purple-900/30 px-3 py-2 text-white h-28 resize-none"
+                      placeholder="Write a short bio"
+                    />
+                  </div>
+                  <div className="flex items-center justify-between gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setIsModalOpen(false)}
+                      className="flex-1 py-3 rounded-2xl border border-purple-900/40 text-xs font-bold text-slate-300 hover:bg-white/5 transition-all"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleProfileSave}
+                      disabled={profileLoading}
+                      className={`flex-1 py-3 rounded-2xl text-xs font-black uppercase tracking-wider text-white transition-all bg-linear-to-r from-[#8B5CF6] to-[#EC4899] shadow-lg shadow-purple-500/20 hover:opacity-90 ${profileLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
+                    >
+                      {profileLoading ? (
+                        <span className="inline-flex items-center gap-2">
+                          <svg className="animate-spin h-4 w-4 text-white" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                          </svg>
+                          Saving
+                        </span>
+                      ) : (
+                        'Save'
+                      )}
+                    </button>
                   </div>
                 </div>
-              ) : (
-                <div className="rounded-3xl border border-purple-900/40 bg-[#0B0718] p-5 text-sm text-slate-400">
-                  Upload own photo is temporarily disabled. Please choose one of the avatar options.
-                </div>
               )}
-
-              <div className="flex items-center justify-between gap-3">
-                <button
-                  type="button"
-                  onClick={() => setIsModalOpen(false)}
-                  className="flex-1 py-3 rounded-2xl border border-purple-900/40 text-xs font-bold text-slate-300 hover:bg-white/5 transition-all"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  onClick={handleAvatarDone}
-                  disabled={avatarLoading || avatarMode !== 'avatar'}
-                  className={`flex-1 py-3 rounded-2xl text-xs font-black uppercase tracking-wider text-white transition-all ${avatarMode === 'avatar'
-                    ? 'bg-linear-to-r from-[#8B5CF6] to-[#EC4899] shadow-lg shadow-purple-500/20 hover:opacity-90'
-                    : 'bg-purple-950/40 cursor-not-allowed text-slate-500'}`}
-                >
-                  {avatarLoading ? (
-                    <span className="inline-flex items-center justify-center gap-2">
-                      <svg className="animate-spin h-4 w-4 text-white" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                      </svg>
-                      Updating
-                    </span>
-                  ) : (
-                    'Done'
-                  )}
-                </button>
-              </div>
             </div>
           </div>
         </div>

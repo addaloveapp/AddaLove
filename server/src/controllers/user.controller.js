@@ -822,30 +822,101 @@ const addAvatarProfilePhoto = asyncHandler(async (req, res) => {
     if (!url) {
         throw new ApiError("Url is required.")
     }
-    if(!userId || !userType){
+    if (!userId || !userType) {
         throw new ApiError("USer id required.")
     }
-    if(userType=="Boy"){
-        const user= await User.findById(userId).lean();
-        if(!user){
+    if (userType == "Boy") {
+        const user = await User.findById(userId).lean();
+        if (!user) {
             throw new ApiError("User is not found.")
         }
-        await User.findByIdAndUpdate(userId,{$set:{imageUrl:url}},{new:true})
-        return res.status(200).json(new ApiResponse(200,"Update Successful."))
+        await User.findByIdAndUpdate(userId, { $set: { imageUrl: url } }, { new: true })
+        return res.status(200).json(new ApiResponse(200, "Update Successful."))
     }
-    if(userType=="Girl"){
-        const user= await Girls.findById(userId).lean();
-        if(!user){
+    if (userType == "Girl") {
+        const user = await Girls.findById(userId).lean();
+        if (!user) {
             throw new ApiError("User is not found.")
         }
-        await Girls.findByIdAndUpdate(userId,{$set:{imageUrl:url}},{new:true})
-        return res.status(200).json(new ApiResponse(200,"Update Successful."))
+        await Girls.findByIdAndUpdate(userId, { $set: { imageUrl: url } }, { new: true })
+        return res.status(200).json(new ApiResponse(200, "Update Successful."))
 
     }
 
 
 
 })
+const profilePhotoUpload = asyncHandler(async (req, res) => {
+    const userId = req.user._id;
+    const userType = req.user.userType;
+    let uploadResult;
+    if (!userId || !userType) {
+        throw new ApiError(400, "userId and userType is required.")
+    }
+    if (req.file) {
+        const { buffer, mimetype, originalname, size } = req.file;
+        if (!buffer || !mimetype || !originalname || !size) {
+            throw new ApiError(400, "Invalid file upload");
+        }
+        const fileName = originalname || `logo_${companyId}_${Date.now()}`;
+        uploadResult = await uploadToImageKit(buffer, fileName);
+        if (!uploadResult || !uploadResult.url || !uploadResult.fileId) {
+            throw new ApiError(500, "Failed to upload logo");
+        }
+    }
+    if (userType == "Boy") {
+        const userData = await User.findById(userId).lean();
+        if (!userData) {
+            throw new ApiError(404, "User not found");
+        }
+        await User.findByIdAndUpdate(userId, { $set: { imageUrl: uploadResult?.url } }, { new: true });
+        return res.status(200).json(new ApiResponse(200, null, "User photo has been updated."))
+    }
+    if (userType == "Girl") {
+        const userData = await Girls.findById(userId).lean();
+        if (!userData) {
+            throw new ApiError(404, "User not found");
+        }
+        await Girls.findByIdAndUpdate(userId, { $set: { imageUrl: uploadResult?.url } }, { new: true });
+        return res.status(200).json(new ApiResponse(200, null, "User photo has been updated."))
+    }
+
+})
+const profileDataUpdate = asyncHandler(async (req, res) => {
+    const { name, bio } = req.body;
+    const { _id: userId, userType } = req.user;
+
+    if (!userId || !userType) {
+        throw new ApiError(400, "UserId and userType are required.");
+    }
+
+    const updateData = {};
+
+    if (name) updateData.fullName = name;
+    if (bio) updateData.userBio = bio;
+
+    if (Object.keys(updateData).length === 0) {
+        throw new ApiError(400, "Nothing to update.");
+    }
+
+    const Model = userType === "Boy" ? User : Girls;
+
+    const user = await Model.findById(userId);
+
+    if (!user) {
+        throw new ApiError(404, "User not found.");
+    }
+
+    await Model.findByIdAndUpdate(
+        userId,
+        { $set: updateData },
+        { new: true }
+    );
+
+    return res.status(200).json(
+        new ApiResponse(200, null, "Profile updated successfully.")
+    );
+});
 export {
     sendOtp,
     otpVerify,
@@ -862,5 +933,7 @@ export {
     forgetPassword,
     getUserFullHistory,
     getGirlProfiles,
-    addAvatarProfilePhoto
+    addAvatarProfilePhoto,
+    profilePhotoUpload,
+    profileDataUpdate
 };

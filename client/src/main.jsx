@@ -27,6 +27,10 @@ import SendOtp from './pages/SendOtp.jsx'
 import ForgetPassword from './pages/ForgetPassword.jsx'
 import Leaderboard from './pages/Leaderboard.jsx'
 import CallHistory from './pages/CalllHistory.jsx'
+import TermsAndConditions from './pages/TermsAndCondition.jsx'
+import CommunityGuidelines from './pages/CommunityGuidelines.jsx'
+import PrivacyPolicy from './pages/PricacyAndPolicy.jsx'
+import ContactUs from './pages/ContactUs.jsx'
 
 const router = createBrowserRouter([
   {
@@ -55,6 +59,26 @@ const router = createBrowserRouter([
       {
         path: "/sendotp",
         element: <ProtectRoute><SendOtp /></ProtectRoute>
+
+      },
+      {
+        path: "/termsandconditions",
+        element: <TermsAndConditions />
+
+      },
+      {
+        path: "/communityguidelines",
+        element:<CommunityGuidelines />
+
+      },
+      {
+        path: "/privacypolicy",
+        element: <PrivacyPolicy />
+
+      },
+      {
+        path: "/contactus",
+        element: <ContactUs />
 
       },
       {

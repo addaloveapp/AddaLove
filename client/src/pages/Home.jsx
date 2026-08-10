@@ -220,7 +220,7 @@ const Home = () => {
         {isGirl && (
           <div className="flex-1 overflow-y-auto px-4 pt-24 pb-28 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] scrollbar-none">
             {/* Reduced opacity on bg-[#090915] and added blur */}
-            <div className="girl-create-ui rounded-3xl border border-white/10 bg-[#090915]/60 backdrop-blur-lg px-4 py-5 shadow-[0_24px_80px_rgba(0,0,0,0.45)]">
+            <div className="girl-create-ui rounded-3xl bg-[#090915]/60 backdrop-blur-lg px-4 py-5 shadow-[0_24px_80px_rgba(0,0,0,0.45)]">
               
               {/* Girl Hero Banner */}
               {/* Reduced opacity on bg-[#0F0D1C] */}
