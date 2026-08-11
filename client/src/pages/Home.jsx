@@ -1,14 +1,15 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import useUserStore from '../store/userStore.js';
 import useRoomStore from '../store/roomStore.js';
-import { MessageCircleMore } from 'lucide-react';
+import { MessageCircleMore, X, Coins } from 'lucide-react';
 import playSound from '../utils/playSound';
 import joinAnyRoomSound from '../assets/sounds/joinAnyRoom.mpeg';
 import createRoomimg from "../assets/createRoom.png"
 import homeAndProfileMusic from '../assets/musics/homeAndProfile.mpeg';
 import PageMusicPlayer from '../components/PageMusicPlayer.jsx';
 import PopularProfiles from '../components/PopularProfiles.jsx';
+
 const languages = ['Bengali', 'Hindi', 'Gujarati', 'English', 'Kannada', 'Marathi', 'Tamil', 'Telugu', 'Urdu', 'Punjabi'];
 
 const getRoomPath = (type, roomId) => {
@@ -16,7 +17,7 @@ const getRoomPath = (type, roomId) => {
   return `/messageRoom/${roomId}`;
 };
 
-// SVG Icons for the new Boy UI design
+// SVG Icons for the new UI design
 const Icons = {
   Wave: () => (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v20M17 7v10M22 10v4M7 7v10M2 10v4" /></svg>
@@ -79,7 +80,7 @@ const Icons = {
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><path d="M2 12h20M12 2a15.3 15.3 0 0 1 0 20M12 2a15.3 15.3 0 0 0 0 20" /></svg>
   ),
   Gear: () => (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 15.5A3.5 3.5 0 1 0 12 8a3.5 3.5 0 0 0 0 7.5Z" /><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.88-.34 1.7 1.7 0 0 0-1 1.55V21a2 2 0 1 1-4 0v-.09a1.7 1.7 0 0 0-1-1.55 1.7 1.7 0 0 0-1.88.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-1.55-1H3a2 2 0 1 1 0-4h.09a1.7 1.7 0 0 0 1.55-1 1.7 1.7 0 0 0-.34-1.88l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-1.55V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1 1.55 1.7 1.7 0 0 0 1.88-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.4 9c.16.6.78 1 1.55 1H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.55 1Z" /></svg>
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 15.5A3.5 3.5 0 1 0 12 8a3.5 3.5 0 0 0 0 7.5Z" /><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.88-.34 1.7 1.7 0 0 0-1 1.55V21a2 2 0 1 1-4 0v-.09a1.7 1.7 0 0 0-1-1.55 1.7 1.7 0 0 0-1.88.34l-.06.06a2 2 0 1 1-2.83-2.83l.06.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-1.55-1H3a2 2 0 1 1 0-4h.09a1.7 1.7 0 0 0 1.55-1 1.7 1.7 0 0 0-.34-1.88l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-1.55V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1 1.55 1.7 1.7 0 0 0 1.88-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.4 9c.16.6.78 1 1.55 1H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.55 1Z" /></svg>
   ),
   ChevronDown: () => (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6" /></svg>
@@ -143,8 +144,29 @@ const Home = () => {
   const navigate = useNavigate();
   const { userRole, user } = useUserStore();
   const { isLoading, error, createRoom, joinRoom, rooms } = useRoomStore();
+  
   const [roomType, setRoomType] = useState('message');
   const [selectedLanguages, setSelectedLanguages] = useState([]);
+  
+  // Exclusive Offer Logic
+  const [showOfferPopup, setShowOfferPopup] = useState(false);
+  const [hasSeenPopup, setHasSeenPopup] = useState(false);
+  const [selectedVibe, setSelectedVibe] = useState(girlVibes[0].title);
+  const [privacySetting, setPrivacySetting] = useState('Anyone can join');
+  const [ageSetting, setAgeSetting] = useState('18 - 25');
+  const [allowGifts, setAllowGifts] = useState(true);
+
+  useEffect(() => {
+    if (user?.isOfferValid && !hasSeenPopup) {
+      setShowOfferPopup(true);
+      setHasSeenPopup(true);
+    }
+  }, [user?.isOfferValid, hasSeenPopup]);
+
+  const handleRechargeNavigate = () => {
+    setShowOfferPopup(false);
+    navigate('/wallet');
+  };
 
   const isBoy = useMemo(() => userRole === 'boy', [userRole]);
   const isGirl = useMemo(() => userRole === 'girl', [userRole]);
@@ -202,7 +224,58 @@ const Home = () => {
   return (
     <div className={`min-h-screen ${isBoy || isGirl ? 'bg-[url("./assets/home.png")] bg-cover bg-center' : 'bg-bg-[url("./assets/home.png")] bg-cover bg-center'} text-white flex justify-center sm:items-center px-0 sm:px-4 sm:py-8`}>
       <PageMusicPlayer src={homeAndProfileMusic} />
-      {/* Changed background opacity and added backdrop-blur here */}
+      
+      {/* Exclusive Offer Popup Overlay */}
+      {showOfferPopup && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn">
+          <div className="bg-gradient-to-b from-[#2A1A05] to-[#0A0014] border border-amber-500/50 rounded-3xl w-full max-w-sm overflow-hidden shadow-[0_0_50px_rgba(245,158,11,0.2)] relative">
+            <button
+              onClick={() => setShowOfferPopup(false)}
+              className="absolute top-4 right-4 text-amber-500/50 hover:text-amber-400 transition-colors z-10 bg-black/20 rounded-full p-1"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <div className="p-8 flex flex-col items-center text-center">
+              <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-amber-600 to-yellow-300 p-1 mb-6 shadow-[0_0_30px_rgba(253,224,71,0.4)]">
+                <div className="w-full h-full bg-[#1A0B2E] rounded-full flex items-center justify-center">
+                  <Icons.Gift />
+                </div>
+              </div>
+              
+              <h2 className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-200 to-yellow-500 mb-2">
+                Exclusive Welcome Offer
+              </h2>
+              
+              <p className="text-slate-300 text-sm mb-6 leading-relaxed">
+                Elevate your AddaLove experience! As a first-time buyer, unlock our premium coin bundle at an unbelievable price.
+              </p>
+
+              <div className="w-full bg-black/40 border border-amber-500/30 rounded-2xl p-4 mb-6 flex justify-between items-center">
+                <div className="flex items-center gap-3">
+                  <Coins className="w-8 h-8 text-yellow-400" />
+                  <div className="text-left">
+                    <div className="text-3xl font-black text-white">95</div>
+                    <div className="text-[10px] text-amber-400 font-bold uppercase tracking-widest">Coins</div>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="text-sm text-slate-500 line-through">₹29</div>
+                  <div className="text-2xl font-black text-green-400">₹9</div>
+                </div>
+              </div>
+
+              <button
+                onClick={handleRechargeNavigate}
+                className="w-full bg-gradient-to-r from-amber-500 to-yellow-400 text-black font-black py-4 rounded-full transition-all flex justify-center items-center shadow-[0_0_20px_rgba(253,224,71,0.4)] hover:shadow-[0_0_30px_rgba(253,224,71,0.6)] hover:scale-[1.02] active:scale-[0.98] text-sm uppercase tracking-wide"
+              >
+                Continue to Recharge
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Main UI Container */}
       <div className={`w-full max-w-md shadow-2xl relative overflow-hidden flex flex-col ${isBoy ? 'bg-[#0B0C13]/70 backdrop-blur-xl border-none sm:rounded-3xl sm:border sm:border-white/5' : isGirl ? 'bg-[#070812]/70 backdrop-blur-xl border-none sm:rounded-3xl sm:border sm:border-white/5' : 'bg-transparent backdrop-blur-xl rounded-3xl border border-white/10 p-6'}`}>
 
         {/* Girl/Unknown Header (Hidden for Boy) */}
@@ -219,11 +292,9 @@ const Home = () => {
         {/* GIRL UI */}
         {isGirl && (
           <div className="flex-1 overflow-y-auto px-4 pt-24 pb-28 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] scrollbar-none">
-            {/* Reduced opacity on bg-[#090915] and added blur */}
             <div className="girl-create-ui rounded-3xl bg-[#090915]/60 backdrop-blur-lg px-4 py-5 shadow-[0_24px_80px_rgba(0,0,0,0.45)]">
               
               {/* Girl Hero Banner */}
-              {/* Reduced opacity on bg-[#0F0D1C] */}
               <div className="relative overflow-hidden rounded-[18px] border border-[#FF4D8D]/15 bg-[#0F0D1C]/50 backdrop-blur-sm px-4 py-5 flex items-center justify-between">
                 <div className="absolute right-3 top-2 h-24 w-24 rounded-full bg-[#FF4D8D]/20"></div>
                 <div className="absolute right-16 bottom-0 h-20 w-20 rounded-full bg-[#6C3BFF]/20"></div>
@@ -312,65 +383,71 @@ const Home = () => {
                 <span>{isLoading ? 'Creating...' : 'Create Room'}</span>
               </button>
 
+              {/* --- UPDATED VIBES SECTION --- */}
               <div className="girl-vibe-section mt-6">
                 <h2 className="flex items-center gap-2 text-[17px] font-black text-white">
                   Pick a Vibe <span className="text-[#FF4D8D]"><Icons.Heart /></span>
                 </h2>
                 <div className="mt-3 flex gap-3 overflow-x-auto pb-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-                  {girlVibes.map((vibe, index) => (
-                    <button
-                      key={vibe.title}
-                      type="button"
-                      className={`relative min-w-[118px] rounded-[18px] border px-3 py-4 text-left transition-colors ${index === 0 ? 'border-[#FF4D8D] bg-[#311029]/60 backdrop-blur-sm shadow-[0_0_18px_rgba(255,77,141,0.32)]' : 'border-white/10 bg-[#11111F]/50 backdrop-blur-sm hover:border-white/20'}`}
-                    >
-                      {index === 0 && (
-                        <span className="absolute -right-2 -top-2 flex h-8 w-8 items-center justify-center rounded-full bg-[#FF4D8D] text-white shadow-[0_0_14px_rgba(255,77,141,0.6)]">
-                          <Icons.Check />
-                        </span>
-                      )}
-                      <div className={`flex h-14 items-center justify-center ${index === 0 ? 'text-[#FF4D8D]' : 'text-[#A7A0D8]'}`}>
-                        {vibe.icon}
-                      </div>
-                      <h3 className={`mt-3 text-[13px] font-black ${index === 2 || index === 4 ? 'text-[#FF5DA4]' : 'text-white'}`}>{vibe.title}</h3>
-                      <p className="mt-0.5 text-[11px] font-semibold text-slate-400">{vibe.subtitle}</p>
-                    </button>
-                  ))}
+                  {girlVibes.map((vibe, index) => {
+                    const isSelected = selectedVibe === vibe.title; // Check actual state
+                    return (
+                      <button
+                        key={vibe.title}
+                        type="button"
+                        onClick={() => setSelectedVibe(vibe.title)} // Add onClick
+                        className={`relative min-w-[118px] cursor-pointer rounded-[18px] border px-3 py-4 text-left transition-colors ${isSelected ? 'border-[#FF4D8D] bg-[#311029]/60 backdrop-blur-sm shadow-[0_0_18px_rgba(255,77,141,0.32)]' : 'border-white/10 bg-[#11111F]/50 backdrop-blur-sm hover:border-white/20'}`}
+                      >
+                        {isSelected && (
+                          <span className="absolute -right-2 -top-2 flex h-8 w-8 items-center justify-center rounded-full bg-[#FF4D8D] text-white shadow-[0_0_14px_rgba(255,77,141,0.6)]">
+                            <Icons.Check />
+                          </span>
+                        )}
+                        <div className={`flex h-14 items-center justify-center ${isSelected ? 'text-[#FF4D8D]' : 'text-[#A7A0D8]'}`}>
+                          {vibe.icon}
+                        </div>
+                        <h3 className={`mt-3 text-[13px] font-black ${index === 2 || index === 4 ? 'text-[#FF5DA4]' : 'text-white'}`}>{vibe.title}</h3>
+                        <p className="mt-0.5 text-[11px] font-semibold text-slate-400">{vibe.subtitle}</p>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
+              {/* --- UPDATED OPTIONAL SETTINGS SECTION --- */}
               <div className="mt-6">
                 <div className="mb-3 flex items-center gap-2">
                   <span className="text-[#A7A0D8]"><Icons.Gear /></span>
                   <span className="text-[17px] font-black text-white">Optional Settings</span>
                 </div>
                 <div className="grid gap-3 sm:grid-cols-3">
-                  <button type="button" className="flex min-h-18.5 items-center gap-3 rounded-3xl border border-white/10 bg-[#11111F]/50 backdrop-blur-sm px-3 text-left">
+                  {/* Privacy Toggle Button */}
+                  <button 
+                    type="button" 
+                    onClick={() => setPrivacySetting(prev => prev === 'Anyone can join' ? 'Followers Only' : 'Anyone can join')}
+                    className="flex cursor-pointer min-h-18.5 items-center gap-3 rounded-3xl border border-white/10 bg-[#11111F]/50 backdrop-blur-sm px-3 text-left hover:border-white/20 transition-colors"
+                  >
                     <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#FF4D8D]/18 text-[#FF4D8D]"><Icons.Lock /></span>
                     <span className="min-w-0">
                       <span className="block text-[12px] font-black text-[#FF4D8D]">Room Privacy</span>
-                      <span className="mt-1 flex items-center gap-1 text-[12px] font-bold text-white">Anyone can join <Icons.ChevronDown /></span>
+                      <span className="mt-1 flex items-center gap-1 text-[12px] font-bold text-white">{privacySetting} <Icons.ChevronDown /></span>
                     </span>
                   </button>
-                  <button type="button" className="flex min-h-18.5 items-center gap-3 rounded-3xl border border-white/10 bg-[#11111F]/50 backdrop-blur-sm px-3 text-left">
+
+                  {/* Age Preference Toggle Button */}
+                  <button 
+                    type="button" 
+                    className="flex cursor-pointer min-h-18.5 items-center gap-3 rounded-3xl border border-white/10 bg-[#11111F]/50 backdrop-blur-sm px-3 text-left hover:border-white/20 transition-colors"
+                  >
                     <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#7C3AED]/20 text-[#A855F7]"><Icons.UsersGroup /></span>
                     <span className="min-w-0">
                       <span className="block text-[12px] font-black text-[#FF4D8D]">Age Preference</span>
-                      <span className="mt-1 flex items-center gap-1 text-[12px] font-bold text-white">18 - 25 <Icons.ChevronDown /></span>
+                      <span className="mt-1 flex items-center gap-1 text-[12px] font-bold text-white">{ageSetting} <Icons.ChevronDown /></span>
                     </span>
                   </button>
-                  <div className="flex min-h-18.5 items-center justify-between gap-3 rounded-3xl border border-white/10 bg-[#11111F]/50 backdrop-blur-sm px-3">
-                    <div className="flex items-center gap-3">
-                      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#FF4D8D]/18 text-[#FF4D8D]"><Icons.Gift /></span>
-                      <span className="text-[12px] font-black text-[#FF4D8D]">Allow Gifts</span>
-                    </div>
-                    <span className="relative h-8 w-14 rounded-full bg-linear-to-r from-[#A855F7] to-[#FF4D8D] p-1 shadow-[0_0_12px_rgba(255,77,141,0.35)]">
-                      <span className="block h-6 w-6 translate-x-6 rounded-full bg-white"></span>
-                    </span>
-                  </div>
+                  
                 </div>
               </div>
-
-              <p className="mt-1 text-center text-[13px] font-semibold text-slate-300">Let the good vibes begin!</p>
             </div>
           </div>
         )}
@@ -380,10 +457,9 @@ const Home = () => {
           <div className="flex-1 overflow-y-auto px-4 pt-4 pb-24 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] scrollbar-none">
             <div className="flex flex-col gap-6">
 
-              {/* Boy Hero Banner - Made gradient transparent and added blur */}
+              {/* Boy Hero Banner */}
               <div className="relative w-full rounded-2xl border mt-18 border-[#FF4D8D]/20 bg-linear-to-br from-[#2D1433]/70 via-[#141021]/70 to-[#0D111A]/70 backdrop-blur-md p-5 overflow-hidden shadow-lg flex items-center justify-between">
                 
-                {/* Static Background Glows */}
                 <div className="absolute top-0 right-0 -mr-10 -mt-10 h-32 w-32 rounded-full bg-[#FF4D8D] opacity-20"></div>
                 <div className="absolute bottom-0 right-10 h-24 w-24 rounded-full bg-[#6C3BFF] opacity-20"></div>
 
@@ -391,7 +467,6 @@ const Home = () => {
                   <h2 className="text-[26px] font-black leading-tight tracking-wide">
                     <span className="block text-[#FF4D8D]">Welcome</span>
                     <span className="block text-white">{user.fullName}</span>
-                    {/* <span className="block bg-linear-to-r from-[#8C6DF8] to-[#5C94FF] bg-clip-text text-transparent">Real Connections.</span> */}
                   </h2>
                   <p className="mt-2 text-[11px] font-medium text-slate-300">Safe • Friendly • Private</p>
                   <button className="mt-4 rounded-full bg-linear-to-r from-[#FF4D8D] to-[#E11D48] px-5 py-2 text-[13px] font-bold text-white shadow-[0_0_15px_rgba(255,77,141,0.3)] transition-transform hover:scale-105">
@@ -399,11 +474,11 @@ const Home = () => {
                   </button>
                 </div>
                 
-                <div className="relative z-10 flex h-24 w-24 shrink-0 items-center justify-center">
+                <div className="relative z-10 flex h-50 shrink-0 items-center justify-center">
                   <img 
                     src="https://ik.imagekit.io/ufopzzlbh/addlovemodel.jpeg" 
                     alt="Mascot" 
-                    className="h-[85px] w-[85px] rounded-full border-2 border-[#6C3BFF]/30 object-cover shadow-[0_0_20px_rgba(108,59,255,0.4)]" 
+                    className="h-50 rounded-full border-2 border-[#6C3BFF]/30 object-cover shadow-[0_0_20px_rgba(108,59,255,0.4)]" 
                   />
                 </div>
               </div>
@@ -610,6 +685,17 @@ const Home = () => {
           </div>
         )}
       </div>
+
+      {/* Inject animation styling safely */}
+      <style>{`
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fadeIn {
+            animation: fadeIn 0.3s ease-out forwards;
+        }
+      `}</style>
     </div>
   );
 };

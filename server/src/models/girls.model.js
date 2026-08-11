@@ -55,6 +55,10 @@ const girlsSchema = new mongoose.Schema({
     publicKey: {
         type: String,
     },
+    isGoldenUser:{
+        type:Boolean,
+        default:false
+    }
 }, { timestamps: true });
 const Girls = mongoose.model('Girls', girlsSchema);
 export default Girls;

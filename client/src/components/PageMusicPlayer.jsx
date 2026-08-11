@@ -46,9 +46,9 @@ export default function PageMusicPlayer({ src }) {
       onClick={toggleMusic}
       aria-label={isPlaying ? 'Pause background music' : 'Play background music'}
       title={isPlaying ? 'Pause music' : 'Play music'}
-      className="fixed top-20 left-4 z-50 flex h-11 w-11 items-center justify-center rounded-full border border-white/15 bg-[#11111F]/85 text-[#FF4D8D] shadow-lg backdrop-blur-md transition hover:scale-105 hover:bg-[#1B1B30] active:scale-95"
+      className="fixed top-20 left-4 z-50 flex h-8 w-8 items-center justify-center rounded-full border border-white/15 bg-[#11111F]/85 text-[#FF4D8D] shadow-lg backdrop-blur-md transition hover:scale-105 hover:bg-[#1B1B30] active:scale-95"
     >
-      {isPlaying ? <Volume2 size={20} /> : <VolumeX size={20} />}
+      {isPlaying ? <Volume2 size={15} /> : <VolumeX size={15} />}
     </button>
   );
 }

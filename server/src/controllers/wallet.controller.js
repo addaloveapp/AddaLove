@@ -77,6 +77,7 @@ const addMoneyToWallet = asyncHandler(async (req, res) => {
         await newcointranscation.save({ session });
         const totalCoin = Number(coins) + Number(bonus);
         await User.findByIdAndUpdate(userId, { $inc: { walletBlance: totalCoin } }, { new: true, session })
+        await User.findByIdAndUpdate(userId,{$set:{isOfferValid:false}},{new:true, session})
 
         const newuserdata = await User.findById(userId).session(session).lean();
         const newWlletBlance = newuserdata.walletBlance;
