@@ -389,9 +389,9 @@ const Home = () => {
 
                 <div className="relative z-10 w-2/3">
                   <h2 className="text-[26px] font-black leading-tight tracking-wide">
-                    <span className="block text-[#FF4D8D]">Real Voices.</span>
-                    <span className="block text-white">Real People.</span>
-                    <span className="block bg-linear-to-r from-[#8C6DF8] to-[#5C94FF] bg-clip-text text-transparent">Real Connections.</span>
+                    <span className="block text-[#FF4D8D]">Welcome</span>
+                    <span className="block text-white">{user.fullName}</span>
+                    {/* <span className="block bg-linear-to-r from-[#8C6DF8] to-[#5C94FF] bg-clip-text text-transparent">Real Connections.</span> */}
                   </h2>
                   <p className="mt-2 text-[11px] font-medium text-slate-300">Safe • Friendly • Private</p>
                   <button className="mt-4 rounded-full bg-linear-to-r from-[#FF4D8D] to-[#E11D48] px-5 py-2 text-[13px] font-bold text-white shadow-[0_0_15px_rgba(255,77,141,0.3)] transition-transform hover:scale-105">
