@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { handleError } from '../components/ErrorMessage';
 import { 
     History, 
@@ -11,7 +11,8 @@ import {
     ChevronDown,
     Sparkles,
     Coins,
-    Crown
+    Crown,
+    Gift
 } from 'lucide-react';
 import { useNavigate } from 'react-router';
 import { useUserData } from '../context/UserdataContext';
@@ -22,6 +23,7 @@ import Recharge from "../assets/Recharge.png"
 import playSound from '../utils/playSound';
 import boyCoinCraditSound from '../assets/sounds/boyCoinCradit.mpeg';
 import paymentSuccessfulVideo from '../assets/Videos/PyamentSuccessful.mp4';
+
 const coinPackages = [
     { coins: 25, price: 9, bonus: null, tag: 'BASIC', tagType: 'basic' },
     { coins: 95, price: 29, bonus: null, tag: 'BASIC', tagType: 'basic' },
@@ -37,6 +39,15 @@ const coinPackages = [
     { coins: 200000, price: 29999, bonus: '+35000 bonus' },
 ];
 
+const exclusiveOfferPackage = { 
+    coins: 95, 
+    price: 9, 
+    bonus: null, 
+    tag: 'EXCLUSIVE', 
+    tagType: 'exclusive', 
+    isOffer: true 
+};
+
 export default function AddaLoveRecharge() {
     // State Management
     const [selectedPkg, setSelectedPkg] = useState(null);
@@ -45,14 +56,31 @@ export default function AddaLoveRecharge() {
     const { user: useralldata, fetchUser } = useUserStore();
     const [balance, setBalance] = useState(null);
     const [showPaymentVideo, setShowPaymentVideo] = useState(false);
+    const [showOfferPopup, setShowOfferPopup] = useState(false);
+    const [hasSeenPopup, setHasSeenPopup] = useState(false);
     const naviget = useNavigate();
+
+    // Trigger Exclusive Offer Popup
+    useEffect(() => {
+        if (useralldata?.isOfferValid && !hasSeenPopup) {
+            setShowOfferPopup(true);
+            setHasSeenPopup(true);
+        }
+    }, [useralldata?.isOfferValid, hasSeenPopup]);
+
+    // Derived Packages List
+    const displayPackages = useralldata?.isOfferValid 
+        ? [exclusiveOfferPackage, ...coinPackages] 
+        : coinPackages;
 
     const handleclick = () => {
         naviget('/transcation-history');
     };
 
-    // Razorpay Payment Handler
-    const handlePayment = async () => {
+    // Razorpay Payment Handler (Now accepts a dynamic package parameter)
+    const handlePayment = async (pkgToBuy = selectedPkg) => {
+        if (!pkgToBuy) return;
+        
         setIsProcessing(true);
         const loaded = await loadRazorpay();
 
@@ -66,15 +94,16 @@ export default function AddaLoveRecharge() {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'include',
-            body: JSON.stringify({ amount: selectedPkg.price, coins: selectedPkg.coins, bonus: selectedPkg.bonus }),
+            body: JSON.stringify({ amount: pkgToBuy.price, coins: pkgToBuy.coins, bonus: pkgToBuy.bonus }),
         });
 
         const data = await response.json();
-        console.log(data);
+        
         if (!data.success) {
             setIsProcessing(false);
             return handleError('Network issue try again!');
         }
+        
         const orderId = data.data.order.id;
         const amount = data.data.order.amount;
         const currency = data.data.order.currency;
@@ -90,8 +119,7 @@ export default function AddaLoveRecharge() {
             callback_url: import.meta.env.VITE_CALLBACK_URL,
             handler: async function (response) {
                 const { razorpay_payment_id, razorpay_order_id, razorpay_signature } = response;
-                console.log(razorpay_payment_id, razorpay_order_id, razorpay_signature);
-
+                
                 const url2 = `${import.meta.env.VITE_BACKEND_URL}/api/wallet/v1/verify-payment`;
                 const responce = await fetch(url2, {
                     method: 'POST',
@@ -101,36 +129,24 @@ export default function AddaLoveRecharge() {
                 });
                 const data2 = await responce.json();
                 if (data2.success) {
-                    console.log(orderdata);
-                    let totalbouns;
-                    if (orderdata.bonus === '+200 bonus') {
-                        totalbouns = 200;
-                    } else if (orderdata.bonus === '+500 bonus') {
-                        totalbouns = 500;
-                    } else if (orderdata.bonus === '+1500 bonus') {
-                        totalbouns = 1500;
-                    } else if (orderdata.bonus === '+3500 bonus') {
-                        totalbouns = 2500;
-                    } else if (orderdata.bonus === '+8000 bonus') {
-                        totalbouns = 8000;
-                    } else if (orderdata.bonus === '+15000 bonus') {
-                        totalbouns = 15000;
-                    } else if (orderdata.bonus === '+35000 bonus') {
-                        totalbouns = 15000;
-                    } else {
-                        totalbouns = 0;
-                    }
+                    let totalbouns = 0;
+                    if (orderdata.bonus === '+200 bonus') { totalbouns = 200; } 
+                    else if (orderdata.bonus === '+500 bonus') { totalbouns = 500; } 
+                    else if (orderdata.bonus === '+1500 bonus') { totalbouns = 1500; } 
+                    else if (orderdata.bonus === '+3500 bonus') { totalbouns = 2500; } 
+                    else if (orderdata.bonus === '+8000 bonus') { totalbouns = 8000; } 
+                    else if (orderdata.bonus === '+15000 bonus') { totalbouns = 15000; } 
+                    else if (orderdata.bonus === '+35000 bonus') { totalbouns = 15000; }
+
                     const url3 = `${import.meta.env.VITE_BACKEND_URL}/api/wallet/v1/add-coin`;
                     const res = await fetch(url3, {
                         method: 'POST',
-                        headers: {
-                            "Content-Type": "application/json"
-                        },
+                        headers: { "Content-Type": "application/json" },
                         credentials: 'include',
                         body: JSON.stringify({ userId: orderdata.userId, coins: orderdata.coins, bonus: totalbouns, razorpay_payment_id, razorpay_order_id, amount: amount })
                     });
                     const data3 = await res.json();
-                    console.log(data3);
+                    
                     if (data3.success) {
                         setShowPaymentVideo(true);
                         await fetchUser();
@@ -138,6 +154,7 @@ export default function AddaLoveRecharge() {
                         setBalance(data3.data.newWlletBlance);
                         setIsProcessing(false);
                         setIsModalOpen(false);
+                        setShowOfferPopup(false); // Close exclusive popup if open
                         setSelectedPkg(null);
                     }
                 } else {
@@ -150,7 +167,7 @@ export default function AddaLoveRecharge() {
                 email: `${orderdata.useremail}`,
             },
             theme: {
-                color: '#FF2994', // Updated to match new brand color
+                color: '#FF2994', 
             },
         };
         try {
@@ -168,6 +185,8 @@ export default function AddaLoveRecharge() {
 
     return (
         <div className="min-h-screen bg-[url('./assets/Rechargebg.png')] text-slate-100 flex flex-col items-center py-6 px-4 font-sans relative overflow-x-hidden pb-32">
+            
+            {/* Payment Successful Video Overlay */}
             {showPaymentVideo && (
                 <div className="fixed inset-0 z-[9999] bg-black flex items-center justify-center">
                     <video
@@ -178,6 +197,70 @@ export default function AddaLoveRecharge() {
                         playsInline
                         onEnded={() => setShowPaymentVideo(false)}
                     />
+                </div>
+            )}
+            
+            {/* Exclusive Offer Popup Overlay */}
+            {showOfferPopup && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn">
+                    <div className="bg-gradient-to-b from-[#2A1A05] to-[#0A0014] border border-amber-500/50 rounded-3xl w-full max-w-sm overflow-hidden shadow-[0_0_50px_rgba(245,158,11,0.2)] relative">
+                        
+                        <button
+                            onClick={() => !isProcessing && setShowOfferPopup(false)}
+                            className="absolute top-4 right-4 text-amber-500/50 hover:text-amber-400 transition-colors z-10 bg-black/20 rounded-full p-1"
+                            disabled={isProcessing}
+                        >
+                            <X className="w-5 h-5" />
+                        </button>
+
+                        <div className="p-8 flex flex-col items-center text-center">
+                            <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-amber-600 to-yellow-300 p-1 mb-6 shadow-[0_0_30px_rgba(253,224,71,0.4)]">
+                                <div className="w-full h-full bg-[#1A0B2E] rounded-full flex items-center justify-center">
+                                    <Gift className="w-10 h-10 text-yellow-400" />
+                                </div>
+                            </div>
+                            
+                            <h2 className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-200 to-yellow-500 mb-2">
+                                Exclusive Welcome Offer
+                            </h2>
+                            
+                            <p className="text-slate-300 text-sm mb-6 leading-relaxed">
+                                Elevate your AddaLove experience! As a first-time buyer, unlock our premium coin bundle at an unbelievable price.
+                            </p>
+
+                            <div className="w-full bg-black/40 border border-amber-500/30 rounded-2xl p-4 mb-6 flex justify-between items-center">
+                                <div className="flex items-center gap-3">
+                                    <Coins className="w-8 h-8 text-yellow-400" />
+                                    <div className="text-left">
+                                        <div className="text-3xl font-black text-white">95</div>
+                                        <div className="text-[10px] text-amber-400 font-bold uppercase tracking-widest">Coins</div>
+                                    </div>
+                                </div>
+                                <div className="text-right">
+                                    <div className="text-sm text-slate-500 line-through">₹29</div>
+                                    <div className="text-2xl font-black text-green-400">₹9</div>
+                                </div>
+                            </div>
+
+                            <button
+                                onClick={() => handlePayment(exclusiveOfferPackage)}
+                                disabled={isProcessing}
+                                className="w-full bg-gradient-to-r from-amber-500 to-yellow-400 text-black font-black py-4 rounded-full transition-all flex justify-center items-center shadow-[0_0_20px_rgba(253,224,71,0.4)] hover:shadow-[0_0_30px_rgba(253,224,71,0.6)] hover:scale-[1.02] active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed text-sm uppercase tracking-wide"
+                            >
+                                {isProcessing ? (
+                                    <>
+                                        <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-black" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                        </svg>
+                                        Processing...
+                                    </>
+                                ) : (
+                                    'Purchase Now for ₹9'
+                                )}
+                            </button>
+                        </div>
+                    </div>
                 </div>
             )}
             
@@ -262,8 +345,9 @@ export default function AddaLoveRecharge() {
 
                     {/* Grid of Coin Packages */}
                     <div className="grid grid-cols-3 gap-2.5 mb-6">
-                        {coinPackages.map((pkg, index) => {
-                            const isSelected = selectedPkg?.price === pkg.price;
+                        {displayPackages.map((pkg, index) => {
+                            const isSelected = selectedPkg?.price === pkg.price && selectedPkg?.coins === pkg.coins;
+                            const isExclusiveOffer = pkg.tagType === 'exclusive';
 
                             return (
                                 <div
@@ -275,21 +359,29 @@ export default function AddaLoveRecharge() {
                                     className={`relative rounded-xl p-3 flex flex-col items-center justify-between border-2 transition-all cursor-pointer ${
                                         isSelected
                                             ? 'border-[#FF2994] bg-[#2A0845] shadow-[0_0_15px_rgba(255,41,148,0.3)] transform scale-105 z-10'
+                                            : isExclusiveOffer 
+                                                ? 'border-amber-400 bg-[#2A1A05] shadow-[0_0_10px_rgba(251,191,36,0.15)] hover:border-amber-300 z-10'
                                             : pkg.popular
                                                 ? 'border-[#8B2BFF]/50 bg-[#1C1035] hover:border-[#8B2BFF]'
                                                 : 'border-white/5 bg-[#1A0B2E] hover:border-white/20'
                                     }`}
                                 >
                                     {/* Elite Badges */}
-                                    {pkg.popular && (
+                                    {pkg.popular && !isExclusiveOffer && (
                                         <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-gradient-to-r from-[#FF2994] to-[#8B2BFF] text-white text-[8px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider whitespace-nowrap shadow-md flex items-center gap-0.5">
                                             <Crown className="w-2 h-2" /> Popular
+                                        </div>
+                                    )}
+                                    
+                                    {isExclusiveOffer && (
+                                        <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-gradient-to-r from-amber-500 to-yellow-400 text-black text-[8px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider whitespace-nowrap shadow-md flex items-center gap-0.5">
+                                            <Gift className="w-2 h-2" /> Offer
                                         </div>
                                     )}
 
                                     {/* Coin Amount */}
                                     <div className="flex flex-col items-center gap-1 mb-2 mt-2">
-                                        <Coins className={`w-6 h-6 ${pkg.popular || isSelected ? 'text-amber-400' : 'text-amber-400/70'}`} />
+                                        <Coins className={`w-6 h-6 ${pkg.popular || isSelected || isExclusiveOffer ? 'text-amber-400' : 'text-amber-400/70'}`} />
                                         <span className="text-amber-400 font-extrabold text-[15px] tracking-tight">
                                             {pkg.coins.toLocaleString()}
                                         </span>
@@ -302,6 +394,7 @@ export default function AddaLoveRecharge() {
                                                 pkg.tagType === 'basic' ? 'bg-white/5 text-slate-400' :
                                                 pkg.tagType === 'popular' ? 'bg-[#8B2BFF]/20 text-[#A75CFF]' :
                                                 pkg.tagType === 'best' ? 'bg-amber-500/20 text-amber-400' :
+                                                pkg.tagType === 'exclusive' ? 'bg-amber-400/20 text-amber-300 border border-amber-400/30' :
                                                 'text-[#FF2994] bg-[#FF2994]/20'
                                             }`}>
                                                 {pkg.tag}
@@ -315,7 +408,11 @@ export default function AddaLoveRecharge() {
 
                                     {/* Price Button Element */}
                                     <div className={`w-full py-1.5 rounded-lg text-center font-bold text-[13px] transition-colors ${
-                                        isSelected ? 'bg-[#FF2994] text-white' : 'bg-white/5 text-slate-200 group-hover:bg-white/10'
+                                        isSelected 
+                                            ? 'bg-[#FF2994] text-white' 
+                                            : isExclusiveOffer 
+                                                ? 'bg-amber-500 text-black hover:bg-amber-400'
+                                                : 'bg-white/5 text-slate-200 group-hover:bg-white/10'
                                     }`}>
                                         ₹{pkg.price.toLocaleString()}
                                     </div>
@@ -344,7 +441,7 @@ export default function AddaLoveRecharge() {
 
             {/* Payment Confirmation Overlay Modal Drawer */}
             {isModalOpen && selectedPkg && (
-                <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fadeIn">
+                <div className="fixed inset-0 z-[80] flex items-end sm:items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fadeIn">
                     <div className="bg-[#150A2A] border border-white/10 rounded-3xl w-full max-w-sm overflow-hidden shadow-[0_0_40px_rgba(139,43,255,0.15)] relative">
                         
                         {/* Interactive Drag Pill */}
@@ -394,7 +491,7 @@ export default function AddaLoveRecharge() {
                             </div>
 
                             <button
-                                onClick={handlePayment}
+                                onClick={() => handlePayment(selectedPkg)}
                                 disabled={isProcessing}
                                 className="w-full bg-gradient-to-r from-[#FF2994] to-[#8B2BFF] text-white font-bold py-4 rounded-full transition-all flex justify-center items-center shadow-[0_0_20px_rgba(255,41,148,0.4)] hover:shadow-[0_0_25px_rgba(139,43,255,0.5)] disabled:opacity-70 disabled:cursor-not-allowed text-sm"
                             >

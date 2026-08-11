@@ -20,10 +20,11 @@ import playSound from '../utils/playSound.js'
 import joinAnyRoomSound from '../assets/sounds/joinAnyRoom.mpeg'
 import rechargeGoingToEndSound from '../assets/sounds/rechargeGoingToEnd.aac'
 import respact from "../assets/respectpointlogo.png"
+
 const MessageRoom = () => {
   const { roomId } = useParams()
   const navigate = useNavigate()
-  const { user, userRole, fetchUser ,fetchUserHistory } = useUserStore()
+  const { user, userRole, fetchUser, fetchUserHistory } = useUserStore()
   const [messageText, setMessageText] = useState('')
   const [replyingTo, setReplyingTo] = useState(null)
   const [isSendingMessage, setIsSendingMessage] = useState(false)
@@ -42,6 +43,11 @@ const MessageRoom = () => {
   const [isRatingOpen, setIsRatingOpen] = useState(false)
   const [ratingTarget, setRatingTarget] = useState(null)
   const [afterRatingAction, setAfterRatingAction] = useState(null)
+  
+  // -- NEW TIMING STATE VARIABLES --
+  const [timeLeft, setTimeLeft] = useState(null)
+  const [showRechargeWarning, setShowRechargeWarning] = useState(false)
+
   const messagesEndRef = useRef(null)
   const swipeStartXRef = useRef(null)
   const isSendingMessageRef = useRef(false)
@@ -60,9 +66,36 @@ const MessageRoom = () => {
   const { createReport, isLoading: isReportSubmitting } = useReportStore()
   const { createRating, checkRating, isLoading: isRatingSubmitting } = useRatingStore()
 
+  // -- TIMING LOGIC EFFECT --
+  useEffect(() => {
+    if (timeLeft === null || userRole !== 'boy') return;
+
+    const timer = setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev <= 0) {
+          clearInterval(timer);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [timeLeft !== null, userRole]);
+
+  useEffect(() => {
+    // Show warning if 20 seconds or less remain, and hasn't shown yet. 
+    if (timeLeft !== null && timeLeft <= 20 && timeLeft > 0 && !showRechargeWarning) {
+      setShowRechargeWarning(true);
+      playSound(rechargeGoingToEndSound);
+    } else if (timeLeft === 0) {
+      setShowRechargeWarning(false);
+    }
+  }, [timeLeft, showRechargeWarning]);
+
+
   const handleSendMessage = async () => {
-    // A ref is set synchronously so a second click cannot start another
-    // request before React has a chance to disable the button.
     if (!isBoyInside || isSendingMessageRef.current) return
 
     const trimmedMessage = messageText.trim()
@@ -126,8 +159,19 @@ const MessageRoom = () => {
     if (action === 'exit') {
       suppressCloseRatingRef.current = true
       exitRoom()
+      return
     }
-  }, [destroyRoom, exitRoom, fetchUser, roomId])
+
+    // -- RECHARGE ACTION NAVIGATION --
+    if (action === 'recharge') {
+      suppressCloseRatingRef.current = true
+      clearMessages()
+      if (roomId && user?._id) {
+        socket.emit('leave_room', { roomId, userId: user._id })
+      }
+      navigate('/wallet')
+    }
+  }, [destroyRoom, exitRoom, fetchUser, roomId, clearMessages, navigate, user])
 
   const openRatingPopup = useCallback(async (targetUser, action = null) => {
     if (!targetUser?._id || hasPendingRatingRef.current) return
@@ -150,17 +194,6 @@ const MessageRoom = () => {
     setIsRatingOpen(true)
   }, [checkRating, runAfterRatingAction, userRole])
 
-  const completeRatingFlow = useCallback(async () => {
-    const action = afterRatingAction
-
-    hasPendingRatingRef.current = false
-    setIsRatingOpen(false)
-    setRatingTarget(null)
-    setAfterRatingAction(null)
-
-    await runAfterRatingAction(action)
-  }, [afterRatingAction, runAfterRatingAction])
-
   const leaveRoomFunc = async () => {
     if (userRole !== 'boy' || isLeaving) return
 
@@ -168,7 +201,7 @@ const MessageRoom = () => {
       setIsLeaving(true)
       await leaveRoom(roomId)
       await fetchUser()
-      await fetchUserHistory(); 
+      await fetchUserHistory();
       if (girlProfile?._id) {
         await openRatingPopup(girlProfile, 'exit')
       } else {
@@ -180,6 +213,33 @@ const MessageRoom = () => {
       setIsLeaving(false)
     }
   }
+
+  // -- HANDLE PURCHASE COIN CLICK NAVIGATION --
+  const handleRechargeClick = async () => {
+    if (userRole !== 'boy' || isLeaving) return;
+
+    try {
+      setIsLeaving(true);
+      await leaveRoom(roomId);
+      await fetchUser();
+      await fetchUserHistory();
+      
+      // Still show the rating popup if applicable, passing the new "recharge" path logic
+      if (girlProfile?._id) {
+        await openRatingPopup(girlProfile, 'recharge');
+      } else {
+        clearMessages();
+        if (roomId && user?._id) {
+          socket.emit('leave_room', { roomId, userId: user._id });
+        }
+        navigate('/wallet');
+      }
+    } catch (error) {
+      console.error('Error leaving for recharge:', error);
+    } finally {
+      setIsLeaving(false);
+    }
+  };
 
   const destroyRoomFunc = async () => {
     if (userRole !== 'girl' || isLeaving) return
@@ -354,14 +414,16 @@ const MessageRoom = () => {
 
     clearMessages()
 
-    // A room can be fetched once while empty and again when a boy joins. Keep
-    // only the newest response so an older empty-room response cannot erase
-    // the joined boy's profile and stats.
     let isActive = true
     let detailsRequestId = 0
     const applyRoomDetails = (room) => {
       if (!room) return
 
+      // --- APPLY TIMING METRICS HERE ---
+      if (typeof room.sessionDurationSeconds === 'number') {
+        setTimeLeft(room.sessionDurationSeconds)
+      }
+      
       setBoyFollowers(room.boyExtraDetails?.followerCount || 0)
       setBoyFollowing(room.boyExtraDetails?.followingCount || 0)
       setRespectPoint(room.RespactPoint || 0)
@@ -398,8 +460,6 @@ const MessageRoom = () => {
     const handleRoomClosed = (data) => {
       if (data.roomId !== roomId) return
       fetchUser().catch(() => { })
-      // A host destroy reaches the boy through a socket event, not his leave
-      // API call. Clear the room state so Home renders its navigation again.
       resetRoomState()
 
       if (suppressCloseRatingRef.current) {
@@ -549,7 +609,42 @@ const MessageRoom = () => {
 
   return (
     <div className='min-h-screen bg-[#070b19] p-0 text-white sm:px-4 sm:py-5 font-sans'>
-      <div className='mx-auto flex h-dvh w-full max-w-5xl flex-col overflow-hidden bg-[#0a0f24] shadow-2xl sm:h-[calc(100vh-2.5rem)] sm:rounded-[40px] sm:border sm:border-blue-500/20'>
+      {/* Changed max container to have relative class to properly position the alert overlay */}
+      <div className='relative mx-auto flex h-dvh w-full max-w-5xl flex-col overflow-hidden bg-[#0a0f24] shadow-2xl sm:h-[calc(100vh-2.5rem)] sm:rounded-[40px] sm:border sm:border-blue-500/20'>
+        
+        {/* -- RECHARGE TIME WARNING POPUP -- */}
+        {showRechargeWarning && isBoy && (
+          <div className='absolute top-20 left-1/2 z-50 w-11/12 max-w-sm -translate-x-1/2 rounded-3xl border border-red-500/50 bg-red-600/95 p-5 text-center shadow-[0_10px_40px_rgba(220,38,38,0.5)] backdrop-blur-xl animate-in fade-in slide-in-from-top-10 duration-300'>
+            <div className='mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-red-500/50'>
+              <TriangleAlert className='text-yellow-300' size={24} />
+            </div>
+            <h3 className='text-lg font-black text-white'>Time Running Out!</h3>
+            <p className='mt-1 mb-4 text-sm font-medium text-red-100'>
+              You will be removed from the room in <span className='text-xl font-bold text-yellow-300'>{timeLeft}s</span>. Purchase coins to continue chatting!
+            </p>
+            <button
+              onClick={handleRechargeClick}
+              disabled={isLeaving}
+              className='flex w-full items-center justify-center gap-2 rounded-2xl bg-white py-3.5 text-sm font-bold text-red-600 shadow-lg transition-transform hover:scale-[1.02] active:scale-95 disabled:cursor-not-allowed disabled:opacity-70'
+            >
+              {isLeaving ? (
+                <Loader2 size={18} className='animate-spin' />
+              ) : (
+                <>
+                  <Coins size={18} />
+                  Purchase Coins
+                </>
+              )}
+            </button>
+            <button
+              onClick={() => setShowRechargeWarning(false)}
+              className='mt-3 text-xs font-semibold text-red-200 hover:text-white underline-offset-2 hover:underline'
+            >
+              Dismiss
+            </button>
+          </div>
+        )}
+
         {/* Top Navbar */}
         <nav className='z-20 flex min-h-17 items-center justify-between px-4 py-4 sm:px-6'>
           <div className='flex items-center gap-3'>
@@ -577,7 +672,6 @@ const MessageRoom = () => {
               <CoinIcon className="w-3.5 h-3.5 text-yellow-400" /> {useralldata.walletBlance}
             </div>
 
-            {/* The user's exact original styles for these buttons */}
             <button
               type='button'
               onClick={userRole === 'girl' ? destroyRoomFunc : leaveRoomFunc}
@@ -666,8 +760,6 @@ const MessageRoom = () => {
                     </button>
                   </div>
 
-                  {/* Badges/Info row */}
-
                   <div className='mt-4 flex w-full items-center justify-center gap-2 rounded-xl border border-purple-500/20 bg-purple-500/10 py-2.5 text-xs font-medium text-purple-300'>
                     <ShieldCheck size={16} /> Verified & Trusted Member
                   </div>
@@ -689,7 +781,7 @@ const MessageRoom = () => {
                 ) : messages.map((message, index) => {
                   const ownMessage = isOwnMessage(message)
                   const isEmojiMessage = message.messageType === 'emoji'
-                  const messageTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) // Format as needed based on your message object
+                  const messageTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
 
                   return (
                     <div
@@ -779,8 +871,6 @@ const MessageRoom = () => {
                 }
               }}
             />
-
-
 
             <button
               type='button'

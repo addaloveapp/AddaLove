@@ -38,6 +38,10 @@ const userSchema = new mongoose.Schema({
         type: String,
         required: true,
 
+    },
+    isOfferValid:{
+        type:Boolean,
+        default:true
     }
 },{ timestamps: true })
 
