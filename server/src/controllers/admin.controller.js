@@ -296,7 +296,7 @@ const checkCertificate = asyncHandler(async (req, res) => {
 });
 const accpectTheGirls = asyncHandler(async (req, res) => {
     const { userID, email } = req.body;
-    if (!userID, !email) {
+    if (!userID || !email) {
         throw new ApiError(400, "All data Required.")
     }
     const girlsData = await Girls.findById(userID);
@@ -311,7 +311,7 @@ const accpectTheGirls = asyncHandler(async (req, res) => {
 })
 const rejectTheGirls = asyncHandler(async (req, res) => {
     const { userID, email } = req.body;
-    if (!userID, !email) {
+    if (!userID || !email) {
         throw new ApiError(400, "All data Required.")
     }
     const girlsData = await Girls.findById(userID);
