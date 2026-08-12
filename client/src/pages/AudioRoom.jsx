@@ -43,6 +43,8 @@ export default function AudioRoom() {
   const [isRatingOpen, setIsRatingOpen] = useState(false);
   const [ratingTarget, setRatingTarget] = useState(null);
   const [afterRatingAction, setAfterRatingAction] = useState(null);
+  const [timeLeft, setTimeLeft] = useState(null);
+  const [showRechargeWarning, setShowRechargeWarning] = useState(false);
   const localStreamRef = useRef(null);
   const peerRef = useRef(null);
   const remoteAudioRef = useRef(null);
@@ -51,10 +53,14 @@ export default function AudioRoom() {
   const girlProfileRef = useRef(null);
   const hasPendingRatingRef = useRef(false);
   const suppressCloseRatingRef = useRef(false);
+  const hasShownRechargeWarningRef = useRef(false);
   
   // Stats and Duration States
   const [boyFollowers, setBoyFollowers] = useState(0);
   const [girlFollowers, setGirlFollowers] = useState(0);
+  const [boyFollowing, setBoyFollowing] = useState(0);
+  const [girlFollowing, setGirlFollowing] = useState(0);
+  const [girlAverageRating, setGirlAverageRating] = useState(null);
   const [boyJoinedAt, setBoyJoinedAt] = useState(null);
   const [elapsedTime, setElapsedTime] = useState('00:00:00');
   
@@ -72,6 +78,32 @@ export default function AudioRoom() {
   const isBoyInside = isGirl ? Boolean(boyProfile) : true;
   const areBothParticipantsPresent = Boolean(girlProfile && boyProfile);
   const isBoy = useMemo(() => userRole === 'boy', [userRole]);
+
+  useEffect(() => {
+    if (timeLeft === null || !isBoy) return undefined;
+
+    const timer = setInterval(() => {
+      setTimeLeft((previousTimeLeft) => {
+        if (previousTimeLeft === null || previousTimeLeft <= 0) {
+          clearInterval(timer);
+          return 0;
+        }
+        return previousTimeLeft - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [isBoy, timeLeft !== null]);
+
+  useEffect(() => {
+    if (timeLeft !== null && timeLeft > 0 && timeLeft <= 10 && !hasShownRechargeWarningRef.current) {
+      hasShownRechargeWarningRef.current = true;
+      setShowRechargeWarning(true);
+      playSound(rechargeGoingToEndSound);
+    } else if (timeLeft === 0) {
+      setShowRechargeWarning(false);
+    }
+  }, [timeLeft]);
   
   useEffect(() => {
   }, [roomId]);
@@ -273,7 +305,7 @@ export default function AudioRoom() {
       await completeRatingFlow();
     } catch (ratingError) {
       const message = ratingError?.response?.data?.message || 'Could not send rating';
-      if (message.toLowerCase().includes('already rated')) {
+      if (userRole === 'boy' && message.toLowerCase().includes('already rated')) {
         handleSuccess('Rating already sended');
         await completeRatingFlow();
         return;
@@ -360,15 +392,22 @@ export default function AudioRoom() {
         setBoyProfile(details.room.currentBoy);
         setBoyFollowers(details.room.boyExtraDetails?.followerCount || 0);
         setGirlFollowers(details.room.girlsExtraDetails?.followerCount || 0);
+        setBoyFollowing(details.room.boyExtraDetails?.followingCount || 0);
+        setGirlFollowing(details.room.girlsExtraDetails?.followingCount || 0);
+        setBoyRespectPoints(details.room.RespactPoint ?? null);
+        setGirlAverageRating(details.room.AvgRating ?? null);
         setIsFollowingPartner(isGirl
           ? Boolean(details.room.boyExtraDetails?.isFollowedByGirl)
           : Boolean(details.room.girlsExtraDetails?.isFollowedByBoy));
         setBoyJoinedAt(details.room.currentBoyJoinedAt);
+        if (isBoy && typeof details.room.currentSessionDurationMs === 'number' && details.room.currentBoyJoinedAt) {
+          const elapsedMs = Date.now() - new Date(details.room.currentBoyJoinedAt).getTime();
+          setTimeLeft(Math.max(0, Math.ceil((details.room.currentSessionDurationMs - elapsedMs) / 1000)));
+          hasShownRechargeWarningRef.current = false;
+          setShowRechargeWarning(false);
+        }
         
-        // Optional additions for API extensions
         if (details.room.girlsExtraDetails?.topFollower) setGirlTopFollower(details.room.girlsExtraDetails.topFollower);
-        if (details.room.boyExtraDetails?.respectPoints) setBoyRespectPoints(details.room.boyExtraDetails.respectPoints);
-        if (details.room.boyExtraDetails?.topRespecter) setBoyTopRespecter(details.room.boyExtraDetails.topRespecter);
 
       } catch {
         setError('Could not load the new participant.');
@@ -389,6 +428,8 @@ export default function AudioRoom() {
         setElapsedTime('00:00:00');
         if (leavingBoy?._id) openRatingPopup(leavingBoy, null);
       } else if (String(data.boyId) === String(user._id)) {
+        setTimeLeft(null);
+        setShowRechargeWarning(false);
         if (data.exitReason === 'time_limit') playSound(rechargeGoingToEndSound);
         openRatingPopup(girlProfileRef.current, 'exit');
       }
@@ -442,17 +483,25 @@ export default function AudioRoom() {
           boyProfileRef.current = details.room.currentBoy;
           setBoyJoinedAt(details.room.currentBoyJoinedAt);
         }
+
+        if (isBoy && details.room.currentBoy && typeof details.room.currentSessionDurationMs === 'number' && details.room.currentBoyJoinedAt) {
+          const elapsedMs = Date.now() - new Date(details.room.currentBoyJoinedAt).getTime();
+          setTimeLeft(Math.max(0, Math.ceil((details.room.currentSessionDurationMs - elapsedMs) / 1000)));
+          hasShownRechargeWarningRef.current = false;
+          setShowRechargeWarning(false);
+        }
         
         setBoyFollowers(details.room.boyExtraDetails?.followerCount || 0);
         setGirlFollowers(details.room.girlsExtraDetails?.followerCount || 0);
+        setBoyFollowing(details.room.boyExtraDetails?.followingCount || 0);
+        setGirlFollowing(details.room.girlsExtraDetails?.followingCount || 0);
+        setBoyRespectPoints(details.room.RespactPoint ?? null);
+        setGirlAverageRating(details.room.AvgRating ?? null);
         setIsFollowingPartner(isGirl
           ? Boolean(details.room.boyExtraDetails?.isFollowedByGirl)
           : Boolean(details.room.girlsExtraDetails?.isFollowedByBoy));
         
-        // Optional additions for API extensions
         if (details.room.girlsExtraDetails?.topFollower) setGirlTopFollower(details.room.girlsExtraDetails.topFollower);
-        if (details.room.boyExtraDetails?.respectPoints) setBoyRespectPoints(details.room.boyExtraDetails.respectPoints);
-        if (details.room.boyExtraDetails?.topRespecter) setBoyTopRespecter(details.room.boyExtraDetails.topRespecter);
 
         await ensureLocalStream();
         if (!active) return;
@@ -573,6 +622,25 @@ export default function AudioRoom() {
         </div>
       )}
 
+      {showRechargeWarning && isBoy && (
+        <div className="absolute left-1/2 top-20 z-50 w-11/12 max-w-sm -translate-x-1/2 rounded-3xl border border-red-500/50 bg-red-600/95 p-5 text-center shadow-[0_10px_40px_rgba(220,38,38,0.5)] backdrop-blur-xl">
+          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-red-500/50">
+            <TriangleAlert className="text-yellow-300" size={24} />
+          </div>
+          <h3 className="text-lg font-black text-white">Time Running Out!</h3>
+          <p className="mb-4 mt-1 text-sm font-medium text-red-100">
+            You will be removed from the room in <span className="text-xl font-bold text-yellow-300">{timeLeft}s</span>. Purchase coins to continue talking!
+          </p>
+          <button
+            type="button"
+            onClick={() => setShowRechargeWarning(false)}
+            className="text-xs font-semibold text-red-100 underline-offset-2 hover:text-white hover:underline"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
+
       {/* Main Content (Heart, Avatars, Stats) */}
       <main className="relative flex flex-1 flex-col items-center justify-center p-4">
         
@@ -638,16 +706,6 @@ export default function AudioRoom() {
               <Heart size={12} fill="currentColor" />
               {girlData.followers}
             </div>
-            {!isGirl && areBothParticipantsPresent && (
-              <button
-                type="button"
-                onClick={handleFollowToggle}
-                disabled={isFollowUpdating}
-                className="mt-3 rounded-full border border-[#FF4D8D]/60 bg-[#FF4D8D]/15 px-4 py-1.5 text-xs font-bold text-[#FF9DBF] transition hover:bg-[#FF4D8D] hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {isFollowUpdating ? 'Please wait...' : isFollowingPartner ? 'Unfollow' : 'Follow'}
-              </button>
-            )}
           </div>
 
           {/* Boy Avatar (Top Right) */}
@@ -670,16 +728,6 @@ export default function AudioRoom() {
               <User size={12} fill="currentColor" />
               {isBoyInside ? boyData.followers : 'Waiting'}
             </div>
-            {isGirl && areBothParticipantsPresent && (
-              <button
-                type="button"
-                onClick={handleFollowToggle}
-                disabled={isFollowUpdating}
-                className="mt-3 rounded-full border border-[#4DA6FF]/60 bg-[#4DA6FF]/15 px-4 py-1.5 text-xs font-bold text-[#8DCBFF] transition hover:bg-[#4DA6FF] hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {isFollowUpdating ? 'Please wait...' : isFollowingPartner ? 'Unfollow' : 'Follow'}
-              </button>
-            )}
           </div>
 
         </div>
@@ -698,6 +746,30 @@ export default function AudioRoom() {
                 <span className="text-2xl font-bold text-[#FF4D8D] drop-shadow-[0_0_8px_rgba(255,77,141,0.5)]">{girlData.followers}</span>
               </div>
             </div>
+
+            <div>
+              <div className="flex items-center gap-1 text-[#FF4D8D]">
+                <Users size={12} className="opacity-80" />
+                <span className="text-[10px] font-medium tracking-wider text-slate-400">Following</span>
+              </div>
+              <div className="mt-1 flex items-center gap-2">
+                <Users size={20} className="text-[#FF4D8D]" />
+                <span className="text-2xl font-bold text-[#FF4D8D]">{girlFollowing}</span>
+              </div>
+            </div>
+
+            {girlAverageRating !== null && (
+              <div>
+                <div className="flex items-center gap-1 text-[#FF4D8D]">
+                  <Star size={12} fill="currentColor" className="opacity-80" />
+                  <span className="text-[10px] font-medium tracking-wider text-slate-400">Avg. Rating</span>
+                </div>
+                <div className="mt-1 flex items-center gap-2">
+                  <Star size={20} fill="currentColor" className="text-[#FF4D8D]" />
+                  <span className="text-2xl font-bold text-[#FF4D8D]">{girlAverageRating}</span>
+                </div>
+              </div>
+            )}
             
             {/* Conditional Rendering for Top Follower */}
             {girlTopFollower && (
@@ -724,14 +796,24 @@ export default function AudioRoom() {
               </div>
             </div>
 
+            <div>
+              <div className="flex items-center justify-end gap-1 text-[#4DA6FF]">
+                <Users size={12} className="opacity-80" />
+                <span className="text-[10px] font-medium tracking-wider text-slate-400">Following</span>
+              </div>
+              <div className="mt-1 flex items-center justify-end gap-2">
+                <Users size={20} className="text-[#4DA6FF]" />
+                <span className="text-2xl font-bold text-[#4DA6FF]">{isBoyInside ? boyFollowing : '-'}</span>
+              </div>
+            </div>
+
             {/* Conditional Rendering for Respect Points */}
-            {boyRespectPoints && (
+            {isBoyInside && boyRespectPoints !== null && (
               <div>
                 <span className="text-[10px] font-medium tracking-wider text-slate-400">Respect Points</span>
                 <div className="flex items-center justify-end gap-1.5 mt-1 text-[#4DA6FF]">
                   <Star size={14} fill="currentColor" />
                   <span className="text-lg font-bold">{boyRespectPoints}</span>
-                  <span className="text-[10px] text-slate-500">/5</span>
                 </div>
               </div>
             )}
@@ -759,6 +841,18 @@ export default function AudioRoom() {
               <span className="text-[8px] text-slate-500 leading-tight">End-to-End Encrypted</span>
             </div>
           </div>
+          {areBothParticipantsPresent && (
+            <button
+              type="button"
+              onClick={handleFollowToggle}
+              disabled={isFollowUpdating}
+              className={`mt-1 rounded-full border px-5 py-2 text-xs font-bold transition disabled:cursor-not-allowed disabled:opacity-60 ${isGirl
+                ? 'border-[#4DA6FF]/60 bg-[#4DA6FF]/15 text-[#8DCBFF] hover:bg-[#4DA6FF] hover:text-white'
+                : 'border-[#FF4D8D]/60 bg-[#FF4D8D]/15 text-[#FF9DBF] hover:bg-[#FF4D8D] hover:text-white'}`}
+            >
+              {isFollowUpdating ? 'Please wait...' : isFollowingPartner ? 'Unfollow' : 'Follow'} {partnerName}
+            </button>
+          )}
         </div>
 
       </main>
