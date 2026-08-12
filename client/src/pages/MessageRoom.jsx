@@ -53,6 +53,8 @@ const MessageRoom = () => {
   const isSendingMessageRef = useRef(false)
   const hasPendingRatingRef = useRef(false)
   const suppressCloseRatingRef = useRef(false)
+  const isRoomClosingRef = useRef(false)
+  const hasShownRechargeWarningRef = useRef(false)
   const boyProfileRef = useRef(null)
   const girlProfileRef = useRef(null)
   const { leaveRoom, destroyRoom, getRoomDetails, resetRoomState } = useRoomStore()
@@ -85,14 +87,15 @@ const MessageRoom = () => {
   }, [timeLeft !== null, userRole]);
 
   useEffect(() => {
-    // Show warning if 20 seconds or less remain, and hasn't shown yet. 
-    if (timeLeft !== null && timeLeft <= 20 && timeLeft > 0 && !showRechargeWarning) {
+    // Warn the boy once, when 10 seconds remain in the active session.
+    if (timeLeft !== null && timeLeft <= 10 && timeLeft > 0 && !hasShownRechargeWarningRef.current) {
+      hasShownRechargeWarningRef.current = true
       setShowRechargeWarning(true);
       playSound(rechargeGoingToEndSound);
     } else if (timeLeft === 0) {
       setShowRechargeWarning(false);
     }
-  }, [timeLeft, showRechargeWarning]);
+  }, [timeLeft]);
 
 
   const handleSendMessage = async () => {
@@ -140,16 +143,21 @@ const MessageRoom = () => {
   }
 
   const exitRoom = useCallback(() => {
+    isRoomClosingRef.current = true
+    // Auto-expiry is completed by the server, so leaveRoom() is not called.
+    // Reset this client flag here to make the app navigation visible on Home.
+    resetRoomState()
     clearMessages()
     if (roomId && user?._id) {
       socket.emit('leave_room', { roomId, userId: user._id })
     }
     navigate('/')
-  }, [clearMessages, navigate, roomId, user])
+  }, [clearMessages, navigate, resetRoomState, roomId, user?._id])
 
   const runAfterRatingAction = useCallback(async (action) => {
     if (action === 'destroyThenExit') {
       suppressCloseRatingRef.current = true
+      isRoomClosingRef.current = true
       await destroyRoom(roomId)
       await fetchUser()
       exitRoom()
@@ -171,7 +179,7 @@ const MessageRoom = () => {
       }
       navigate('/wallet')
     }
-  }, [destroyRoom, exitRoom, fetchUser, roomId, clearMessages, navigate, user])
+  }, [destroyRoom, exitRoom, fetchUser, roomId, clearMessages, navigate, user?._id])
 
   const openRatingPopup = useCallback(async (targetUser, action = null) => {
     if (!targetUser?._id || hasPendingRatingRef.current) return
@@ -193,6 +201,17 @@ const MessageRoom = () => {
     setAfterRatingAction(action)
     setIsRatingOpen(true)
   }, [checkRating, runAfterRatingAction, userRole])
+
+  const completeRatingFlow = useCallback(async () => {
+    const action = afterRatingAction
+
+    hasPendingRatingRef.current = false
+    setIsRatingOpen(false)
+    setRatingTarget(null)
+    setAfterRatingAction(null)
+
+    await runAfterRatingAction(action)
+  }, [afterRatingAction, runAfterRatingAction])
 
   const leaveRoomFunc = async () => {
     if (userRole !== 'boy' || isLeaving) return
@@ -410,7 +429,7 @@ const MessageRoom = () => {
   }
 
   useEffect(() => {
-    if (!roomId) return
+    if (!roomId || isRoomClosingRef.current) return
 
     clearMessages()
 
@@ -419,9 +438,15 @@ const MessageRoom = () => {
     const applyRoomDetails = (room) => {
       if (!room) return
 
-      // --- APPLY TIMING METRICS HERE ---
-      if (typeof room.sessionDurationSeconds === 'number') {
-        setTimeLeft(room.sessionDurationSeconds)
+      // The API returns the full session duration in milliseconds. Subtract
+      // elapsed time client-side so a refresh does not restart the countdown.
+      if (userRole === 'boy' && room.currentBoy && typeof room.currentSessionDurationMs === 'number' && room.currentBoyJoinedAt) {
+        const elapsedMs = Date.now() - new Date(room.currentBoyJoinedAt).getTime()
+        setTimeLeft(Math.max(0, Math.ceil((room.currentSessionDurationMs - elapsedMs) / 1000)))
+        hasShownRechargeWarningRef.current = false
+        setShowRechargeWarning(false)
+      } else if (!room.currentBoy) {
+        setTimeLeft(null)
       }
       
       setBoyFollowers(room.boyExtraDetails?.followerCount || 0)
@@ -526,7 +551,7 @@ const MessageRoom = () => {
       socket.off('boy_left', handleBoyLeft)
       clearMessages()
     }
-  }, [roomId, userRole, user, fetchUser, getRoomDetails, getMessages, addMessage, clearMessages, exitRoom, openRatingPopup, resetRoomState])
+  }, [roomId, userRole, user?._id, fetchUser, getRoomDetails, getMessages, addMessage, clearMessages, exitRoom, openRatingPopup, resetRoomState])
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -572,6 +597,7 @@ const MessageRoom = () => {
       handleSuccess('Rating sended')
       await completeRatingFlow()
     } catch (error) {
+      console.error('Error sending rating:', error)
       const message = error?.response?.data?.message || 'Could not send rating'
       if (message.toLowerCase().includes('already rated')) {
         handleSuccess('Rating already sended')
