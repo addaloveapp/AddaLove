@@ -23,25 +23,30 @@ import Recharge from "../assets/Recharge.png"
 import playSound from '../utils/playSound';
 import boyCoinCraditSound from '../assets/sounds/boyCoinCradit.mpeg';
 import paymentSuccessfulVideo from '../assets/Videos/PyamentSuccessful.mp4';
-
+import coin1 from "../assets/coin1.png"
+import coin2 from "../assets/coin2.png"
+import coin3 from "../assets/coin3.png"
+import coin4 from "../assets/coin4.png"
+import coin5 from "../assets/coin5.png"
 const coinPackages = [
-    { coins: 25, price: 9, bonus: null, tag: 'BASIC', tagType: 'basic' },
-    { coins: 95, price: 29, bonus: null, tag: 'BASIC', tagType: 'basic' },
-    { coins: 180, price: 49, bonus: null, tag: 'POPULAR', tagType: 'popular' },
-    { coins: 400, price: 99, bonus: null, tag: 'POPULAR', tagType: 'popular' },
-    { coins: 880, price: 199, bonus: null, tag: 'BEST VALUE', tagType: 'best' },
-    { coins: 2400, price: 499, bonus: '+200 bonus', tag: 'MOST POPULAR', popular: true },
-    { coins: 5000, price: 999, bonus: '+500 bonus' },
-    { coins: 11000, price: 1999, bonus: '+1500 bonus' },
-    { coins: 30000, price: 4999, bonus: '+3500 bonus' },
-    { coins: 66000, price: 9999, bonus: '+8000 bonus' },
-    { coins: 100000, price: 14999, bonus: '+15000 bonus' },
-    { coins: 200000, price: 29999, bonus: '+35000 bonus' },
+    { coins: 25, price: 9, bonus: null, tag: 'BASIC', tagType: 'basic', imageName:coin1  },
+    { coins: 95, price: 29, bonus: null, tag: 'BASIC', tagType: 'basic',imageName:coin1  },
+    { coins: 180, price: 49, bonus: null, tag: 'POPULAR', tagType: 'popular',imageName:coin1  },
+    { coins: 400, price: 99, bonus: null, tag: 'POPULAR', tagType: 'popular',imageName:coin2 },
+    { coins: 880, price: 199, bonus: null, tag: 'BEST VALUE', tagType: 'best',imageName:coin2 },
+    { coins: 2400, price: 499, bonus: '+200 bonus', tag: 'MOST POPULAR', popular: true ,imageName:coin3},
+    { coins: 5000, price: 999, bonus: '+500 bonus',imageName:coin3 },
+    { coins: 11000, price: 1999, bonus: '+1500 bonus',imageName:coin3 },
+    { coins: 30000, price: 4999, bonus: '+3500 bonus',imageName:coin5 },
+    { coins: 66000, price: 9999, bonus: '+8000 bonus',imageName:coin5 },
+    { coins: 100000, price: 14999, bonus: '+15000 bonus',imageName:coin4 },
+    { coins: 200000, price: 29999, bonus: '+35000 bonus',imageName:coin4 },
 ];
 
 const exclusiveOfferPackage = { 
     coins: 95, 
     price: 9, 
+    imageName:coin1,
     bonus: null, 
     tag: 'EXCLUSIVE', 
     tagType: 'exclusive', 
@@ -203,7 +208,7 @@ export default function AddaLoveRecharge() {
             {/* Exclusive Offer Popup Overlay */}
             {showOfferPopup && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn">
-                    <div className="bg-gradient-to-b from-[#2A1A05] to-[#0A0014] border border-amber-500/50 rounded-3xl w-full max-w-sm overflow-hidden shadow-[0_0_50px_rgba(245,158,11,0.2)] relative">
+                    <div className="bg-linear-to-b from-[#2A1A05] to-[#0A0014] border border-amber-500/50 rounded-3xl w-full max-w-sm overflow-hidden shadow-[0_0_50px_rgba(245,158,11,0.2)] relative">
                         
                         <button
                             onClick={() => !isProcessing && setShowOfferPopup(false)}
@@ -214,13 +219,13 @@ export default function AddaLoveRecharge() {
                         </button>
 
                         <div className="p-8 flex flex-col items-center text-center">
-                            <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-amber-600 to-yellow-300 p-1 mb-6 shadow-[0_0_30px_rgba(253,224,71,0.4)]">
+                            <div className="w-20 h-20 rounded-full bg-linear-to-tr from-amber-600 to-yellow-300 p-1 mb-6 shadow-[0_0_30px_rgba(253,224,71,0.4)]">
                                 <div className="w-full h-full bg-[#1A0B2E] rounded-full flex items-center justify-center">
                                     <Gift className="w-10 h-10 text-yellow-400" />
                                 </div>
                             </div>
                             
-                            <h2 className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-200 to-yellow-500 mb-2">
+                            <h2 className="text-2xl font-black text-transparent bg-clip-text bg-linear-to-r from-amber-200 to-yellow-500 mb-2">
                                 Exclusive Welcome Offer
                             </h2>
                             
@@ -245,7 +250,7 @@ export default function AddaLoveRecharge() {
                             <button
                                 onClick={() => handlePayment(exclusiveOfferPackage)}
                                 disabled={isProcessing}
-                                className="w-full bg-gradient-to-r from-amber-500 to-yellow-400 text-black font-black py-4 rounded-full transition-all flex justify-center items-center shadow-[0_0_20px_rgba(253,224,71,0.4)] hover:shadow-[0_0_30px_rgba(253,224,71,0.6)] hover:scale-[1.02] active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed text-sm uppercase tracking-wide"
+                                className="w-full bg-linear-to-r from-amber-500 to-yellow-400 text-black font-black py-4 rounded-full transition-all flex justify-center items-center shadow-[0_0_20px_rgba(253,224,71,0.4)] hover:shadow-[0_0_30px_rgba(253,224,71,0.6)] hover:scale-[1.02] active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed text-sm uppercase tracking-wide"
                             >
                                 {isProcessing ? (
                                     <>
@@ -303,7 +308,7 @@ export default function AddaLoveRecharge() {
                 <div className="w-full bg-[#150A2A]/90 backdrop-blur-xl border border-white/5 rounded-[32px] p-5 shadow-2xl animate-fadeIn">
                     
                     {/* Balance Display Banner */}
-                    <div className="bg-gradient-to-br from-[#2A0845] via-[#1C053A] to-[#0A0014] border border-[#FF2994]/30 rounded-2xl p-5 mb-5 relative overflow-hidden shadow-[0_0_20px_rgba(255,41,148,0.15)]">
+                    <div className="bg-linear-to-br from-[#2A0845] via-[#1C053A] to-[#0A0014] border border-[#FF2994]/30 rounded-2xl p-5 mb-5 relative overflow-hidden shadow-[0_0_20px_rgba(255,41,148,0.15)]">
                         <div className="absolute -top-10 -right-10 w-32 h-32 bg-[#FF2994] rounded-full mix-blend-screen filter blur-[40px] opacity-30"></div>
                         
                         <div className="relative z-10 flex items-center justify-between">
@@ -312,7 +317,7 @@ export default function AddaLoveRecharge() {
                                     Current Balance
                                 </div>
                                 <div className="flex items-end gap-2">
-                                    <span className="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-[#FF2994] to-[#8B2BFF] tracking-tight">
+                                    <span className="text-4xl font-extrabold text-transparent bg-clip-text bg-linear-to-r from-[#FF2994] to-[#8B2BFF] tracking-tight">
                                         {balance ? balance : (useralldata?.walletBlance || "0")}
                                     </span>
                                     <span className="text-amber-400 font-bold text-sm mb-1.5 flex items-center gap-1">
@@ -368,20 +373,20 @@ export default function AddaLoveRecharge() {
                                 >
                                     {/* Elite Badges */}
                                     {pkg.popular && !isExclusiveOffer && (
-                                        <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-gradient-to-r from-[#FF2994] to-[#8B2BFF] text-white text-[8px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider whitespace-nowrap shadow-md flex items-center gap-0.5">
+                                        <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-linear-to-r from-[#FF2994] to-[#8B2BFF] text-white text-[8px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider whitespace-nowrap shadow-md flex items-center gap-0.5">
                                             <Crown className="w-2 h-2" /> Popular
                                         </div>
                                     )}
                                     
                                     {isExclusiveOffer && (
-                                        <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-gradient-to-r from-amber-500 to-yellow-400 text-black text-[8px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider whitespace-nowrap shadow-md flex items-center gap-0.5">
+                                        <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-linear-to-r from-amber-500 to-yellow-400 text-black text-[8px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider whitespace-nowrap shadow-md flex items-center gap-0.5">
                                             <Gift className="w-2 h-2" /> Offer
                                         </div>
                                     )}
 
                                     {/* Coin Amount */}
                                     <div className="flex flex-col items-center gap-1 mb-2 mt-2">
-                                        <Coins className={`w-6 h-6 ${pkg.popular || isSelected || isExclusiveOffer ? 'text-amber-400' : 'text-amber-400/70'}`} />
+                                        <img src={pkg.imageName} alt='Coin' className={` h-19 ${pkg.popular || isSelected || isExclusiveOffer ? 'text-amber-400' : 'text-amber-400/70'}`} />
                                         <span className="text-amber-400 font-extrabold text-[15px] tracking-tight">
                                             {pkg.coins.toLocaleString()}
                                         </span>
@@ -493,7 +498,7 @@ export default function AddaLoveRecharge() {
                             <button
                                 onClick={() => handlePayment(selectedPkg)}
                                 disabled={isProcessing}
-                                className="w-full bg-gradient-to-r from-[#FF2994] to-[#8B2BFF] text-white font-bold py-4 rounded-full transition-all flex justify-center items-center shadow-[0_0_20px_rgba(255,41,148,0.4)] hover:shadow-[0_0_25px_rgba(139,43,255,0.5)] disabled:opacity-70 disabled:cursor-not-allowed text-sm"
+                                className="w-full bg-linear-to-r from-[#FF2994] to-[#8B2BFF] text-white font-bold py-4 rounded-full transition-all flex justify-center items-center shadow-[0_0_20px_rgba(255,41,148,0.4)] hover:shadow-[0_0_25px_rgba(139,43,255,0.5)] disabled:opacity-70 disabled:cursor-not-allowed text-sm"
                             >
                                 {isProcessing ? (
                                     <>

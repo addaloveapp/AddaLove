@@ -31,6 +31,7 @@ import TermsAndConditions from './pages/TermsAndCondition.jsx'
 import CommunityGuidelines from './pages/CommunityGuidelines.jsx'
 import PrivacyPolicy from './pages/PricacyAndPolicy.jsx'
 import ContactUs from './pages/ContactUs.jsx'
+import ProfileView from './pages/ProfileView.jsx'
 
 const router = createBrowserRouter([
   {
@@ -64,6 +65,11 @@ const router = createBrowserRouter([
       {
         path: "/termsandconditions",
         element: <TermsAndConditions />
+
+      },
+      {
+        path: "/profile/:id",
+        element: <ProfileView />
 
       },
       {

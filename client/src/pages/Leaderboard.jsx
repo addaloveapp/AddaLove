@@ -17,6 +17,7 @@ import boyLeaderboardMusic from '../assets/musics/boyLeaderbord.mpeg';
 import girlLeaderboardMusic from '../assets/musics/girlLeaderbord.mpeg';
 import PageMusicPlayer from '../components/PageMusicPlayer.jsx';
 import leaderboardVideo from '../assets/Videos/Leaderbored.mp4';
+import { Link } from 'react-router';
 
 const Leaderboard = () => {
   const [activeTab, setActiveTab] = useState('boy');
@@ -61,7 +62,7 @@ const Leaderboard = () => {
   return (
     <div className="min-h-screen bg-[url('./assets/leaderbord.png')]  text-white font-sans relative pb-24 overflow-x-hidden">
       {showIntroVideo && (
-        <div className="fixed inset-0 z-[9999] bg-black flex items-center justify-center">
+        <div className="fixed inset-0 z-9999 bg-black flex items-center justify-center">
           <video
             src={leaderboardVideo}
             className="w-full h-full object-cover"
@@ -73,7 +74,7 @@ const Leaderboard = () => {
         </div>
       )}
       {userRole && <PageMusicPlayer src={leaderboardMusic} />}
-      {/* Background Starry effect (simulated with radial gradient & absolute dots if needed) */}
+      {/* Background Starry effect (simulated with radial linear & absolute dots if needed) */}
       <div className="fixed inset-0  pointer-events-none z-0" />
 
       {/* Sparkle background elements */}
@@ -87,7 +88,7 @@ const Leaderboard = () => {
         <div className="w-full flex items-center justify-between mb-6">
           <div className="flex items-center gap-2">
             <MessageCircleHeart className="w-8 h-8 text-pink-500 drop-shadow-[0_0_10px_rgba(236,72,153,0.8)]" />
-            <span className="text-xl font-bold italic bg-gradient-to-r from-cyan-400 to-pink-500 bg-clip-text text-transparent">
+            <span className="text-xl font-bold italic bg-linear-to-r from-cyan-400 to-pink-500 bg-clip-text text-transparent">
               AddaLove
             </span>
           </div>
@@ -110,8 +111,8 @@ const Leaderboard = () => {
           <button
             onClick={() => setActiveTab('boy')}
             className={`flex-1 py-3 rounded-xl text-sm font-bold italic flex items-center justify-center gap-2 transition-all ${activeTab === 'boy'
-                ? 'bg-transparent text-white border-2 border-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.5),inset_0_0_10px_rgba(59,130,246,0.3)]'
-                : 'text-gray-500 border border-gray-800'
+              ? 'bg-transparent text-white border-2 border-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.5),inset_0_0_10px_rgba(59,130,246,0.3)]'
+              : 'text-gray-500 border border-gray-800'
               }`}
           >
             <span className="text-lg leading-none not-italic text-blue-400"></span> BOYS LEADERBOARD
@@ -119,8 +120,8 @@ const Leaderboard = () => {
           <button
             onClick={() => setActiveTab('girl')}
             className={`flex-1 py-3 rounded-xl text-sm font-bold italic flex items-center justify-center gap-2 transition-all ${activeTab === 'girl'
-                ? 'bg-transparent text-white border-2 border-pink-500 shadow-[0_0_15px_rgba(236,72,153,0.5),inset_0_0_10px_rgba(236,72,153,0.3)]'
-                : 'text-gray-500 border border-gray-800'
+              ? 'bg-transparent text-white border-2 border-pink-500 shadow-[0_0_15px_rgba(236,72,153,0.5),inset_0_0_10px_rgba(236,72,153,0.3)]'
+              : 'text-gray-500 border border-gray-800'
               }`}
           >
             <span className="text-lg leading-none not-italic text-pink-400"></span> GIRLS LEADERBOARD
@@ -135,7 +136,7 @@ const Leaderboard = () => {
           </div>
 
           {/* <Crown className="w-8 h-8 text-pink-500 drop-shadow-[0_0_10px_rgba(236,72,153,0.8)] mb-1" /> */}
-          <h1 className="text-3xl font-black italic tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-purple-400 to-pink-500 drop-shadow-[0_0_15px_rgba(236,72,153,0.5)]">
+          <h1 className="text-3xl font-black italic tracking-widest text-transparent bg-clip-text bg-linear-to-r from-blue-400 via-purple-400 to-pink-500 drop-shadow-[0_0_15px_rgba(236,72,153,0.5)]">
             TOP {activeTab === 'boy' ? 'BOYS' : 'GIRLS'}
           </h1>
           <div className="flex items-center gap-2 mt-2">
@@ -190,7 +191,7 @@ const Leaderboard = () => {
 
                   {/* Avatar Container with Laurels */}
                   <div className="relative flex flex-col items-center mb-4">
-                    
+
 
                     <div className="relative">
                       {/* Placeholder for SVG Laurel Wreaths */}
@@ -198,12 +199,14 @@ const Leaderboard = () => {
                         <path d="M 20 80 C 10 50, 20 20, 50 10" fill="none" stroke="currentColor" strokeWidth="2" strokeDasharray="4 4" />
                         <path d="M 80 80 C 90 50, 80 20, 50 10" fill="none" stroke="currentColor" strokeWidth="2" strokeDasharray="4 4" />
                       </svg>
-
-                      <img
-                        src={user.imageUrl || '/api/placeholder/150/150'}
-                        alt={user.fullName}
-                        className={`${styles.avatarSize} rounded-full object-cover border-2 animate-bounce ${styles.borderClass} ${styles.ringShadow} relative z-10 p-0.5 bg-black`}
-                      />
+                      <div className='animate-bounce'>
+                        {rank === 1 ? <p className=" text-6xl text-center ">👑</p> : ""}
+                        <Link to={`/profile/${user._id}`}>  <img
+                          src={user.imageUrl || '/api/placeholder/150/150'}
+                          alt={user.fullName}
+                          className={`${styles.avatarSize} rounded-full object-cover border-2  ${styles.borderClass} ${styles.ringShadow} relative z-10 p-0.5 bg-black`}
+                        /></Link>
+                      </div>
 
                       {/* Rank / Icon badge overlapping avatar and pedestal */}
                       <div className={`absolute -bottom-4 left-1/2 -translate-x-1/2 w-8 h-8 rounded-full border-2 ${styles.borderClass} bg-black flex items-center justify-center z-20 shadow-[0_0_10px_rgba(0,0,0,1)]`}>
@@ -222,10 +225,10 @@ const Leaderboard = () => {
                   <div className={`w-full ${styles.height} rounded-2xl border-2 ${styles.borderClass} ${styles.shadow} bg-black/40 backdrop-blur-md flex flex-col items-center justify-end pb-3 pt-6 relative`}>
                     <span className="font-bold text-lg mb-1">{rank}</span>
                     <span className="font-bold italic text-[11px] uppercase tracking-wider text-center w-full  px-1">{user.fullName}</span>
-                    <span className="text-[8px] text-gray-400 mt-1 mb-0.5 uppercase tracking-widest">{activeTab==="boy"?"Respect Points":"Rating"}</span>
+                    <span className="text-[8px] text-gray-400 mt-1 mb-0.5 uppercase tracking-widest">{activeTab === "boy" ? "Respect Points" : "Rating"}</span>
                     <div className="flex items-center gap-1">
-                    {activeTab==='boy'?<span className="font-bold text-sm">{user.ratingScore || 0}</span>:  <span className="font-bold text-sm">{user.averageRating || 0}</span>}
-                      {activeTab==='boy'?<img src={respact} className='h-5' alt="" />:'⭐'}
+                      {activeTab === 'boy' ? <span className="font-bold text-sm">{user.ratingScore || 0}</span> : <span className="font-bold text-sm">{user.averageRating || 0}</span>}
+                      {activeTab === 'boy' ? <img src={respact} className='h-5' alt="" /> : '⭐'}
                     </div>
                   </div>
 
@@ -243,14 +246,15 @@ const Leaderboard = () => {
             const rank = index + 4;
             return (
               <div key={user._id} className="flex items-center justify-between bg-black/60 backdrop-blur-sm p-3 rounded-2xl border border-purple-900/50 shadow-[0_0_10px_rgba(147,51,234,0.15)] relative overflow-hidden">
-                {/* Left gradient accent inside card */}
-                <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-blue-600 to-purple-600"></div>
+                {/* Left linear accent inside card */}
+                <div className="absolute left-0 top-0 bottom-0 w-1 bg-linear-to-b from-blue-600 to-purple-600"></div>
 
-                <div className="flex items-center gap-4 pl-2">
-                  <span className="w-6 text-center text-xl font-bold text-transparent bg-clip-text bg-gradient-to-b from-purple-400 to-purple-600">
+                <Link to={`/profile/${user._id}`}><div className="flex items-center gap-4 pl-2">
+                  <span className="w-6 text-center text-xl font-bold text-transparent bg-clip-text bg-linear-to-b from-purple-400 to-purple-600">
                     {rank}
                   </span>
                   <div className="relative">
+
                     <img
                       src={user.imageUrl || '/api/placeholder/150/150'}
                       alt={user.fullName}
@@ -259,13 +263,14 @@ const Leaderboard = () => {
                   </div>
                   <span className="font-bold italic uppercase text-sm tracking-wide">{user.fullName}</span>
                 </div>
+                </Link>
 
                 <div className="flex items-center gap-4">
                   <div className="flex flex-col items-end">
-                    <span className="text-[9px] text-gray-400 uppercase tracking-widest">{activeTab==="boy"?"Respect Points":"Rating"}</span>
+                    <span className="text-[9px] text-gray-400 uppercase tracking-widest">{activeTab === "boy" ? "Respect Points" : "Rating"}</span>
                     <div className="flex items-center gap-1">
                       <span className="font-bold">{user.ratingScore || 0}</span>
-                      {activeTab==="boy"?<img src={respact} className='h-5' alt="" />:"⭐"}
+                      {activeTab === "boy" ? <img src={respact} className='h-5' alt="" /> : "⭐"}
                     </div>
                   </div>
                   <button className="w-10 h-10 rounded-full border border-purple-700/50 bg-[#1a0b2e] flex items-center justify-center hover:bg-purple-900/50 transition-colors">
