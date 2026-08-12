@@ -18,6 +18,7 @@ import { respactPointCalculate } from '../utils/respactPointCalculate.js';
 import { calculateMiliScond } from '../utils/calculation.js';
 import VisitHistory from '../models/visitHistory.model.js';
 import CoinTransaction from '../models/coinsTransaction.model.js';
+import Followers from '../models/followers.model.js';
 const sendOtp = asyncHandler(async (req, res) => {
     const { email, purpose } = req.body;
     if (!email) {
@@ -917,6 +918,32 @@ const profileDataUpdate = asyncHandler(async (req, res) => {
         new ApiResponse(200, null, "Profile updated successfully.")
     );
 });
+const viewProfile = asyncHandler(async (req, res) => {
+    const { userId } = req.body;
+    if (!userId) {
+        throw new ApiError(400, "All data required.")
+    }
+    const boyProfile = await User.findById(userId).select('fullName imageUrl userBio').lean();
+    const girlProfile = await Girls.findById(userId).select('fullName imageUrl userBio').lean();
+    const followersCount = await Followers.countDocuments({
+        following: new mongoose.Types.ObjectId(userId)
+    });
+    const followingCount = await Followers.countDocuments({
+        follower: new mongoose.Types.ObjectId(userId),
+    });
+    if (boyProfile) {
+        const resRespectpoint = await respactPointCalculate(userId)
+        return res.status(200).json(new ApiResponse(200, {boyProfile,followersCount,followingCount,resRespectpoint}, "Boy Profile data retrieves successfully."))
+    }
+    if (girlProfile) {
+        const avgRating = await userRateCalculate(userId)
+        return res.status(200).json(new ApiResponse(200, {girlProfile,followersCount,followingCount,avgRating}, "Girl Profile data retrieves successfully."))
+    }
+    if (!boyProfile && !girlProfile) {
+        throw new ApiError(404, "User not found.")
+    }
+})
+
 export {
     sendOtp,
     otpVerify,
@@ -935,5 +962,6 @@ export {
     getGirlProfiles,
     addAvatarProfilePhoto,
     profilePhotoUpload,
-    profileDataUpdate
+    profileDataUpdate,
+    viewProfile
 };
