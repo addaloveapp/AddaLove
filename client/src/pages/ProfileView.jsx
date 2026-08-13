@@ -24,8 +24,8 @@ export default function ProfileView() {
   const [stats, setStats] = useState({ followers: 0, following: 0 });
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [avgReating,setAvgReacting]=useState();
-  const [respectPoint,setRespectPoint]=useState();
+  const [avgReating,setAvgReacting]=useState(0);
+  const [respectPoint,setRespectPoint]=useState(null);
   // Follow states
   const [isFollowing, setIsFollowing] = useState(false);
   const [isFollowLoading, setIsFollowLoading] = useState(false);
@@ -56,10 +56,12 @@ export default function ProfileView() {
                 followers: profileDataRes.data.followersCount || 0,
                 following: profileDataRes.data.followingCount || 0
             });
-            if(profileDataRes.data.resRespectpoint){
+            if (profileDataRes.data.resRespectpoint !== null && profileDataRes.data.resRespectpoint !== undefined) {
                setRespectPoint(profileDataRes.data.resRespectpoint)
-            }else{
-                setAvgReacting(profileDataRes.data.avgRating)
+               setAvgReacting(0)
+            } else {
+                setRespectPoint(null)
+                setAvgReacting(profileDataRes.data.avgRating ?? 0)
             }
 
           } else {
@@ -273,10 +275,9 @@ export default function ProfileView() {
                 <span className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">Following</span>
               </div>
               <div className="flex-1 flex flex-col items-center justify-center bg-white/5 border border-white/10 rounded-2xl py-4 transition-all hover:bg-white/10 backdrop-blur-md">
-                
-               {respectPoint? <img src={respact} className="h-10" alt="" /> :<Crown size={20} className="text-yellow-400  mb-1.5" />}
-                <span className="text-xl font-black text-white tracking-tight">{Number(respectPoint)*2||avgReating}</span>
-                <span className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">Following</span>
+               {respectPoint !== null && respectPoint !== undefined ? <img src={respact} className="h-10" alt="" /> :<Crown size={20} className="text-yellow-400  mb-1.5" />}
+                <span className="text-xl font-black text-white tracking-tight">{respectPoint !== null && respectPoint !== undefined ? Number(respectPoint) * 2 : avgReating}</span>
+                <span className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">{respectPoint !== null && respectPoint !== undefined ? "Respect Point" : "Rating"}</span>
               </div>
             </div>
 
