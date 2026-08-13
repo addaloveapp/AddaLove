@@ -23,20 +23,20 @@ import Recharge from "../assets/Recharge.png"
 import playSound from '../utils/playSound';
 import boyCoinCraditSound from '../assets/sounds/boyCoinCradit.mpeg';
 import paymentSuccessfulVideo from '../assets/Videos/PyamentSuccessful.mp4';
-import coin1 from "../assets/coin1.png"
+
 import coin2 from "../assets/coin2.png"
 import coin3 from "../assets/coin3.png"
 import coin4 from "../assets/coin4.png"
 import coin5 from "../assets/coin5.png"
 const coinPackages = [
-    { coins: 25, price: 9, bonus: null, tag: 'BASIC', tagType: 'basic', imageName:coin1  },
-    { coins: 95, price: 29, bonus: null, tag: 'BASIC', tagType: 'basic',imageName:coin1  },
-    { coins: 180, price: 49, bonus: null, tag: 'POPULAR', tagType: 'popular',imageName:coin1  },
+    { coins: 25, price: 9, bonus: null, tag: 'BASIC', tagType: 'basic', imageName:coin2  },
+    { coins: 95, price: 29, bonus: null, tag: 'BASIC', tagType: 'basic',imageName:coin2  },
+    { coins: 180, price: 49, bonus: null, tag: 'POPULAR', tagType: 'popular',imageName:coin2  },
     { coins: 400, price: 99, bonus: null, tag: 'POPULAR', tagType: 'popular',imageName:coin2 },
-    { coins: 880, price: 199, bonus: null, tag: 'BEST VALUE', tagType: 'best',imageName:coin2 },
+    { coins: 880, price: 199, bonus: null, tag: 'BEST VALUE', tagType: 'best',imageName:coin3 },
     { coins: 2400, price: 499, bonus: '+200 bonus', tag: 'MOST POPULAR', popular: true ,imageName:coin3},
     { coins: 5000, price: 999, bonus: '+500 bonus',imageName:coin3 },
-    { coins: 11000, price: 1999, bonus: '+1500 bonus',imageName:coin3 },
+    { coins: 11000, price: 1999, bonus: '+1500 bonus',imageName:coin5 },
     { coins: 30000, price: 4999, bonus: '+3500 bonus',imageName:coin5 },
     { coins: 66000, price: 9999, bonus: '+8000 bonus',imageName:coin5 },
     { coins: 100000, price: 14999, bonus: '+15000 bonus',imageName:coin4 },
@@ -46,7 +46,7 @@ const coinPackages = [
 const exclusiveOfferPackage = { 
     coins: 95, 
     price: 9, 
-    imageName:coin1,
+    imageName:coin2,
     bonus: null, 
     tag: 'EXCLUSIVE', 
     tagType: 'exclusive', 
