@@ -23,7 +23,7 @@ import Recharge from "../assets/Recharge.png"
 import playSound from '../utils/playSound';
 import boyCoinCraditSound from '../assets/sounds/boyCoinCradit.mpeg';
 import paymentSuccessfulVideo from '../assets/Videos/PyamentSuccessful.mp4';
-
+import coin1 from "../assets/coin1.png"
 import coin2 from "../assets/coin2.png"
 import coin3 from "../assets/coin3.png"
 import coin4 from "../assets/coin4.png"
@@ -321,7 +321,7 @@ export default function AddaLoveRecharge() {
                                         {balance ? balance : (useralldata?.walletBlance || "0")}
                                     </span>
                                     <span className="text-amber-400 font-bold text-sm mb-1.5 flex items-center gap-1">
-                                        <Coins className="w-3.5 h-3.5" /> coins
+                                        <img src={coin1} className="w-8 h-8 mt-1" /> <span className='text-2xl'>coins</span>
                                     </span>
                                 </div>
                             </div>
@@ -470,7 +470,7 @@ export default function AddaLoveRecharge() {
                                 <div className="flex justify-between items-center mb-4">
                                     <span className="text-sm text-slate-400 font-medium">Coins Package</span>
                                     <div className="flex items-center gap-1.5 bg-amber-500/10 px-2.5 py-1 rounded-lg border border-amber-500/20">
-                                        <Coins className="w-4 h-4 text-amber-400" />
+                                        <img src={coin1} className="w-6 h-6 text-amber-400" />
                                         <span className="text-base font-bold text-amber-400">{selectedPkg.coins.toLocaleString()}</span>
                                     </div>
                                 </div>
