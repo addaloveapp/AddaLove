@@ -19,6 +19,7 @@ import { calculateMiliScond } from '../utils/calculation.js';
 import VisitHistory from '../models/visitHistory.model.js';
 import CoinTransaction from '../models/coinsTransaction.model.js';
 import Followers from '../models/followers.model.js';
+import WithdrawRequest from '../models/withdrawRequest.model.js';
 const sendOtp = asyncHandler(async (req, res) => {
     const { email, purpose } = req.body;
     if (!email) {
@@ -932,17 +933,117 @@ const viewProfile = asyncHandler(async (req, res) => {
         follower: new mongoose.Types.ObjectId(userId),
     });
     if (boyProfile) {
-        const resRespectpoint = await respactPointCalculate(userId)
-        return res.status(200).json(new ApiResponse(200, {boyProfile,followersCount,followingCount,resRespectpoint}, "Boy Profile data retrieves successfully."))
+        let resRespectpoint = await respactPointCalculate(userId)
+        if (resRespectpoint == null) {
+            resRespectpoint = 0;
+        }
+        return res.status(200).json(new ApiResponse(200, { boyProfile, followersCount, followingCount, resRespectpoint }, "Boy Profile data retrieves successfully."))
     }
     if (girlProfile) {
-        const avgRating = await userRateCalculate(userId)
-        return res.status(200).json(new ApiResponse(200, {girlProfile,followersCount,followingCount,avgRating}, "Girl Profile data retrieves successfully."))
+        let avgRating = await userRateCalculate(userId)
+        if(avgRating==null){
+            avgRating=0;
+        }
+        return res.status(200).json(new ApiResponse(200, { girlProfile, followersCount, followingCount, avgRating }, "Girl Profile data retrieves successfully."))
     }
     if (!boyProfile && !girlProfile) {
         throw new ApiError(404, "User not found.")
     }
 })
+
+const createWithdrawRequest = asyncHandler(async (req, res) => {
+    if (req.userType !== "girl") {
+        throw new ApiError(403, "Only girls can withdraw earnings");
+    }
+
+    const { userId, withdrawAmount, withdrawMethod, upiId, accountNumber, ifscCode } = req.body;
+    const authUserId = req.user._id.toString();
+
+    if (!userId || userId.toString() !== authUserId) {
+        throw new ApiError(403, "Invalid user");
+    }
+
+    const amount = Number(withdrawAmount);
+    if (!amount || amount < 100) {
+        throw new ApiError(400, "Minimum withdrawal amount is Rs. 100");
+    }
+
+    if (!["upi", "bank"].includes(withdrawMethod)) {
+        throw new ApiError(400, "Invalid withdraw method");
+    }
+
+    if (withdrawMethod === "upi" && !upiId?.trim()) {
+        throw new ApiError(400, "UPI ID is required");
+    }
+
+    if (withdrawMethod === "bank" && (!accountNumber?.trim() || !ifscCode?.trim())) {
+        throw new ApiError(400, "Account number and IFSC code are required");
+    }
+
+    const coinValueForWithdraw = Math.ceil(amount / 0.09);
+    const session = await mongoose.startSession();
+    let applicationId;
+
+    try {
+        await session.withTransaction(async () => {
+            const girl = await Girls.findById(userId).session(session);
+            if (!girl) {
+                throw new ApiError(404, "Girl user not found");
+            }
+
+            if (Number(girl.walletBlance || 0) < coinValueForWithdraw) {
+                throw new ApiError(400, "Not enough coins to withdraw this amount");
+            }
+
+            let isUniqueApplicationId = false;
+            while (!isUniqueApplicationId) {
+                applicationId = generateApplicationId();
+                const existingRequest = await WithdrawRequest.findOne({ applicationId }).session(session).lean();
+                isUniqueApplicationId = !existingRequest;
+            }
+
+            const details = withdrawMethod === "upi"
+                ? { upiId: upiId.trim() }
+                : { accountNumber: accountNumber.trim(), ifscCode: ifscCode.trim().toUpperCase() };
+
+            await WithdrawRequest.create([{
+                userId: girl._id,
+                userName: girl.fullName,
+                userPhoneNumber: girl.phoneNumber,
+                userCoinBalance: girl.walletBlance,
+                applicationId,
+                withdrawMethod,
+                details,
+                withdrawAmount: amount,
+                coinValueForWithdraw
+            }], { session });
+
+            girl.walletBlance = Number(girl.walletBlance || 0) - coinValueForWithdraw;
+            await girl.save({ session });
+        });
+    } finally {
+        await session.endSession();
+    }
+
+    return res.status(201).json(
+        new ApiResponse(201, { applicationId, coinValueForWithdraw }, "Withdrawal request submitted successfully. Your money will be processed within 24 hours.")
+    );
+});
+
+const getWithdrawRequestHistory = asyncHandler(async (req, res) => {
+    if (req.userType !== "girl") {
+        throw new ApiError(403, "Only girls can view withdrawal history");
+    }
+
+    const requests = await WithdrawRequest.find({ userId: req.user._id })
+        .select("applicationId withdrawAmount coinValueForWithdraw action withdrawMethod createdAt updatedAt")
+        .sort({ createdAt: -1 })
+        .lean();
+
+    return res.status(200).json(
+        new ApiResponse(200, requests, "Withdrawal history retrieved successfully")
+    );
+});
 
 export {
     sendOtp,
@@ -963,5 +1064,7 @@ export {
     addAvatarProfilePhoto,
     profilePhotoUpload,
     profileDataUpdate,
-    viewProfile
+    viewProfile,
+    createWithdrawRequest,
+    getWithdrawRequestHistory
 };

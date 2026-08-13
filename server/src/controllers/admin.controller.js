@@ -16,6 +16,7 @@ import mongoose from 'mongoose';
 import sendaccpectemail from '../middlewares/sendAccpect.middleware.js';
 import sendRejectemail from '../middlewares/sendReject.middleware.js';
 import { getOnlineUsers } from '../socket/onlineUsers.js';
+import WithdrawRequest from '../models/withdrawRequest.model.js';
 const registerAdmin = asyncHandler(async (req, res) => {
     const { fullName, email, password } = req.body;
     if (!fullName || !email || !password) {
@@ -324,4 +325,44 @@ const rejectTheGirls = asyncHandler(async (req, res) => {
 
 
 })
-export { allApplication, allBoysWithPresence, allRoomsOpens, allReport, allCoinPurchase, registerAdmin, loginAdmin, logoutAdmin, createCertificate, checkCertificate, accpectTheGirls, rejectTheGirls };
+
+const allWithdrawRequests = asyncHandler(async (req, res) => {
+    const requests = await WithdrawRequest.find({})
+        .sort({ createdAt: -1 })
+        .lean();
+
+    return res.status(200).json(
+        new ApiResponse(200, requests, "All withdraw requests retrieved")
+    );
+});
+
+const sendWithdrawMoney = asyncHandler(async (req, res) => {
+    const { requestId, applicationId } = req.body;
+
+    if (!requestId && !applicationId) {
+        throw new ApiError(400, "Request id or application id is required");
+    }
+
+    const query = requestId ? { _id: requestId } : { applicationId };
+    const request = await WithdrawRequest.findOne(query);
+
+    if (!request) {
+        throw new ApiError(404, "Withdraw request not found");
+    }
+
+    if (request.action === "send") {
+        return res.status(200).json(
+            new ApiResponse(200, request, "Money already marked as sent")
+        );
+    }
+
+    request.action = "send";
+    request.sentAt = new Date();
+    await request.save();
+
+    return res.status(200).json(
+        new ApiResponse(200, request, "Withdraw request marked as sent")
+    );
+});
+
+export { allApplication, allBoysWithPresence, allRoomsOpens, allReport, allCoinPurchase, registerAdmin, loginAdmin, logoutAdmin, createCertificate, checkCertificate, accpectTheGirls, rejectTheGirls, allWithdrawRequests, sendWithdrawMoney };
