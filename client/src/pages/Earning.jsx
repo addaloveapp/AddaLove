@@ -19,7 +19,7 @@ import useUserStore from '../store/userStore';
 import { handleError, handleSuccess } from '../components/ErrorMessage';
 import playSound from '../utils/playSound';
 import girlCoinWithdrawalSound from '../assets/sounds/girlCoinWithdrawal.aac';
-
+import coin1 from "../assets/coin1.png"
 const Earning = () => {
   const [amount, setAmount] = useState('');
   const [withdrawMethod, setWithdrawMethod] = useState('bank');
@@ -42,8 +42,8 @@ const Earning = () => {
       return;
     }
 
-    if (!withdrawAmount || withdrawAmount < 200) {
-      handleError('Minimum withdrawal amount is Rs. 200');
+    if (!withdrawAmount || withdrawAmount < 100) {
+      handleError('Minimum withdrawal amount is Rs. 100');
       return;
     }
 
@@ -96,7 +96,7 @@ const Earning = () => {
 
         {/* NEW: Coin Exchange Rate Section */}
         <div className="exchange-rate-banner">
-          <span className="rate-text">🪙1</span>
+          <img src={coin1} className='h-6' alt="" />1
           <span className="rate-text">= ₹0.09</span>
         </div>
 
@@ -119,11 +119,12 @@ const Earning = () => {
           </div>
 
           <div className="quick-amounts">
+            <button className="quick-btn" onClick={() => handleQuickAmount('200')}>₹100</button>
             <button className="quick-btn" onClick={() => handleQuickAmount('200')}>₹200</button>
             <button className="quick-btn" onClick={() => handleQuickAmount('500')}>₹500</button>
             <button className="quick-btn" onClick={() => handleQuickAmount('1000')}>₹1,000</button>
             <button className="quick-btn" onClick={() => handleQuickAmount('2000')}>₹2,000</button>
-            <button className="quick-btn max-btn" onClick={() => handleQuickAmount('1250')}>MAX</button>
+       
           </div>
         </div>
 

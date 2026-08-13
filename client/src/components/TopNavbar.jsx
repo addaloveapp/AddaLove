@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router';
 import useUserStore from '../store/userStore';
 import logo from '../assets/logo2.png';
 import { Menu, X, ChevronRight } from 'lucide-react';
-
+import coin1 from "../assets/coin1.png"
 export default function TopNavbar() {
     const naviget = useNavigate();
     const { user: useralldata, userRole } = useUserStore();
@@ -66,7 +66,7 @@ export default function TopNavbar() {
                         } : handlecoinclick}
                         className="md:hidden bg-slate-800/80 hover:bg-slate-700/80 px-5 py-1.5 rounded-full flex items-center gap-1.5 text-xs font-bold border border-[#6C3BFF]/30 transition-colors"
                     >
-                        <span className="text-yellow-400 text-[18px]">🪙</span>
+                      <img src={coin1} className='h-8' alt="" />
                         <span className="text-slate-200">{useralldata?.walletBlance || '0'}</span>
                     </button>
                     

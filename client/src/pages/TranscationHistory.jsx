@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
-
+import coin1 from "../assets/coin1.png"
 export default function TransactionHistory() {
   const [transactions, setTransactions] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -87,7 +87,7 @@ export default function TransactionHistory() {
             /* Empty State */
             <div className="bg-[#17161c] rounded-3xl p-10 text-center border border-gray-800">
               <div className="w-20 h-20 bg-[#2a1a29] rounded-full flex items-center justify-center mx-auto mb-4 border border-pink-500/20">
-                <CoinIcon className="w-10 h-10 text-yellow-400 opacity-50" />
+                <img src={coin1} className="w-10 h-10 text-yellow-400 opacity-50" />
               </div>
               <h3 className="text-xl font-bold text-white mb-2">No Transactions Yet</h3>
               <p className="text-gray-400 mb-6">Looks like you haven't made any purchases.</p>
@@ -129,7 +129,7 @@ function TransactionCard({ tx }) {
       {/* Left side: Icon, Coins, and Date */}
       <div className="flex items-center gap-4">
         <div className="w-12 h-12 sm:w-14 sm:h-14 bg-linear-to-br from-[#2a1a29] to-[#17161c] rounded-xl flex items-center justify-center border border-pink-500/20 group-hover:border-pink-500/40 transition-colors shadow-inner">
-          <CoinIcon className="w-6 h-6 sm:w-7 sm:h-7 text-yellow-400 drop-shadow-md" />
+          <img src={coin1} className="w-10 h-10 sm:w-7 sm:h-7 text-yellow-400 drop-shadow-md" />
         </div>
         
         <div>

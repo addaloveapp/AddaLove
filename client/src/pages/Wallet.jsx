@@ -29,14 +29,14 @@ import coin3 from "../assets/coin3.png"
 import coin4 from "../assets/coin4.png"
 import coin5 from "../assets/coin5.png"
 const coinPackages = [
-    { coins: 25, price: 9, bonus: null, tag: 'BASIC', tagType: 'basic', imageName:coin1  },
-    { coins: 95, price: 29, bonus: null, tag: 'BASIC', tagType: 'basic',imageName:coin1  },
-    { coins: 180, price: 49, bonus: null, tag: 'POPULAR', tagType: 'popular',imageName:coin1  },
+    { coins: 25, price: 9, bonus: null, tag: 'BASIC', tagType: 'basic', imageName:coin2  },
+    { coins: 95, price: 29, bonus: null, tag: 'BASIC', tagType: 'basic',imageName:coin2  },
+    { coins: 180, price: 49, bonus: null, tag: 'POPULAR', tagType: 'popular',imageName:coin2  },
     { coins: 400, price: 99, bonus: null, tag: 'POPULAR', tagType: 'popular',imageName:coin2 },
-    { coins: 880, price: 199, bonus: null, tag: 'BEST VALUE', tagType: 'best',imageName:coin2 },
+    { coins: 880, price: 199, bonus: null, tag: 'BEST VALUE', tagType: 'best',imageName:coin3 },
     { coins: 2400, price: 499, bonus: '+200 bonus', tag: 'MOST POPULAR', popular: true ,imageName:coin3},
     { coins: 5000, price: 999, bonus: '+500 bonus',imageName:coin3 },
-    { coins: 11000, price: 1999, bonus: '+1500 bonus',imageName:coin3 },
+    { coins: 11000, price: 1999, bonus: '+1500 bonus',imageName:coin5 },
     { coins: 30000, price: 4999, bonus: '+3500 bonus',imageName:coin5 },
     { coins: 66000, price: 9999, bonus: '+8000 bonus',imageName:coin5 },
     { coins: 100000, price: 14999, bonus: '+15000 bonus',imageName:coin4 },
@@ -46,7 +46,7 @@ const coinPackages = [
 const exclusiveOfferPackage = { 
     coins: 95, 
     price: 9, 
-    imageName:coin1,
+    imageName:coin2,
     bonus: null, 
     tag: 'EXCLUSIVE', 
     tagType: 'exclusive', 
@@ -321,7 +321,7 @@ export default function AddaLoveRecharge() {
                                         {balance ? balance : (useralldata?.walletBlance || "0")}
                                     </span>
                                     <span className="text-amber-400 font-bold text-sm mb-1.5 flex items-center gap-1">
-                                        <Coins className="w-3.5 h-3.5" /> coins
+                                        <img src={coin1} className="w-8 h-8 mt-1" /> <span className='text-2xl'>coins</span>
                                     </span>
                                 </div>
                             </div>
@@ -470,7 +470,7 @@ export default function AddaLoveRecharge() {
                                 <div className="flex justify-between items-center mb-4">
                                     <span className="text-sm text-slate-400 font-medium">Coins Package</span>
                                     <div className="flex items-center gap-1.5 bg-amber-500/10 px-2.5 py-1 rounded-lg border border-amber-500/20">
-                                        <Coins className="w-4 h-4 text-amber-400" />
+                                        <img src={coin1} className="w-6 h-6 text-amber-400" />
                                         <span className="text-base font-bold text-amber-400">{selectedPkg.coins.toLocaleString()}</span>
                                     </div>
                                 </div>
