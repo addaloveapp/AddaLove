@@ -386,7 +386,7 @@ export default function AddaLoveRecharge() {
 
                                     {/* Coin Amount */}
                                     <div className="flex flex-col items-center gap-1 mb-2 mt-2">
-                                        <img src={pkg.imageName} alt='Coin' className={` h-19 ${pkg.popular || isSelected || isExclusiveOffer ? 'text-amber-400' : 'text-amber-400/70'}`} />
+                                        <img src={pkg.imageName} alt='Coin' className={`w-28 h-15 ${pkg.popular || isSelected || isExclusiveOffer ? 'text-amber-400' : 'text-amber-400/70'}`} />
                                         <span className="text-amber-400 font-extrabold text-[15px] tracking-tight">
                                             {pkg.coins.toLocaleString()}
                                         </span>

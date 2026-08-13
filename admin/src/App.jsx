@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { QRCodeCanvas } from 'qrcode.react'
 import './App.css'
+import AdminWithdrawRequests from './pages/AdminWithdrawRequests.jsx'
 
 const API_BASE = import.meta.env.VITE_ADMIN_API_URL;
 
@@ -68,8 +69,11 @@ function App() {
   const [rooms, setRooms] = useState([])
   const [applications, setApplications] = useState([])
   const [boys, setBoys] = useState([])
+  const [withdrawRequests, setWithdrawRequests] = useState([])
   const [fetchingBoys, setFetchingBoys] = useState(false)
+  const [fetchingWithdrawRequests, setFetchingWithdrawRequests] = useState(false)
   const [applicationActionLoading, setApplicationActionLoading] = useState({})
+  const [withdrawActionLoading, setWithdrawActionLoading] = useState({})
 
   useEffect(() => {
     if (!token) {
@@ -95,6 +99,7 @@ function App() {
     setRooms([])
     setApplications([])
     setBoys([])
+    setWithdrawRequests([])
     setMessage('')
     setError('')
   }
@@ -125,17 +130,19 @@ function App() {
     setFetchingData(true)
     setError('')
     try {
-      const [reportRes, transactionRes, roomsRes, applicationsRes] = await Promise.all([
+      const [reportRes, transactionRes, roomsRes, applicationsRes, withdrawRes] = await Promise.all([
         request('/all-report'),
         request('/all-transaction'),
         request('/all-openrooms'),
         request('/all-application'),
+        request('/all-withdraw-request'),
       ])
 
       setReports([...(reportRes?.data || [])].reverse())
       setTransactions([...(transactionRes?.data || [])].reverse())
       setRooms([...(roomsRes?.data || [])].reverse())
       setApplications([...(applicationsRes?.data || [])].reverse())
+      setWithdrawRequests([...(withdrawRes?.data || [])].reverse())
     } catch (err) {
       if (err.message.toLowerCase().includes('unauthorized')) {
         clearSession()
@@ -165,6 +172,55 @@ function App() {
       setFetchingBoys(false)
     }
   }, [token])
+
+  const loadWithdrawRequests = useCallback(async () => {
+    if (!token) return
+
+    setFetchingWithdrawRequests(true)
+    setError('')
+    try {
+      const response = await request('/all-withdraw-request')
+      setWithdrawRequests([...(response?.data || [])].reverse())
+    } catch (err) {
+      if (err.message.toLowerCase().includes('unauthorized')) {
+        clearSession()
+      } else {
+        setError(showError(err.message))
+      }
+    } finally {
+      setFetchingWithdrawRequests(false)
+    }
+  }, [token])
+
+  const handleWithdrawSendMoney = async (withdrawRequest) => {
+    setWithdrawActionLoading((prev) => ({ ...prev, [withdrawRequest._id]: true }))
+    setError('')
+    setMessage('')
+
+    try {
+      await request('/send-withdraw-money', {
+        method: 'POST',
+        body: JSON.stringify({ requestId: withdrawRequest._id }),
+      })
+
+      setWithdrawRequests((prev) =>
+        prev.map((item) =>
+          item._id === withdrawRequest._id
+            ? { ...item, action: 'send', sentAt: new Date().toISOString() }
+            : item,
+        ),
+      )
+      setMessage(`Task done. Withdraw request #${withdrawRequest.applicationId} marked as sent.`)
+    } catch (err) {
+      setError(showError(err.message))
+    } finally {
+      setWithdrawActionLoading((prev) => {
+        const next = { ...prev }
+        delete next[withdrawRequest._id]
+        return next
+      })
+    }
+  }
 
   const handleLoginSubmit = async (event) => {
     event.preventDefault()
@@ -268,8 +324,9 @@ function App() {
       { title: 'Reports', value: reports.length, description: 'Reported user and girls cases' },
       { title: 'Open Rooms', value: rooms.length, description: 'Live rooms currently opened' },
       { title: 'Applications', value: applications.length, description: 'Pending profile applications' },
+      { title: 'Withdraw Requests', value: withdrawRequests.length, description: 'Girl payout requests' },
     ],
-    [applications.length, reports.length, rooms.length, transactions.length],
+    [applications.length, reports.length, rooms.length, transactions.length, withdrawRequests.length],
   )
 
   const NavLink = ({ label, id }) => (
@@ -278,6 +335,7 @@ function App() {
       onClick={() => {
         setView(id)
         if (id === 'onlineBoys') loadOnlineBoys()
+        if (id === 'withdrawRequests') loadWithdrawRequests()
       }}
       className={`transition rounded-full border px-4 py-2 text-sm font-semibold tracking-wide ${view === id ? 'border-transparent bg-[#ff2a73] text-white shadow-[0_14px_35px_rgba(255,41,148,0.26)]' : 'border-white/10 bg-white/5 text-slate-200 hover:border-[#8B2BFF]/50 hover:bg-[#8B2BFF]/10'}`}
     >
@@ -340,6 +398,7 @@ function App() {
             <NavLink label="Dashboard" id="dashboard" />
             <NavLink label="Reports" id="reports" />
             <NavLink label="Transactions" id="transactions" />
+            <NavLink label="Withdraw Requests" id="withdrawRequests" />
             <NavLink label="Applications" id="applications" />
             <NavLink label="Online Boys" id="onlineBoys" />
             <NavLink label="Create Certificate" id="certificate" />
@@ -814,6 +873,16 @@ function App() {
               )}
             </div>
           </section>
+        )}
+
+        {token && view === 'withdrawRequests' && (
+          <AdminWithdrawRequests
+            requests={withdrawRequests}
+            fetching={fetchingWithdrawRequests}
+            actionLoading={withdrawActionLoading}
+            onRefresh={loadWithdrawRequests}
+            onSendMoney={handleWithdrawSendMoney}
+          />
         )}
 
         {token && view === 'certificate' && (
