@@ -433,6 +433,43 @@ const joinRoom = asyncHandler(async (req, res) => {
 
 });
 
+// Selects a currently free girl-hosted room. The atomic update in joinRoom still
+// protects against another boy claiming the selected room first.
+const joinRandomRoom = asyncHandler(async (req, res, next) => {
+    if (req.userType !== 'boy') {
+        throw new ApiError(403, 'Only boys can use random matching');
+    }
+
+    const boyId = req.user._id;
+    const existingBoyRoom = await Room.findOne({ currentBoy: boyId, status: 'occupied' });
+    if (existingBoyRoom) {
+        throw new ApiError(409, 'You are already inside another room');
+    }
+
+    const boy = await User.findById(boyId).select('walletBlance').lean();
+    const balance = Number(boy?.walletBlance || 0);
+    const allowedTypes = ['message', 'voice'].filter((type) => balance >= MINIMUM_JOIN_COINS[type]);
+    if (!allowedTypes.length) {
+        throw new ApiError(403, 'You need at least 5 coins to join a room');
+    }
+
+    // $sample makes the message/voice choice and the host choice random on the server.
+    const [candidate] = await Room.aggregate([
+        { $match: { status: 'open', currentBoy: null, roomType: { $in: allowedTypes } } },
+        { $sample: { size: 1 } },
+        { $project: { roomId: 1 } }
+    ]);
+
+    if (!candidate) {
+        throw new ApiError(404, 'No room is open right now. Please try again shortly.');
+    }
+
+    // Re-use the normal join flow so coin checks, socket events, payments, and
+    // auto-leave timing stay exactly the same as a manual room join.
+    req.params.roomId = candidate.roomId;
+    return joinRoom(req, res, next);
+});
+
 const leaveRoom = asyncHandler(async (req, res) => {
 
     if (req.userType !== 'boy') {
@@ -766,6 +803,7 @@ export {
     createRoom,
     destroyRoom,
     joinRoom,
+    joinRandomRoom,
     leaveRoom,
     getRoomDetails,
     getOpenRooms,

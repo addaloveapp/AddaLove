@@ -61,8 +61,9 @@
   width: 120px;
   height: 120px;
   position: absolute;
-  right: -20px;
-  top: -40px;
+  right: -8px;
+  top: -5px;
+  z-index: 9;
 }
 
 .wallet-illustration {

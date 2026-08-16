@@ -175,7 +175,7 @@ const Earning = () => {
             <span className="amount">{coinToMoney(useralldata?.walletBlance)}</span>
           </div>
           <div className="respect-points-pill">
-            <span>= {(useralldata?.walletBlance || 0).toLocaleString()} Respect Points</span>
+            <span>= {(useralldata?.walletBlance || 0).toLocaleString()} Coins</span>
             <Info size={14} className="info-icon" />
           </div>
         </div>
@@ -208,11 +208,11 @@ const Earning = () => {
           )}
           <div className="min-withdrawal">
             <ShieldCheck size={14} className="min-icon" />
-            <span>Minimum withdrawal amount: ₹200</span>
+            <span>Minimum withdrawal amount: ₹100</span>
           </div>
 
           <div className="quick-amounts">
-            <button className="quick-btn" onClick={() => handleQuickAmount('200')}>₹100</button>
+            <button className="quick-btn" onClick={() => handleQuickAmount('100')}>₹100</button>
             <button className="quick-btn" onClick={() => handleQuickAmount('200')}>₹200</button>
             <button className="quick-btn" onClick={() => handleQuickAmount('500')}>₹500</button>
             <button className="quick-btn" onClick={() => handleQuickAmount('1000')}>₹1,000</button>

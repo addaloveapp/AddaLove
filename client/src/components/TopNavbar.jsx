@@ -8,7 +8,7 @@ import coin1 from "../assets/coin1.png"
 export default function TopNavbar() {
     const naviget = useNavigate();
     const { user: useralldata, userRole } = useUserStore();
-    
+
     // State to handle sidebar visibility
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
@@ -42,12 +42,19 @@ export default function TopNavbar() {
             <header className="fixed top-0 w-full bg-[#0F172A]/90 backdrop-blur-md border-b border-slate-800 z-30 px-4 md:px-8 py-4 flex justify-between items-center select-none">
                 {/* Left section: Web title on widescreen or close button on small screens */}
                 <div className="flex items-center gap-1">
-                    <img src={logo} alt="" className="h-8" />
+                    <img src={logo} alt="" className="h-10" />
                     {/* Logo specifically for Mobile Viewport header */}
                     <div className="flex md:hidden items-center gap-1.5">
-                        <div className="relative flex items-center">
-                            <span className="text-lg font-black italic text-transparent bg-clip-text bg-linear-to-r from-[#FF4D8D] to-[#6C3BFF]">Adda</span>
-                            <span className="text-lg font-black italic text-[#FF4D8D] ml-px">Love</span>
+                        <div className="relative flex items-center font-script font-bold text-3xl tracking-wide">
+                            {/* "Adda" with a 1.5px pink stroke to make it extra bold */}
+                            <span className="text-[#FF4D8D] [-webkit-text-stroke:1.5px_#FF4D8D]">
+                                Adda
+                            </span>
+
+                            {/* "Love" with a 1.5px purple stroke to make it extra bold */}
+                            <span className="text-[#6C3BFF] ml-px [-webkit-text-stroke:1.5px_#6C3BFF]">
+                                Love
+                            </span>
                         </div>
                     </div>
                 </div>
@@ -66,12 +73,12 @@ export default function TopNavbar() {
                         } : handlecoinclick}
                         className="md:hidden bg-slate-800/80 hover:bg-slate-700/80 px-5 py-1.5 rounded-full flex items-center gap-1.5 text-xs font-bold border border-[#6C3BFF]/30 transition-colors"
                     >
-                      <img src={coin1} className='h-8' alt="" />
+                        <img src={coin1} className='h-8' alt="" />
                         <span className="text-slate-200">{useralldata?.walletBlance || '0'}</span>
                     </button>
-                    
+
                     {/* Trigger for Sidebar */}
-                    <button 
+                    <button
                         onClick={() => setIsSidebarOpen(true)}
                         className="p-1 rounded-md hover:bg-slate-800 transition-colors"
                     >
@@ -83,21 +90,20 @@ export default function TopNavbar() {
             {/* --- SIDEBAR OVERLAY --- */}
             {/* Hides the menu when clicking outside of it */}
             {isSidebarOpen && (
-                <div 
+                <div
                     className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 transition-opacity"
                     onClick={() => setIsSidebarOpen(false)}
                 />
             )}
 
             {/* --- RIGHT SIDEBAR MENU --- */}
-            <div 
-                className={`fixed top-0 right-0 h-full w-72 bg-[#0F172A] border-l border-slate-800 z-50 transform transition-transform duration-300 ease-in-out shadow-2xl ${
-                    isSidebarOpen ? 'translate-x-0' : 'translate-x-full'
-                }`}
+            <div
+                className={`fixed top-0 right-0 h-full w-72 bg-[#0F172A] border-l border-slate-800 z-50 transform transition-transform duration-300 ease-in-out shadow-2xl ${isSidebarOpen ? 'translate-x-0' : 'translate-x-full'
+                    }`}
             >
                 <div className="p-5 flex justify-between items-center border-b border-slate-800/80">
                     <span className="text-slate-200 font-semibold text-lg tracking-wide">Menu</span>
-                    <button 
+                    <button
                         onClick={() => setIsSidebarOpen(false)}
                         className="p-1 rounded-md text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
                     >
