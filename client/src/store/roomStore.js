@@ -197,6 +197,31 @@ const useRoomStore = create((set, get) => ({
             throw error;
         }
     },
+    joinRandomRoom: async () => {
+        set({ isLoading: true, error: null });
+        try {
+            const response = await axios.post(
+                `${import.meta.env.VITE_BACKEND_URL}/api/rooms/v1/join-random`,
+                {},
+                { withCredentials: true }
+            );
+            const joinedRoom = response.data.data;
+            set((state) => ({
+                room: joinedRoom,
+                isLoading: false,
+                isEnterTheRoom: true,
+                rooms: state.rooms.map((room) =>
+                    getRoomId(room) === joinedRoom.roomId
+                        ? { ...room, status: "occupied", currentBoy: true }
+                        : room
+                ),
+            }));
+            return joinedRoom;
+        } catch (error) {
+            set({ error: error.response?.data?.message || error.message, isLoading: false });
+            throw error;
+        }
+    },
     leaveRoom: async (roomId) => {
         set({ isLoading: true, error: null });
         try {

@@ -3,6 +3,7 @@ import {
     createRoom,
     destroyRoom,
     joinRoom,
+    joinRandomRoom,
     leaveRoom,
     getOpenRooms,
     getRoomMessages,
@@ -22,6 +23,7 @@ const router = Router();
 router.route("/create").post(verifyUser, createRoom);
 router.route("/destroy/:roomId").delete(verifyUser, destroyRoom);
 router.route("/join/:roomId").post(verifyUser, joinRoom);
+router.route("/join-random").post(verifyUser, joinRandomRoom);
 router.route("/leave/:roomId").post(verifyUser, leaveRoom);
 router.route("/openRooms").get(verifyUser, getOpenRooms);
 router.route("/:roomId/details").get(verifyUser, getRoomDetails);
