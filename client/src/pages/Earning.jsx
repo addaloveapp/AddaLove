@@ -175,7 +175,7 @@ const Earning = () => {
             <span className="amount">{coinToMoney(useralldata?.walletBlance)}</span>
           </div>
           <div className="respect-points-pill">
-            <span>= {(useralldata?.walletBlance || 0).toLocaleString()} Respect Points</span>
+            <span>= {(useralldata?.walletBlance || 0).toLocaleString()} Coins</span>
             <Info size={14} className="info-icon" />
           </div>
         </div>
