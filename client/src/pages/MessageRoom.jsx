@@ -2,8 +2,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import {
   Coins, Loader2, LogOut, MessageCircle, Send, Trash2, TriangleAlert,
-  UserMinus, UserRoundPlus, Users, User, Crown, BadgeCheck, ShieldCheck,
-  Plus, Smile, Info, Video, Star,
+  UserMinus, Users, User, BadgeCheck, ShieldCheck,
+  Plus, Smile, Star,
   CheckCheck
 } from 'lucide-react'
 import useUserStore from '../store/userStore.js'
@@ -49,6 +49,8 @@ const MessageRoom = () => {
   const [showRechargeWarning, setShowRechargeWarning] = useState(false)
 
   const messagesEndRef = useRef(null)
+  const messageInputRef = useRef(null)
+  const messageTextRef = useRef('')
   const swipeStartXRef = useRef(null)
   const isSendingMessageRef = useRef(false)
   const hasPendingRatingRef = useRef(false)
@@ -101,25 +103,62 @@ const MessageRoom = () => {
   const handleSendMessage = async () => {
     if (!isBoyInside || isSendingMessageRef.current) return
 
-    const trimmedMessage = messageText.trim()
+    const trimmedMessage = messageTextRef.current.trim()
     if (!trimmedMessage) return
 
+    const outgoingReply = replyingTo
     isSendingMessageRef.current = true
     setIsSendingMessage(true)
+    setMessageText('')
+    messageTextRef.current = ''
+    setReplyingTo(null)
+
+    // Keep the focused textarea editable and stable while Android WebView
+    // keeps the IME attached to it.
+    if (messageInputRef.current) {
+      messageInputRef.current.style.height = 'auto'
+    }
+
     try {
       await sendMessageToServer(roomId, {
         text: trimmedMessage,
         messageType: 'text',
-        ...(replyingTo?._id && { replyToId: replyingTo._id }),
+        ...(outgoingReply?._id && { replyToId: outgoingReply._id }),
       })
-      setMessageText('')
-      setReplyingTo(null)
     } catch (error) {
       console.error('Error sending message:', error)
+
+      if (!messageTextRef.current.trim()) {
+        setMessageText(trimmedMessage)
+        messageTextRef.current = trimmedMessage
+        setReplyingTo(outgoingReply)
+      }
     } finally {
       isSendingMessageRef.current = false
       setIsSendingMessage(false)
     }
+  }
+
+  const handleSendButtonPointerDown = (event) => {
+    event.preventDefault()
+    event.stopPropagation()
+
+    if (event.button !== 0 && event.pointerType === 'mouse') return
+
+    handleSendMessage()
+  }
+
+  const handleSendButtonClick = (event) => {
+    event.preventDefault()
+    event.stopPropagation()
+  }
+
+  const handleSendButtonKeyDown = (event) => {
+    if (event.key !== 'Enter' && event.key !== ' ') return
+
+    event.preventDefault()
+    event.stopPropagation()
+    handleSendMessage()
   }
 
   const handleEmojiSelect = async (emoji) => {
@@ -632,6 +671,7 @@ const MessageRoom = () => {
   const chatPartner = userRole === 'boy' ? girlProfile : boyProfile
   const partnerName = chatPartner?.fullName || 'Guest'
   const partnerAvatar = chatPartner?.imageUrl || getFallbackAvatar(partnerName)
+  const canSendMessage = isBoyInside && messageText.trim().length > 0 && !isSendingMessage
 
   return (
     <div className='min-h-screen bg-[#070b19] p-0 text-white sm:px-4 sm:py-5 font-sans'>
@@ -793,11 +833,15 @@ const MessageRoom = () => {
               )}
 
               {/* Chat Date Divider */}
-              <div className='relative flex items-center justify-center py-4'>
+              <div className='relative flex items-center justify-center py-2'>
                 <div className='absolute left-0 right-0 h-[1px] bg-linear-to-r from-transparent via-white/10 to-transparent' />
                 <span className='relative bg-[#0a0f24] px-4 text-xs font-medium text-slate-400'>
-                  ✧ Today ✧
+                  ✧ Today ✧ <br />
                 </span>
+              </div>
+              <div className='text-center text-gray-400'>
+
+                 🔒 End to End Encrypted 🔒
               </div>
 
               {/* Messages Container */}
@@ -883,27 +927,31 @@ const MessageRoom = () => {
           >
             <Emoji onSelect={handleEmojiSelect} />
 
-            <input
-              type='text'
+            <textarea
+              ref={messageInputRef}
+              rows={1}
               value={messageText}
               placeholder={inputPlaceholder}
-              disabled={!isBoyInside || isSendingMessage}
-              className='min-w-0 flex-1 bg-transparent px-2 text-sm text-white outline-none placeholder:text-slate-500 disabled:cursor-not-allowed'
-              onChange={(event) => setMessageText(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === 'Enter') {
-                  event.preventDefault()
-                  handleSendMessage()
-                }
+              disabled={!isBoyInside}
+              className='min-w-0 flex-1 bg-transparent px-2 py-1 text-sm text-white outline-none placeholder:text-slate-500 disabled:cursor-not-allowed resize-none max-h-32 custom-scrollbar'
+              onChange={(event) => {
+                const nextMessageText = event.target.value
+                setMessageText(nextMessageText)
+                messageTextRef.current = nextMessageText
+                // Auto-resize logic
+                event.target.style.height = 'auto'
+                event.target.style.height = `${event.target.scrollHeight}px`
               }}
             />
 
             <button
               type='button'
               aria-label='Send message'
-              onClick={handleSendMessage}
-              disabled={!isBoyInside || !messageText.trim() || isSendingMessage}
-              className='flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-full bg-linear-to-r from-[#FF4D8D] to-purple-500 text-white shadow-lg transition hover:scale-105 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:scale-100'
+              aria-disabled={!canSendMessage}
+              onPointerDown={handleSendButtonPointerDown}
+              onClick={handleSendButtonClick}
+              onKeyDown={handleSendButtonKeyDown}
+              className={`flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-full bg-linear-to-r from-[#FF4D8D] to-purple-500 text-white shadow-lg transition ${canSendMessage ? 'hover:scale-105 active:scale-95' : 'cursor-not-allowed opacity-40'}`}
             >
               {isSendingMessage ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} className="ml-0.5" />}
             </button>
