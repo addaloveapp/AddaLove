@@ -29,7 +29,7 @@ const AddaLoveLandingPage = () => {
                     <a href="#footer" className="hover:text-pink-500 transition-colors">Contact</a>
                 </div>
                 <button className="bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-400 hover:to-purple-500 text-white px-6 py-2.5 rounded-full text-sm font-semibold transition-all shadow-[0_0_15px_rgba(236,72,153,0.4)] flex items-center gap-2">
-                    Download App
+                    Comming Soon
                 </button>
             </nav>
 
@@ -51,7 +51,7 @@ const AddaLoveLandingPage = () => {
                     </p>
                     <div className="flex flex-wrap items-center gap-4 pt-4">
                         <button className="bg-gradient-to-r from-pink-500 to-purple-600 hover:opacity-90 text-white px-8 py-3.5 rounded-full font-semibold transition-all shadow-[0_0_20px_rgba(236,72,153,0.4)] flex items-center gap-2">
-                            Download App <Download className="w-4 h-4" />
+                            Comming Soon <Download className="w-4 h-4" />
                         </button>
                     </div>
                 </div>
@@ -88,8 +88,8 @@ const AddaLoveLandingPage = () => {
                         </div>
                         <div>
                             <p className="text-[10px] text-gray-400 uppercase tracking-wider">Building Connections</p>
-                            <p className="text-lg font-bold">25K+</p>
-                            <p className="text-xs text-gray-400">Happy Users</p>
+                            {/* <p className="text-lg font-bold">25K+</p>
+                            <p className="text-xs text-gray-400">Happy Users</p> */}
                         </div>
                     </div>
 
