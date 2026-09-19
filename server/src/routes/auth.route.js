@@ -1,5 +1,5 @@
 import express from 'express';
-import {sendOtp,otpVerify,register,login,girlRegister, girlVedioUpload, checkApplicationStatus, girlsLogin, currentUser, logOut, messageOtpSend, findUserDataForForgetPassword, forgetPassword, getUserFullHistory, getGirlProfiles, addAvatarProfilePhoto, profilePhotoUpload, profileDataUpdate, viewProfile, createWithdrawRequest, getWithdrawRequestHistory} from "../controllers/user.controller.js"
+import {sendOtp,otpVerify,register,login,girlRegister, girlVedioUpload, checkApplicationStatus, girlsLogin, currentUser, logOut, messageOtpSend, findUserDataForForgetPassword, forgetPassword, getUserFullHistory, getGirlProfiles, addAvatarProfilePhoto, profilePhotoUpload, profileDataUpdate, viewProfile, createWithdrawRequest, getWithdrawRequestHistory, fndUserDataForDeleteUserAccount, deleteTheUserAccout} from "../controllers/user.controller.js"
 import {upload} from '../middlewares/multer.middleware.js'
 import { verifyUser } from '../middlewares/user.middleware.js';
 const AuthRoute= express.Router();
@@ -25,6 +25,8 @@ AuthRoute.post('/profile-data-update', verifyUser, profileDataUpdate);
 AuthRoute.post('/profile-data',viewProfile)
 AuthRoute.post('/withdraw-request', verifyUser, createWithdrawRequest);
 AuthRoute.get('/withdraw-history', verifyUser, getWithdrawRequestHistory);
+AuthRoute.get('/find-data-for-delete', fndUserDataForDeleteUserAccount);
+AuthRoute.get('/delete-account', deleteTheUserAccout);
 
 
 export default AuthRoute; 

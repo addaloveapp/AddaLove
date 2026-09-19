@@ -1045,6 +1045,42 @@ const getWithdrawRequestHistory = asyncHandler(async (req, res) => {
     );
 });
 
+const fndUserDataForDeleteUserAccount = asyncHandler(async(register,res)=>{
+    const {phoneNumber}=req.body;
+    if(!phoneNumber){
+        throw new ApiError(400,"Phone number is required.")
+    }
+    const findTheUserDataBoy = await User.findOne({ phoneNumber }).select("-password").lean();
+    const findTheUserDataGirl = await Girls.findOne({ phoneNumber }).select("-password").lean();
+    if (!findTheUserDataBoy && !findTheUserDataGirl) {
+        throw new ApiError(404, 'User not found')
+    }
+    if (findTheUserDataBoy) {
+        return res.status(200).json(new ApiResponse(200, findTheUserDataBoy, 'Email retrive'))
+    }
+    if (findTheUserDataGirl) {
+        return res.status(200).json(new ApiResponse(200, findTheUserDataGirl, 'Email retrive'))
+    }
+
+
+})
+const deleteTheUserAccout = asyncHandler(async(req,res)=>{
+    const {userId,userType}=req.body;
+     if(!userId){
+        throw new ApiError(400,"userId  is required.")
+    }
+
+    if(userType=="Boy"){
+        await User.findByIdAndDelete(userId)
+        return res.status(200).json(new ApiResponse(200,null,"Acoount has been deleted."))
+    }
+    if(userType=="girl"){
+        await Girls.findByIdAndDelete(userId);
+        return res.status(200).json(new ApiResponse(200,null,"Acoount has been deleted."))
+    }
+
+})
+
 export {
     sendOtp,
     otpVerify,
@@ -1066,5 +1102,8 @@ export {
     profileDataUpdate,
     viewProfile,
     createWithdrawRequest,
-    getWithdrawRequestHistory
+    getWithdrawRequestHistory,
+    fndUserDataForDeleteUserAccount,
+    deleteTheUserAccout
+
 };
