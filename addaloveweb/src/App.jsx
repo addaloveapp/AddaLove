@@ -6,6 +6,7 @@ import CertificateVerify from './pages/CertificateVerify'
 import PrivacyPolicy from './pages/PricacyAndPolicy'
 import CommunityGuidelines from './pages/CommunityGuidelines'
 import TermsAndConditions from './pages/TermsAndCondition'
+import DeleteUserAccount from './pages/DeleteUserAccount'
 
 function App() {
 
@@ -19,6 +20,7 @@ function App() {
       <Route path='/privacypolicy' element={<PrivacyPolicy/>}/>
       <Route path='/communityguidelines' element={<CommunityGuidelines/>}/>
       <Route path='/termsAndconditions' element={<TermsAndConditions/>}/>
+      <Route path='/deleteaccount' element={<DeleteUserAccount/>}/>
     </Routes>
     </BrowserRouter>
 
