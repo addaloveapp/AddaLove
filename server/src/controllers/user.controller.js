@@ -1045,41 +1045,69 @@ const getWithdrawRequestHistory = asyncHandler(async (req, res) => {
     );
 });
 
-const fndUserDataForDeleteUserAccount = asyncHandler(async(register,res)=>{
-    const {phoneNumber}=req.body;
-    if(!phoneNumber){
-        throw new ApiError(400,"Phone number is required.")
-    }
-    const findTheUserDataBoy = await User.findOne({ phoneNumber }).select("-password").lean();
-    const findTheUserDataGirl = await Girls.findOne({ phoneNumber }).select("-password").lean();
-    if (!findTheUserDataBoy && !findTheUserDataGirl) {
-        throw new ApiError(404, 'User not found')
-    }
-    if (findTheUserDataBoy) {
-        return res.status(200).json(new ApiResponse(200, findTheUserDataBoy, 'Email retrive'))
-    }
-    if (findTheUserDataGirl) {
-        return res.status(200).json(new ApiResponse(200, findTheUserDataGirl, 'Email retrive'))
+const findDeleteAccountUser = async (userId, userType, includePassword = false) => {
+    const normalizedUserType = String(userType).toLowerCase();
+    const UserModel = normalizedUserType === 'girl' ? Girls : normalizedUserType === 'boy' ? User : null;
+
+    if (!UserModel) {
+        throw new ApiError(400, "Invalid user type.");
     }
 
-
-})
-const deleteTheUserAccout = asyncHandler(async(req,res)=>{
-    const {userId,userType}=req.body;
-     if(!userId){
-        throw new ApiError(400,"userId  is required.")
+    const projection = includePassword ? "" : "-password";
+    const account = await UserModel.findById(userId).select(projection).lean();
+    if (!account) {
+        throw new ApiError(404, "User not found.");
     }
 
-    if(userType=="Boy"){
-        await User.findByIdAndDelete(userId)
-        return res.status(200).json(new ApiResponse(200,null,"Acoount has been deleted."))
-    }
-    if(userType=="girl"){
-        await Girls.findByIdAndDelete(userId);
-        return res.status(200).json(new ApiResponse(200,null,"Acoount has been deleted."))
+    return { account, UserModel };
+};
+
+const fndUserDataForDeleteUserAccount = asyncHandler(async (req, res) => {
+    const { phoneNumber } = req.body;
+    if (!phoneNumber) {
+        throw new ApiError(400, "Phone number is required.");
     }
 
-})
+    const account = await User.findOne({ phoneNumber }).select("-password").lean()
+        || await Girls.findOne({ phoneNumber }).select("-password").lean();
+
+    if (!account) {
+        throw new ApiError(404, "User not found.");
+    }
+
+    return res.status(200).json(new ApiResponse(200, account, "User data retrieved successfully."));
+});
+
+const checkDeleteAccountPassword = asyncHandler(async (req, res) => {
+    const { userId, userType, password } = req.body;
+    if (!userId || !userType || !password) {
+        throw new ApiError(400, "User ID, user type, and password are required.");
+    }
+
+    const { account } = await findDeleteAccountUser(userId, userType, true);
+    const isPasswordValid = await bcrypt.compare(password, account.password);
+    if (!isPasswordValid) {
+        throw new ApiError(401, "Invalid password.");
+    }
+
+    return res.status(200).json(new ApiResponse(200, { valid: true }, "Password verified successfully."));
+});
+
+const deleteTheUserAccout = asyncHandler(async (req, res) => {
+    const { userId, userType, password } = req.body;
+    if (!userId || !userType || !password) {
+        throw new ApiError(400, "User ID, user type, and password are required.");
+    }
+
+    const { account, UserModel } = await findDeleteAccountUser(userId, userType, true);
+    const isPasswordValid = await bcrypt.compare(password, account.password);
+    if (!isPasswordValid) {
+        throw new ApiError(401, "Invalid password.");
+    }
+
+    await UserModel.findByIdAndDelete(userId);
+    return res.status(200).json(new ApiResponse(200, null, "User account has been deleted successfully."));
+});
 
 export {
     sendOtp,
@@ -1104,6 +1132,7 @@ export {
     createWithdrawRequest,
     getWithdrawRequestHistory,
     fndUserDataForDeleteUserAccount,
+    checkDeleteAccountPassword,
     deleteTheUserAccout
 
 };
