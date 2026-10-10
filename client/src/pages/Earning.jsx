@@ -175,7 +175,7 @@ const Earning = () => {
             <span className="amount">{coinToMoney(useralldata?.walletBlance)}</span>
           </div>
           <div className="respect-points-pill">
-            <span>= {(useralldata?.walletBlance || 0).toLocaleString()} Coins</span>
+            <span>= {(useralldata?.walletBlance || 0).toLocaleString()} Respect Points</span>
             <Info size={14} className="info-icon" />
           </div>
         </div>
@@ -262,7 +262,8 @@ const Earning = () => {
               <div className="method-info">
                 <span className="method-name">UPI / E-Wallet</span>
                 <span className="method-desc">Instant transfer to UPI ID</span>
-                <span className="method-time"><Zap size={12} /> Instant Transfer</span>
+                <span className="method-time"><Clock size={12} />Take 12-24 hours</span>
+        
               </div>
               <div className="method-action">
                 {withdrawMethod === 'upi' ? (

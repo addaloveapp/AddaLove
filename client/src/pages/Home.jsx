@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import useUserStore from '../store/userStore.js';
 import useRoomStore from '../store/roomStore.js';
 import { MessageCircleMore, X, Coins } from 'lucide-react';
@@ -9,7 +9,9 @@ import createRoomimg from "../assets/createRoom.png"
 import homeAndProfileMusic from '../assets/musics/homeAndProfile.mpeg';
 import PageMusicPlayer from '../components/PageMusicPlayer.jsx';
 import PopularProfiles from '../components/PopularProfiles.jsx';
-
+import chatIcone from "../assets/chat.png"
+import voice from "../assets/voice.png"
+import coin from "../assets/coin1.png"
 const languages = ['Bengali', 'Hindi', 'Gujarati', 'English', 'Kannada', 'Marathi', 'Tamil', 'Telugu', 'Urdu', 'Punjabi'];
 
 const getRoomPath = (type, roomId) => {
@@ -117,9 +119,9 @@ const popularTags = [
 ];
 
 const girlRoomTypes = [
-  { type: 'message', title: 'Message', subtitle: 'Text Chat', icon: <Icons.Message /> },
-  { type: 'voice', title: 'Voice', subtitle: 'Voice Chat', icon: <Icons.Mic /> },
-  { type: 'video', title: 'Video', subtitle: 'Video Call', icon: <Icons.Video />, disabled: true },
+  { type: 'message', title: 'Message', subtitle: 'Text Chat', imageName: chatIcone },
+  { type: 'voice', title: 'Voice', subtitle: 'Voice Chat', imageName: voice },
+  { type: 'video', title: 'Video', subtitle: 'Coming soon', imageName: voice, disabled: true },
 ];
 
 const popularTagCards = popularTags.map((tag) => ({
@@ -144,16 +146,16 @@ const Home = () => {
   const navigate = useNavigate();
   const { userRole, user } = useUserStore();
   const { isLoading, error, createRoom, joinRoom, rooms } = useRoomStore();
-  
+
   const [roomType, setRoomType] = useState('message');
   const [selectedLanguages, setSelectedLanguages] = useState([]);
-  
+
   // Exclusive Offer Logic
   const [showOfferPopup, setShowOfferPopup] = useState(false);
   const [hasSeenPopup, setHasSeenPopup] = useState(false);
   const [selectedVibe, setSelectedVibe] = useState(girlVibes[0].title);
   const [privacySetting, setPrivacySetting] = useState('Anyone can join');
-  const [ageSetting, setAgeSetting] = useState('18 - 25');
+  const [ageSetting, setAgeSetting] = useState('12 - 25');
   const [allowGifts, setAllowGifts] = useState(true);
 
   useEffect(() => {
@@ -224,7 +226,7 @@ const Home = () => {
   return (
     <div className={`min-h-screen ${isBoy || isGirl ? 'bg-[url("./assets/home.png")] bg-cover bg-center' : 'bg-bg-[url("./assets/home.png")] bg-cover bg-center'} text-white flex justify-center sm:items-center px-0 sm:px-4 sm:py-8`}>
       <PageMusicPlayer src={homeAndProfileMusic} />
-      
+
       {/* Exclusive Offer Popup Overlay */}
       {showOfferPopup && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn">
@@ -241,11 +243,11 @@ const Home = () => {
                   <Icons.Gift />
                 </div>
               </div>
-              
+
               <h2 className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-200 to-yellow-500 mb-2">
                 Exclusive Welcome Offer
               </h2>
-              
+
               <p className="text-slate-300 text-sm mb-6 leading-relaxed">
                 Elevate your AddaLove experience! As a first-time buyer, unlock our premium coin bundle at an unbelievable price.
               </p>
@@ -293,12 +295,12 @@ const Home = () => {
         {isGirl && (
           <div className="flex-1 overflow-y-auto px-4 pt-24 pb-28 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] scrollbar-none">
             <div className="girl-create-ui rounded-3xl bg-[#090915]/60 backdrop-blur-lg px-4 py-5 shadow-[0_24px_80px_rgba(0,0,0,0.45)]">
-              
+
               {/* Girl Hero Banner */}
               <div className="relative overflow-hidden rounded-[18px] border border-[#FF4D8D]/15 bg-[#0F0D1C]/50 backdrop-blur-sm px-4 py-5 flex items-center justify-between">
                 <div className="absolute right-3 top-2 h-24 w-24 rounded-full bg-[#FF4D8D]/20"></div>
                 <div className="absolute right-16 bottom-0 h-20 w-20 rounded-full bg-[#6C3BFF]/20"></div>
-                
+
                 <div className="relative z-10 max-w-[58%]">
                   <h1 className="text-[30px] font-black leading-tight tracking-normal text-white">
                     Create a <span className="text-[#FF4D8D]">Room</span>
@@ -307,12 +309,12 @@ const Home = () => {
                     Choose your vibe, select 2 languages and let the fun begin!
                   </p>
                 </div>
-                
-                  <img 
-                    src={createRoomimg}
-                    alt="Mascot" 
-                    className=" h-40 border-2 border-[#FF4D8D]/30 object-cover shadow-[0_0_20px_rgba(255,77,141,0.4)]" 
-                  />
+
+                <img
+                  src={createRoomimg}
+                  alt="Mascot"
+                  className=" h-40 border-2 border-[#FF4D8D]/30 object-cover shadow-[0_0_20px_rgba(255,77,141,0.4)]"
+                />
               </div>
 
               <div className="mt-4 grid grid-cols-3 gap-3">
@@ -327,9 +329,10 @@ const Home = () => {
                       disabled={option.disabled}
                       className={`relative flex min-h-21.5 flex-col items-center justify-center rounded-[18px] border px-2 py-3 text-center transition-all ${isSelected ? 'border-[#FF4D8D] bg-[#FF4D8D]/20 text-white shadow-[0_0_20px_rgba(255,77,141,0.36)]' : 'border-white/10 bg-[#11111F]/50 backdrop-blur-sm text-slate-300 hover:border-white/20'} ${option.disabled ? 'cursor-not-allowed opacity-55' : ''}`}
                     >
-                      <span className={isSelected ? 'text-[#FF4D8D]' : 'text-[#8D88B8]'}>{option.icon}</span>
-                      <span className="mt-2 text-[14px] font-black">{option.title}</span>
-                      <span className="mt-0.5 text-[11px] font-semibold text-slate-400">{option.subtitle}</span>
+                      <span className={isSelected ? 'text-[#FF4D8D]' : 'text-[#8D88B8]'}> <img src={option.imageName} className='h-10' alt="" /> </span>
+                    { option.disabled?<span className="mt-2 text-[14px] font-black">{option.title}</span> :<span className="mt-2 text-[14px] font-black">{option.title}</span>}
+                    { option.disabled?<span className="mt-0.5 text-[11px] font-semibold text-slate-400">{option.subtitle}n</span> : <span className="mt-0.5 text-[11px] font-semibold text-slate-400">{option.subtitle}</span>}
+                     
                     </button>
                   );
                 })}
@@ -422,30 +425,19 @@ const Home = () => {
                 </div>
                 <div className="grid gap-3 sm:grid-cols-3">
                   {/* Privacy Toggle Button */}
-                  <button 
-                    type="button" 
-                    onClick={() => setPrivacySetting(prev => prev === 'Anyone can join' ? 'Followers Only' : 'Anyone can join')}
-                    className="flex cursor-pointer min-h-18.5 items-center gap-3 rounded-3xl border border-white/10 bg-[#11111F]/50 backdrop-blur-sm px-3 text-left hover:border-white/20 transition-colors"
+                  <div
+                    className="flex min-h-18.5 items-center gap-3 rounded-3xl border border-white/10 bg-[#11111F]/50 backdrop-blur-sm px-3 text-left"
                   >
                     <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#FF4D8D]/18 text-[#FF4D8D]"><Icons.Lock /></span>
                     <span className="min-w-0">
                       <span className="block text-[12px] font-black text-[#FF4D8D]">Room Privacy</span>
-                      <span className="mt-1 flex items-center gap-1 text-[12px] font-bold text-white">{privacySetting} <Icons.ChevronDown /></span>
+                      <span className="mt-1 flex items-center gap-1 text-[12px] font-bold text-white">Chat and voice end to end Encrypted </span>
                     </span>
-                  </button>
+                  </div>
 
                   {/* Age Preference Toggle Button */}
-                  <button 
-                    type="button" 
-                    className="flex cursor-pointer min-h-18.5 items-center gap-3 rounded-3xl border border-white/10 bg-[#11111F]/50 backdrop-blur-sm px-3 text-left hover:border-white/20 transition-colors"
-                  >
-                    <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#7C3AED]/20 text-[#A855F7]"><Icons.UsersGroup /></span>
-                    <span className="min-w-0">
-                      <span className="block text-[12px] font-black text-[#FF4D8D]">Age Preference</span>
-                      <span className="mt-1 flex items-center gap-1 text-[12px] font-bold text-white">{ageSetting} <Icons.ChevronDown /></span>
-                    </span>
-                  </button>
-                  
+
+
                 </div>
               </div>
             </div>
@@ -459,7 +451,7 @@ const Home = () => {
 
               {/* Boy Hero Banner */}
               <div className="relative w-full rounded-2xl border mt-18 border-[#FF4D8D]/20 bg-linear-to-br from-[#2D1433]/70 via-[#141021]/70 to-[#0D111A]/70 backdrop-blur-md p-5 overflow-hidden shadow-lg flex items-center justify-between">
-                
+
                 <div className="absolute top-0 right-0 -mr-10 -mt-10 h-32 w-32 rounded-full bg-[#FF4D8D] opacity-20"></div>
                 <div className="absolute bottom-0 right-10 h-24 w-24 rounded-full bg-[#6C3BFF] opacity-20"></div>
 
@@ -469,16 +461,29 @@ const Home = () => {
                     <span className="block text-white">{user.fullName}</span>
                   </h2>
                   <p className="mt-2 text-[11px] font-medium text-slate-300">Safe • Friendly • Private</p>
-                  <button className="mt-4 rounded-full bg-linear-to-r from-[#FF4D8D] to-[#E11D48] px-5 py-2 text-[13px] font-bold text-white shadow-[0_0_15px_rgba(255,77,141,0.3)] transition-transform hover:scale-105">
+                  <a
+                    href="#roomsection"
+                    onClick={(e) => {
+                      e.preventDefault(); // Prevents the default instant jump
+                      const element = document.getElementById('roomsection');
+                      if (element) {
+                        element.scrollIntoView({
+                          behavior: 'smooth', // Creates the smooth animation
+                          block: 'start',     // Aligns to the top of the section
+                        });
+                      }
+                    }}
+                    className="mt-4 rounded-full bg-linear-to-r from-[#FF4D8D] to-[#E11D48] px-5 py-2 text-[13px] font-bold text-white shadow-[0_0_15px_rgba(255,77,141,0.3)] transition-transform hover:scale-105"
+                  >
                     Explore Rooms →
-                  </button>
+                  </a>
                 </div>
-                
+
                 <div className="relative z-10 flex h-50 shrink-0 items-center justify-center">
-                  <img 
-                    src="https://ik.imagekit.io/ufopzzlbh/addlovemodel.jpeg" 
-                    alt="Mascot" 
-                    className="h-50 rounded-full border-2 border-[#6C3BFF]/30 object-cover shadow-[0_0_20px_rgba(108,59,255,0.4)]" 
+                  <img
+                    src="https://ik.imagekit.io/ufopzzlbh/addlovemodel.jpeg"
+                    alt="Mascot"
+                    className="h-50 rounded-full border-2 border-[#6C3BFF]/30 object-cover shadow-[0_0_20px_rgba(108,59,255,0.4)]"
                   />
                 </div>
               </div>
@@ -497,18 +502,18 @@ const Home = () => {
                 <div className="relative z-10 mt-4 grid grid-cols-2 gap-3">
                   <div className="rounded-2xl border border-[#55e11d]/25 bg-[#0F2418]/70 px-3 py-3">
                     <div className="flex items-center gap-2 text-[#7DFF9F]">
-                      <Icons.Mic />
+                      <img src={voice} className='h-5' alt="" />
                       <span className="font-rounded text-[12px] font-black uppercase tracking-wide">Voice Call</span>
                     </div>
-                    <p className="mt-2 font-display text-[24px] font-black leading-none text-white">20</p>
+                    <p className="mt-2 font-display text-[24px] font-black flex  gap-1.5 leading-none text-white">20 <img src={coin} className='h-6' alt="" /></p>
                     <p className="mt-1 font-friendly text-[11px] font-semibold text-slate-300">coins / 1 min</p>
                   </div>
                   <div className="rounded-2xl border border-[#FF4D8D]/25 bg-[#2A1023]/70 px-3 py-3">
                     <div className="flex items-center gap-2 text-[#FF8DB8]">
-                      <MessageCircleMore className="h-4 w-4" />
+                      <img src={chatIcone} className='h-5' alt="" />
                       <span className="font-rounded text-[12px] font-black uppercase tracking-wide">Chat</span>
                     </div>
-                    <p className="mt-2 font-display text-[24px] font-black leading-none text-white">12</p>
+                    <p className="mt-2 font-display text-[24px] font-black leading-none flex gap-1.5 text-white">12 <img src={coin} className='h-6' alt="" /></p>
                     <p className="mt-1 font-friendly text-[11px] font-semibold text-slate-300">coins / 1 min</p>
                   </div>
                 </div>
@@ -517,17 +522,23 @@ const Home = () => {
               {/* Top Categories Scroll */}
               <div className="flex gap-3 overflow-x-auto pb-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] scrollbar-none">
                 {topCategories.map((c) => (
-                  <div key={c.id} className="min-w-33.75 shrink-0 cursor-pointer flex-col rounded-2xl border border-[#232336] bg-[#12131D]/50 backdrop-blur-sm p-3 transition-colors hover:bg-[#1A1C29]/80">
-                    <div className={`mb-2 flex h-8 w-8 items-center justify-center rounded-xl bg-white/5 ${c.color}`}>
+                  <div
+                    key={c.id}
+                    className="min-w-33.75 shrink-0 flex-col rounded-2xl border border-[#232336] bg-[#12131D]/50 backdrop-blur-sm p-3"
+                  >
+                    <div
+                      className={`mb-2 flex h-8 w-full items-center justify-center rounded-xl bg-white/5 ${c.color}`}
+                    >
                       {c.icon}
                     </div>
-                    <h4 className="text-[13px] font-bold text-white">{c.title}</h4>
+
+                    <h4 className="text-[13px] font-bold text-white">
+                      {c.title}
+                    </h4>
+
                     <p className="mt-0.5 text-[10px] font-medium leading-tight text-slate-400">
                       {c.subtitle}
                     </p>
-                    <div className="mt-2 flex justify-end text-slate-500">
-                      <Icons.ChevronRight />
-                    </div>
                   </div>
                 ))}
               </div>
@@ -535,7 +546,7 @@ const Home = () => {
               {/* Active Rooms Section */}
               <PopularProfiles />
 
-              <div className="flex flex-col gap-4">
+              <div className="flex flex-col gap-4" id="roomsection">
                 <div className="flex items-end justify-between px-1">
                   <h3 className="text-[17px] font-bold text-white">Active Rooms</h3>
                   <span className="flex items-center gap-1.5 text-[11px] font-bold text-[#FF4D8D]">
@@ -578,7 +589,7 @@ const Home = () => {
                                   <Icons.Verified />
                                   <span className="text-[11px] font-medium text-slate-400">{room.createdBy?.age} yrs</span>
                                 </div>
-                                <div className="mt-[2px] flex items-center gap-1 text-[10px] font-bold tracking-wider text-[#FF4D8D] uppercase">
+                                <div className="mt-0.5 flex items-center gap-1 text-[10px] font-bold tracking-wider text-[#FF4D8D] uppercase">
                                   {room.roomType === 'message' ? <MessageCircleMore className='h-4' /> : <Icons.Mic />} {room.roomType}
                                 </div>
                                 <span className={`mt-1 w-fit rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${isOccupied ? 'border-yellow-400/25 bg-yellow-400/10 text-yellow-300' : 'border-emerald-400/25 bg-emerald-400/10 text-emerald-300'}`}>
@@ -592,9 +603,10 @@ const Home = () => {
                                 onClick={() => handleJoinRoom(room)}
                                 disabled={isJoinDisabled}
                                 title={!hasEnoughCoins ? `Need ${getMinimumJoinCoins(room.roomType)} coins to join` : undefined}
-                                className={`flex h-[42px] w-[42px] items-center justify-center rounded-full shadow-[0_4px_14px_rgba(255,77,141,0.35)] transition-transform active:scale-95 ${isJoinDisabled ? 'cursor-not-allowed bg-slate-700 opacity-60' : 'bg-linear-to-br from-[#4dffa6] to-[#55e11d] hover:scale-105'}`}
+                                className={`flex h-[42px] w-[42px] items-center justify-center rounded-full shadow-[0_4px_14px_rgba(255,77,141,0.35)] transition-transform active:scale-95 ${isJoinDisabled ? 'cursor-not-allowed bg-slate-700 opacity-60' : room.roomType === "message" ? 'bg-linear-to-br from-[#f9ff4d] to-[#e1e11d] hover:scale-105' : 'bg-linear-to-br from-[#4dffa6] to-[#55e11d] hover:scale-105'}`}
                               >
-                                <Icons.Phone />
+                                {room.roomType === 'message' ? <MessageCircleMore className='h-4 text-black' /> : <Icons.Phone />}
+                                {/*  */}
                               </button>
                               <span className="text-[11px] font-medium text-slate-200">{isOccupied ? 'Busy' : !hasEnoughCoins ? 'Low coins' : 'Join'}</span>
                             </div>
@@ -650,22 +662,29 @@ const Home = () => {
               </div>
 
               {/* Safety Priority Footer Banner */}
-              <div className="flex cursor-pointer items-center justify-between rounded-xl bg-[#12131D]/60 backdrop-blur-sm border border-white/5 px-4 py-3 transition-colors hover:bg-white/10">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#FF4D8D]/15 text-[#FF4D8D]">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z" /></svg>
+              <Link to="/contactus" onClick={() => {
+                window.scrollTo({
+                  top: 0,
+                  left: 0,
+                  behavior: 'smooth', // Optional: creates a smooth animation instead of an instant jump
+                });
+              }}><div className="flex cursor-pointer items-center justify-between rounded-xl bg-[#12131D]/60 backdrop-blur-sm border border-white/5 px-4 py-3 transition-colors hover:bg-white/10">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#FF4D8D]/15 text-[#FF4D8D]">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z" /></svg>
+                    </div>
+                    <div className="flex flex-col">
+                      <h4 className="text-[13px] font-bold text-[#D8B4FE]">Your Safety, Our Priority</h4>
+                      <p className="mt-0.5 text-[9px] font-medium text-slate-400">
+                        24x7 Moderation • No Harassment • 100% Secure
+                      </p>
+                    </div>
                   </div>
-                  <div className="flex flex-col">
-                    <h4 className="text-[13px] font-bold text-[#D8B4FE]">Your Safety, Our Priority</h4>
-                    <p className="mt-0.5 text-[9px] font-medium text-slate-400">
-                      24x7 Moderation • No Harassment • 100% Secure
-                    </p>
+                  <div className="text-slate-500">
+                    <Icons.ChevronRight />
                   </div>
                 </div>
-                <div className="text-slate-500">
-                  <Icons.ChevronRight />
-                </div>
-              </div>
+              </Link>
 
             </div>
           </div>
@@ -696,7 +715,7 @@ const Home = () => {
             animation: fadeIn 0.3s ease-out forwards;
         }
       `}</style>
-    </div>
+    </div >
   );
 };
 
