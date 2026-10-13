@@ -17,6 +17,11 @@ import sendaccpectemail from '../middlewares/sendAccpect.middleware.js';
 import sendRejectemail from '../middlewares/sendReject.middleware.js';
 import { getOnlineUsers } from '../socket/onlineUsers.js';
 import WithdrawRequest from '../models/withdrawRequest.model.js';
+
+const versionCheckUp = asyncHandler(async(req,res)=>{
+    return res.status(200).json(new ApiResponse(200,null,"This version you can use."))
+})
+
 const registerAdmin = asyncHandler(async (req, res) => {
     const { fullName, email, password } = req.body;
     if (!fullName || !email || !password) {
@@ -365,4 +370,4 @@ const sendWithdrawMoney = asyncHandler(async (req, res) => {
     );
 });
 
-export { allApplication, allBoysWithPresence, allRoomsOpens, allReport, allCoinPurchase, registerAdmin, loginAdmin, logoutAdmin, createCertificate, checkCertificate, accpectTheGirls, rejectTheGirls, allWithdrawRequests, sendWithdrawMoney };
+export { allApplication, allBoysWithPresence, allRoomsOpens, allReport, allCoinPurchase, registerAdmin, loginAdmin, logoutAdmin, createCertificate, checkCertificate, accpectTheGirls, rejectTheGirls, allWithdrawRequests, sendWithdrawMoney,versionCheckUp };
