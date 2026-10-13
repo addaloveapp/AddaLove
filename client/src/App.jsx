@@ -8,12 +8,20 @@ import useRoomStore from './store/roomStore.js';
 import lodescreen from './assets/LodingScreen.mp4'
 import TopNavbar from './components/TopNavbar'
 import ButtomNavbar from './components/ButtomNavbar'
+import CheckPage from './pages/CheckPage.jsx';
+import useIsAppLiveStore from './store/isAppLiveStore.js';
 
 function App() {
   const { fetchUser, isAuthenticated, user, userRole, fetchUserHistory } = useUserStore();
-  const {getOpenRooms, isEnterTheRoom, startRoomSocketListeners, stopRoomSocketListeners } = useRoomStore();
+  const { getOpenRooms, isEnterTheRoom, startRoomSocketListeners, stopRoomSocketListeners } = useRoomStore();
   const [screenloder, setScreenloder] = useState(true);
   const location = useLocation();
+  const {
+    isAppLive,
+    isLoading: isAppStatusLoading,
+    data,
+    checkIsAppLive,
+  } = useIsAppLiveStore();
 
   useEffect(() => {
     const loadInitialData = async () => {
@@ -24,14 +32,20 @@ function App() {
         await fetchUserHistory();
       } catch (error) {
         disconnectSocket();
-      }finally {
+      } finally {
         await new Promise(resolve => setTimeout(resolve, 10000));
         setScreenloder(false);
       }
     };
-   console.log(location.pathname)
+    console.log(location.pathname)
     loadInitialData();
   }, [fetchUser, getOpenRooms, fetchUserHistory]);
+
+  useEffect(() => {
+    checkIsAppLive().catch(error => {
+      console.error('Error checking app status:', error);
+    });
+  }, [checkIsAppLive]);
 
   useEffect(() => {
     if (isAuthenticated && user?._id && userRole) {
@@ -42,7 +56,7 @@ function App() {
       disconnectSocket();
     }
   }, [isAuthenticated, user?._id, userRole, startRoomSocketListeners, stopRoomSocketListeners]);
-  
+
   if (screenloder) {
     return (
       <div className='h-full w-full bg-[#0c1014]'>
@@ -52,14 +66,19 @@ function App() {
       </div>
     )
   }
+
+  if (!isAppLive) {
+    return <CheckPage data={data} />;
+  }
+  
   return (
     <div className="App">
       <ToastContainer transition={Flip} />
-     {isAuthenticated && !isEnterTheRoom? <TopNavbar/>:''}
+      {isAuthenticated && !isEnterTheRoom ? <TopNavbar /> : ''}
       <Suspense>
         <Outlet />
       </Suspense>
-      {isAuthenticated && !isEnterTheRoom?<ButtomNavbar/>:''}
+      {isAuthenticated && !isEnterTheRoom ? <ButtomNavbar /> : ''}
     </div>
   )
 }
