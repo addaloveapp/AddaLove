@@ -28,9 +28,9 @@ const AddaLoveLandingPage = () => {
                     <a href="#internship" className="hover:text-pink-500 transition-colors">Internship</a>
                     <a href="#footer" className="hover:text-pink-500 transition-colors">Contact</a>
                 </div>
-                <button className="bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-400 hover:to-purple-500 text-white px-6 py-2.5 rounded-full text-sm font-semibold transition-all shadow-[0_0_15px_rgba(236,72,153,0.4)] flex items-center gap-2">
-                    Comming Soon
-                </button>
+                <a href="/app-release.apk" download="AddaLove.apk" className="bg-gradient-to-r from-pink-500 to-purple-600 hover:opacity-90 text-white px-8 py-3.5 rounded-full font-semibold transition-all shadow-[0_0_20px_rgba(236,72,153,0.4)] flex items-center gap-2">
+                           Download <Download className="w-4 h-4" />
+                        </a>
             </nav>
 
             {/* Hero Section */}
@@ -50,9 +50,9 @@ const AddaLoveLandingPage = () => {
                         AddaLove is a social communication platform that helps people connect, have meaningful conversations, and create positive moments together.
                     </p>
                     <div className="flex flex-wrap items-center gap-4 pt-4">
-                        <button className="bg-gradient-to-r from-pink-500 to-purple-600 hover:opacity-90 text-white px-8 py-3.5 rounded-full font-semibold transition-all shadow-[0_0_20px_rgba(236,72,153,0.4)] flex items-center gap-2">
-                            Comming Soon <Download className="w-4 h-4" />
-                        </button>
+                        <a href="/app-release.apk" download="AddaLove.apk" className="bg-gradient-to-r from-pink-500 to-purple-600 hover:opacity-90 text-white px-8 py-3.5 rounded-full font-semibold transition-all shadow-[0_0_20px_rgba(236,72,153,0.4)] flex items-center gap-2">
+                           Download <Download className="w-4 h-4" />
+                        </a>
                     </div>
                 </div>
 

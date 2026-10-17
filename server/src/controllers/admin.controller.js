@@ -19,6 +19,7 @@ import { getOnlineUsers } from '../socket/onlineUsers.js';
 import WithdrawRequest from '../models/withdrawRequest.model.js';
 
 const versionCheckUp = asyncHandler(async(req,res)=>{
+    // {url:"https://addalove.com"}
     return res.status(200).json(new ApiResponse(200,null,"This version you can use."))
 })
 
